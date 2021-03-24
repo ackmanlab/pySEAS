@@ -15,8 +15,6 @@ def test_tiff_loading_and_saving():
         tempdir = tempdir
 
         save_path = os.path.join(tempdir, 'test.tiff')
-
-        print(os.path.exists(tempdir))
         seas.video.save(test_video, save_path)
 
         loaded_video = seas.video.load(save_path)

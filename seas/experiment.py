@@ -21,7 +21,7 @@ class Experiment:
                  loadraw=False,
                  downsample=False,
                  downsample_t=False,
-                 n_rotations=None):
+                 n_rotations=0):
 
         print('\nInitializing wholeBrain Instance\n-----------------------')
         if isinstance(pathlist, str):
@@ -32,7 +32,7 @@ class Experiment:
 
         if np.any(np.isnan(movie)):
             # if the video was already masked
-            roimask = np.zeros(movie[0].shape, dtype='uint8')
+            roimask = np.zeros(movie[0].shape, dtype='uisnt8')
             roimask[np.where(~np.isnan(movie[0]))] = 1
             self.roimask = roimask
 
@@ -46,14 +46,12 @@ class Experiment:
         self.shape = self.bound_movie().shape
         self.n_rotations = n_rotations
 
-
         experiments = sort_experiments(pathlist, verbose=False).keys()
         spanstring = get_exp_span_string(experiments)
         self.name = spanstring
 
         self.dir = os.path.dirname(pathlist[0])
         self.rotate()
-
 
     def rotate(self):
         # rotates a t,y,x movie counter-clockwise n times and

@@ -14,7 +14,11 @@ if some ffmpeg bindings aren't set correctly, mp4 videos may be difficult to loa
 
 May help to create venv with system site packages for things like tk:
     
-    python3.[X] -m venv <nameofyourenv> --system-site-packages
+    python3.[X] -m venv <nameofyourenv> 
+
+Manually install all dependencies with:
+
+    pip install -r requirements.txt
 
 Note the system site packages flag.  This allows the venv installation to access your systemwide tk installation.
 
@@ -46,3 +50,14 @@ This will launch a GUI that tells you your tk version.  Make sure it is >=8.6
     ../seas/colormaps.py:79: UserWarning: FixedFormatter should only be used together with FixedLocator
       cb.ax.set_yticklabels(ticks)
 
+* fix rotation issue in experiment
+
+* clean up ROIs and other things in exp
+
+* sharing test data?
+
+* documentation
+
+* clean up and unify script parameters
+
+* explicitly return ica_project output to bash.
