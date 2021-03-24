@@ -61,3 +61,7 @@ This will launch a GUI that tells you your tk version.  Make sure it is >=8.6
 * clean up and unify script parameters
 
 * explicitly return ica_project output to bash.
+
+
+
+<!--DA: Note that on my branch I erased the boto dependencies from the requirements.txt file -->
