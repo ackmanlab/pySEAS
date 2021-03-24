@@ -141,9 +141,6 @@ if __name__ == '__main__':
                     '--filteringresiduals',
                     action='store_true',
                     help='calculate spatial and temporal artifact residuals')
-    ap.add_argument('--flip',
-                    action='store_true',
-                    help='flip movies before saving')
     ap.add_argument('-pca',
                     '--pca',
                     action='store_true',
@@ -212,8 +209,6 @@ if __name__ == '__main__':
     else:
         filtermean = True
 
-    flip = args['flip']
-
     if args['output_folder'] is not None:
         output_folder = args['output_folder'][0]
         assert os.path.isdir(output_folder), 'Output folder was not valid!!'
@@ -229,9 +224,8 @@ if __name__ == '__main__':
 
     if len(pathlist) > 0:
 
-        print('Loading videos files and running PCAfilter.')
-        print('If there is a matching _ica.hdf5 file, ',
-              'it will be loaded.\n')
+        print('Loading videos files and running ICA projection.')
+        print('If there is a matching _ica.hdf5 file, ', 'it will be loaded.\n')
 
         if args['downsample'] is not None:
             downsample = args['downsample'][0]
@@ -255,7 +249,7 @@ if __name__ == '__main__':
         exp = Experiment(pathlist,
                          downsample=downsample,
                          downsample_t=dt,
-                         rotate=rotate)
+                         n_rotations=rotate)
 
         if roipath is not None:
             print('Roi path found at:', roipath)
@@ -348,7 +342,7 @@ if __name__ == '__main__':
             else:
                 print('No downsample information found')
 
-            filterComparison(components,
+            filter_comparison(components,
                              filtered=filtered,
                              videopath=savepath,
                              downsample=downsample,
@@ -424,7 +418,7 @@ if __name__ == '__main__':
 
             print('Downsampling by:', downsample, '\n')
 
-            filterComparison(components,
+            filter_comparison(components,
                              videopath=savepath,
                              downsample=downsample,
                              filterpath=filterpath,
@@ -445,12 +439,12 @@ if __name__ == '__main__':
                 g = h5(filterpath)
                 filtered = g.load('filtered')
             else:
-                filtered = PCA_rebuild(components,
-                                       returnmeta=True,
-                                       include_noise=not args['filternoise'],
-                                       t_stop=tmax,
-                                       t_start=tmin,
-                                       filtermean=filtermean)
+                filtered = rebuild(components,
+                                   returnmeta=True,
+                                   include_noise=not args['filternoise'],
+                                   t_stop=tmax,
+                                   t_start=tmin,
+                                   filtermean=filtermean)
 
             domainROIs = f.load('domain_ROIs')
             edges = wb.cv2.Canny((domainROIs + 1).astype('uint8'), 1, 1)
@@ -495,8 +489,8 @@ if __name__ == '__main__':
             # invert indices and get signal components to exclude rebuilding:
             signal_components = (
                 components['artifact_components'] == 0).astype('uint8')
-            artifact_movie = PCA_rebuild(components,
-                                         artifact_components=signal_components)
+            artifact_movie = rebuild(components,
+                                     artifact_components=signal_components)
 
             if 'roimask' in components:
                 roimask = components['roimask']
@@ -516,7 +510,7 @@ if __name__ == '__main__':
             }
 
             # get total signal from video:
-            original_movie = PCA_rebuild(components, artifact_components='none')
+            original_movie = rebuild(components, artifact_components='none')
 
             if 'roimask' in components:
                 original_movie = original_movie - components[

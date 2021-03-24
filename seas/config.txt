@@ -1,0 +1,39 @@
+[colormap]
+domains = twilight_r
+components = coolwarm
+correlation = RdGy_r
+
+[regions]
+motor = 1
+motor-medial = 1.25
+motor-lateral = 1.5
+somatosensory = 2
+somatosensory-barrel = 2.25
+somatosensory-core = 2.5
+somatosensory-secondary = 2.75
+auditory = 3
+visual = 4
+visual-primary = 4.25
+visual-higher = 4.75
+retrosplenial = 5
+olfactory = 6
+superiorcolliculus = 7
+clear = NaN
+
+[regions-abbrev]
+motor = M
+motor-medial = Ml
+motor-lateral = Mm
+somatosensory = S
+somatosensory-barrel = Sb
+somatosensory-core = Sc
+somatosensory-secondary = Ss
+auditory = A
+visual = V
+visual-primary = V1
+visual-higher = V+
+retrosplenial = R
+olfactory = O
+superiorcolliculus = SC
+clear = X
+

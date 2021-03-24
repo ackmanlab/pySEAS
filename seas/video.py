@@ -5,6 +5,7 @@ import sys
 import numpy as np
 from math import ceil
 import cv2
+import os
 
 from seas.rois import get_masked_region, insert_masked_region
 from seas.colormaps import DEFAULT_COLORMAP, save_colorbar
@@ -273,7 +274,7 @@ def save(array,
          path,
          resize_factor=1,
          apply_cmap=True,
-         rescale_movie=False,
+         rescale_range=False,
          colormap=DEFAULT_COLORMAP,
          speed=1,
          fps=10,
@@ -315,7 +316,7 @@ def save(array,
     elif path.endswith('.png'):
         assert array.ndim <= 3, 'File was not an image'
 
-        if rescale_movie:
+        if rescale_range:
             array, scale = rescale(array, return_scale=True)
 
         array = array.astype('uint8')
@@ -338,7 +339,7 @@ def save(array,
     elif path.endswith('.avi') | path.endswith('.mp4'):
         sz = array.shape
 
-        if rescale_movie:
+        if rescale_range:
             array, scale = rescale(array, return_scale=True)
 
         array = array.astype('uint8')
@@ -347,11 +348,12 @@ def save(array,
             if path.endswith('.avi'):
                 codec = 'MJPG'
             elif path.endswith('.mp4'):
-                if os.name is 'posix':
+                if os.name == 'posix':
                     codec = 'X264'
-                elif os.name is 'nt':
-                    # codec = 'H264'
+                elif os.name == 'nt':
                     codec = 'XVID'
+                else:
+                    raise TypeError('Unknown os type: {0}'.format(os.name))
 
         # check codec and dimensions
         if array.ndim == 3:
@@ -689,10 +691,7 @@ def play(A,
                 imgclone = A.copy()
             t0 = timer()
             A = np.reshape(A, (sz[0], int(A.size / sz[0])))
-            A = rescale(A,
-                             low=lowB[0],
-                             high=highB[0],
-                             mean_std=(mean, std))
+            A = rescale(A, low=lowB[0], high=highB[0], mean_std=(mean, std))
 
             A = np.reshape(A, sz)
             A = A.astype('uint8', copy=False)
@@ -708,9 +707,9 @@ def play(A,
                 if preprocess:
                     A = imgclone.copy()
                     A = rescale(A,
-                                     low=lowB[0],
-                                     high=highB[0],
-                                     mean_std=(mean, std))
+                                low=lowB[0],
+                                high=highB[0],
+                                mean_std=(mean, std))
                 return
 
             cv2.createTrackbar("Low Limit", windowname, (-2 * lowB[0] + 8), 8,
@@ -739,11 +738,11 @@ def play(A,
         if A.ndim == 3:
             if (preprocess != True) & (rescale_movie == True):
                 im = rescale(im,
-                                  low=lowB[0],
-                                  high=highB[0],
-                                  mean_std=(mean, std),
-                                  verbose=False,
-                                  cap=False)
+                             low=lowB[0],
+                             high=highB[0],
+                             mean_std=(mean, std),
+                             verbose=False,
+                             cap=False)
             color = np.zeros((im.shape[0], im.shape[1], 3))
             color = cv2.applyColorMap(im.astype('uint8'), cmap, color)
             if overlay is not None:
@@ -916,3 +915,24 @@ def downsample(array, new_shape, keepdims=False):
         array = array.reshape(array_shape)
 
     return (array)
+
+
+def rotate(array, n):
+
+    assert type(array) == np.ndarray
+
+    if n > 0:
+        ndim = array.ndim
+
+        if ndim == 3:
+            array = (array.swapaxes(0, 2))
+            array = array.swapaxes(0, 1)
+
+            array = np.rot90(array, n)
+            array = array.swapaxes(0, 1)
+            array = (array.swapaxes(0, 2))
+
+        elif ndim == 2:
+
+            array = np.rot90(array, n)
+    return array

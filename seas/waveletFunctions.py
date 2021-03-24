@@ -3,7 +3,6 @@ import numpy as np
 from scipy.optimize import fminbound
 __author__ = 'Evgeniya Predybaylo'
 
-
 # Copyright (C) 1995-2004, Christopher Torrence and Gilbert P.Compo
 # Python version of the code is written by Evgeniya Predybaylo in 2014
 #
@@ -28,7 +27,6 @@ __author__ = 'Evgeniya Predybaylo'
 #
 #-------------------------------------------------------------------------------------------------------------------
 
-
 # # WAVELET  1D Wavelet transform with optional significance testing
 #   wave, period, scale, coi = wavelet(Y, dt, pad, dj, s0, J1, mother, param)
 #
@@ -52,7 +50,7 @@ __author__ = 'Evgeniya Predybaylo'
 #    Its units are sigma**2 (the time series variance).
 #
 # OPTIONAL INPUTS:
-# 
+#
 # *** Note *** if none of the optional variables is set up, then the program
 #   uses default values of -1.
 #
@@ -92,6 +90,7 @@ __author__ = 'Evgeniya Predybaylo'
 #        at that particular time.
 #        Periods greater than this are subject to edge effects.
 
+
 # def wavelet(Y, dt, pad=0, dj=-1, s0=-1, J1=-1, mother=-1, param=-1):
 def wavelet(Y, dt, pad=0, dj=-1, s0=-1, J1=-1, mother=-1, param=-1):
     n1 = len(Y)
@@ -108,8 +107,9 @@ def wavelet(Y, dt, pad=0, dj=-1, s0=-1, J1=-1, mother=-1, param=-1):
     #....construct time series to analyze, pad if necessary
     x = Y - np.mean(Y)
     if pad == 1:
-        base2 = np.fix(np.log(n1) / np.log(2) + 0.4999)  # power of 2 nearest to N
-        x = np.concatenate((x, np.zeros(2 ** (int(base2) + 1) - n1)))
+        base2 = np.fix(np.log(n1) / np.log(2) +
+                       0.4999)  # power of 2 nearest to N
+        x = np.concatenate((x, np.zeros(2**(int(base2) + 1) - n1)))
 
     n = len(x)
 
@@ -123,21 +123,26 @@ def wavelet(Y, dt, pad=0, dj=-1, s0=-1, J1=-1, mother=-1, param=-1):
     f = np.fft.fft(x)  # [Eqn(3)]
 
     #....construct SCALE array & empty PERIOD & WAVE arrays
-    j = np.arange(0,J1+1)
-    scale = s0 * 2. ** (j * dj)
-    wave = np.zeros(shape=(J1 + 1, n), dtype=complex)  # define the wavelet array
+    j = np.arange(0, J1 + 1)
+    scale = s0 * 2.**(j * dj)
+    wave = np.zeros(shape=(J1 + 1, n),
+                    dtype=complex)  # define the wavelet array
 
     # loop through all scales and compute transform
-    for a1 in range(0, int(J1+1)):
-        daughter, fourier_factor, coi, dofmin = wave_bases(mother, k, scale[a1], param)
+    for a1 in range(0, int(J1 + 1)):
+        daughter, fourier_factor, coi, dofmin = wave_bases(
+            mother, k, scale[a1], param)
         wave[a1, :] = np.fft.ifft(f * daughter)  # wavelet transform[Eqn(4)]
 
     period = fourier_factor * scale  #[Table(1)]
-    coi = coi * dt * np.concatenate((np.insert(np.arange((n1 + 1) / 2 - 1), [0], [1E-5]),
-                                     np.insert(np.flipud(np.arange(0, n1 / 2 - 1)), [-1], [1E-5])))  # COI [Sec.3g]
+    coi = coi * dt * np.concatenate(
+        (np.insert(np.arange((n1 + 1) / 2 - 1), [0], [1E-5]),
+         np.insert(np.flipud(np.arange(0, n1 / 2 - 1)), [-1],
+                   [1E-5])))  # COI [Sec.3g]
     wave = wave[:, :n1]  # get rid of padding before returning
 
     return wave, period, scale, coi
+
 
 #-------------------------------------------------------------------------------------------------------------------
 # WAVE_BASES  1D Wavelet functions Morlet, Paul, or DOG
@@ -174,11 +179,13 @@ def wave_bases(mother, k, scale, param):
             param = 6.
 
         k0 = np.copy(param)
-        expnt = -(scale * k - k0) ** 2 / 2. * kplus
-        norm = np.sqrt(scale * k[1]) * (np.pi ** (-0.25)) * np.sqrt(n)  # total energy=N   [Eqn(7)]
+        expnt = -(scale * k - k0)**2 / 2. * kplus
+        norm = np.sqrt(scale * k[1]) * (np.pi**(-0.25)) * np.sqrt(
+            n)  # total energy=N   [Eqn(7)]
         daughter = norm * np.exp(expnt)
         daughter = daughter * kplus  # Heaviside step function
-        fourier_factor = (4 * np.pi) / (k0 + np.sqrt(2 + k0 ** 2))  # Scale-->Fourier [Sec.3h]
+        fourier_factor = (4 * np.pi) / (k0 + np.sqrt(2 + k0**2)
+                                       )  # Scale-->Fourier [Sec.3h]
         coi = fourier_factor / np.sqrt(2)  # Cone-of-influence [Sec.3g]
         dofmin = 2  # Degrees of freedom
     elif mother == 'PAUL':  #--------------------------------  Paul
@@ -186,8 +193,9 @@ def wave_bases(mother, k, scale, param):
             param = 4.
         m = param
         expnt = -scale * k * kplus
-        norm = np.sqrt(scale * k[1]) * (2 ** m / np.sqrt(m*np.prod(np.arange(1, (2 * m))))) * np.sqrt(n)
-        daughter = norm * ((scale * k) ** m) * np.exp(expnt) * kplus
+        norm = np.sqrt(scale * k[1]) * (
+            2**m / np.sqrt(m * np.prod(np.arange(1, (2 * m))))) * np.sqrt(n)
+        daughter = norm * ((scale * k)**m) * np.exp(expnt) * kplus
         fourier_factor = 4 * np.pi / (2 * m + 1)
         coi = fourier_factor * np.sqrt(2)
         dofmin = 2
@@ -195,9 +203,9 @@ def wave_bases(mother, k, scale, param):
         if param == -1:
             param = 2.
         m = param
-        expnt = -(scale * k) ** 2 / 2.0
+        expnt = -(scale * k)**2 / 2.0
         norm = np.sqrt(scale * k[1] / gamma(m + 0.5)) * np.sqrt(n)
-        daughter = -norm * (1j ** m) * ((scale * k) ** m) * np.exp(expnt)
+        daughter = -norm * (1j**m) * ((scale * k)**m) * np.exp(expnt)
         fourier_factor = 2 * np.pi * np.sqrt(2. / (2 * m + 1))
         coi = fourier_factor / np.sqrt(2)
         dofmin = 1
@@ -205,6 +213,7 @@ def wave_bases(mother, k, scale, param):
         print('Mother must be one of MORLET, PAUL, DOG')
 
     return daughter, fourier_factor, coi, dofmin
+
 
 #-------------------------------------------------------------------------------------------------------------------
 # WAVE_SIGNIF  Significance testing for the 1D Wavelet transform WAVELET
@@ -262,7 +271,15 @@ def wave_bases(mother, k, scale, param):
 #            See discussion following Eqn (23) in Torrence & Compo.
 
 
-def wave_signif(Y, dt, scale, sigtest=-1, lag1=-1, siglvl=-1, dof=-1, mother=-1, param=-1):
+def wave_signif(Y,
+                dt,
+                scale,
+                sigtest=-1,
+                lag1=-1,
+                siglvl=-1,
+                dof=-1,
+                mother=-1,
+                param=-1):
     n1 = len(np.atleast_1d(Y))
     J1 = len(scale) - 1
     s0 = np.min(scale)
@@ -271,7 +288,7 @@ def wave_signif(Y, dt, scale, sigtest=-1, lag1=-1, siglvl=-1, dof=-1, mother=-1,
     if n1 == 1:
         variance = Y
     else:
-        variance = np.std(Y) ** 2
+        variance = np.std(Y)**2
 
     if sigtest == -1:
         sigtest = 0
@@ -291,7 +308,8 @@ def wave_signif(Y, dt, scale, sigtest=-1, lag1=-1, siglvl=-1, dof=-1, mother=-1,
         if param == 4:
             empir[1:] = ([1.151, 2.5, 0.60])
         k0 = param
-        fourier_factor = (4 * np.pi) / (k0 + np.sqrt(2 + k0 ** 2))  # Scale-->Fourier [Sec.3h]
+        fourier_factor = (4 * np.pi) / (k0 + np.sqrt(2 + k0**2)
+                                       )  # Scale-->Fourier [Sec.3h]
     elif mother == 'PAUL':
         empir = ([2, -1, -1, -1])
         if param == -1:
@@ -318,7 +336,8 @@ def wave_signif(Y, dt, scale, sigtest=-1, lag1=-1, siglvl=-1, dof=-1, mother=-1,
     dj0 = empir[3]  # scale-decorrelation factor
 
     freq = dt / period  # normalized frequency
-    fft_theor = (1 - lag1 ** 2) / (1 - 2 * lag1 * np.cos(freq * 2 * np.pi) + lag1 ** 2)  # [Eqn(16)]
+    fft_theor = (1 - lag1**2) / (
+        1 - 2 * lag1 * np.cos(freq * 2 * np.pi) + lag1**2)  # [Eqn(16)]
     fft_theor = variance * fft_theor  # include time-series variance
     signif = fft_theor
     if len(np.atleast_1d(dof)) == 1:
@@ -332,27 +351,34 @@ def wave_signif(Y, dt, scale, sigtest=-1, lag1=-1, siglvl=-1, dof=-1, mother=-1,
         if len(np.atleast_1d(dof)) == 1:
             dof = np.zeros(J1) + dof
         dof[dof < 1] = 1
-        dof = dofmin * np.sqrt(1 + (dof * dt / gamma_fac / scale) ** 2)  # [Eqn(23)]
-        dof[dof < dofmin] = dofmin   # minimum DOF is dofmin
+        dof = dofmin * np.sqrt(1 +
+                               (dof * dt / gamma_fac / scale)**2)  # [Eqn(23)]
+        dof[dof < dofmin] = dofmin  # minimum DOF is dofmin
         for a1 in range(0, J1 + 1):
             chisquare = chisquare_inv(siglvl, dof[a1]) / dof[a1]
             signif[a1] = fft_theor[a1] * chisquare
         # print("Chi squared: %e " % chisquare)
     elif sigtest == 2:  # time-averaged significance
         if len(dof) != 2:
-            print('ERROR: DOF must be set to [S1,S2], the range of scale-averages')
+            print(
+                'ERROR: DOF must be set to [S1,S2], the range of scale-averages'
+            )
         if Cdelta == -1:
-            print('ERROR: Cdelta & dj0 not defined for ' + mother + ' with param = ' + str(param))
+            print('ERROR: Cdelta & dj0 not defined for ' + mother +
+                  ' with param = ' + str(param))
 
         s1 = dof[0]
         s2 = dof[1]
-        avg =  np.logical_and(scale >= s1, scale < s2)# scales between S1 & S2
-        navg = np.sum(np.array(np.logical_and(scale >= s1, scale < s2), dtype=int))
+        avg = np.logical_and(scale >= s1, scale < s2)  # scales between S1 & S2
+        navg = np.sum(
+            np.array(np.logical_and(scale >= s1, scale < s2), dtype=int))
         if navg == 0:
-            print('ERROR: No valid scales between ' + str(s1) + ' and ' + str(s2))
+            print('ERROR: No valid scales between ' + str(s1) + ' and ' +
+                  str(s2))
         Savg = 1. / np.sum(1. / scale[avg])  # [Eqn(25)]
         Smid = np.exp((np.log(s1) + np.log(s2)) / 2.)  # power-of-two midpoint
-        dof = (dofmin * navg * Savg / Smid) * np.sqrt(1 + (navg * dj / dj0) ** 2)  # [Eqn(28)]
+        dof = (dofmin * navg * Savg / Smid) * np.sqrt(
+            1 + (navg * dj / dj0)**2)  # [Eqn(28)]
         fft_theor = Savg * np.sum(fft_theor[avg] / scale[avg])  # [Eqn(27)]
         chisquare = chisquare_inv(siglvl, dof) / dof
         signif = (dj * dt / Cdelta / Savg) * fft_theor * chisquare  # [Eqn(26)]
@@ -360,6 +386,7 @@ def wave_signif(Y, dt, scale, sigtest=-1, lag1=-1, siglvl=-1, dof=-1, mother=-1,
         print('ERROR: sigtest must be either 0, 1, or 2')
 
     return signif
+
 
 #-------------------------------------------------------------------------------------------------------------------
 # CHISQUARE_INV  Inverse of chi-square cumulative distribution function (cdf).
@@ -389,36 +416,37 @@ def chisquare_inv(P, V):
 
     while (X + TOLERANCE) >= MAXX:  # should only need to loop thru once
         MAXX = MAXX * 10.
-    # this calculates value for X, NORMALIZED by V
-        X = fminbound(chisquare_solve, MINN, MAXX, args=(P,V), xtol=TOLERANCE )
+        # this calculates value for X, NORMALIZED by V
+        X = fminbound(chisquare_solve, MINN, MAXX, args=(P, V), xtol=TOLERANCE)
         MINN = MAXX
 
     X = X * V  # put back in the goofy V factor
 
     return X  # end of code
 
+
 #-------------------------------------------------------------------------------------------------------------------
 # CHISQUARE_SOLVE  Internal function used by CHISQUARE_INV
-    #
-    #   PDIFF=chisquare_solve(XGUESS,P,V)  Given XGUESS, a percentile P,
-    #   and degrees-of-freedom V, return the difference between
-    #   calculated percentile and P.
+#
+#   PDIFF=chisquare_solve(XGUESS,P,V)  Given XGUESS, a percentile P,
+#   and degrees-of-freedom V, return the difference between
+#   calculated percentile and P.
 
-    # Uses GAMMAINC
-    #
-    # Written January 1998 by C. Torrence
+# Uses GAMMAINC
+#
+# Written January 1998 by C. Torrence
 
-    # extra factor of V is necessary because X is Normalized
+# extra factor of V is necessary because X is Normalized
 
 
-def chisquare_solve(XGUESS,P,V):
+def chisquare_solve(XGUESS, P, V):
 
-    PGUESS = gammainc(V/2, V*XGUESS/2)  # incomplete Gamma function
+    PGUESS = gammainc(V / 2, V * XGUESS / 2)  # incomplete Gamma function
 
-    PDIFF = np.abs(PGUESS - P)            # error in calculated P
+    PDIFF = np.abs(PGUESS - P)  # error in calculated P
 
     TOL = 1E-4
-    if PGUESS >= 1-TOL:  # if P is very close to 1 (i.e. a bad guess)
-        PDIFF = XGUESS   # then just assign some big number like XGUESS
+    if PGUESS >= 1 - TOL:  # if P is very close to 1 (i.e. a bad guess)
+        PDIFF = XGUESS  # then just assign some big number like XGUESS
 
     return PDIFF

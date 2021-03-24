@@ -1,12 +1,12 @@
 import numpy as np
 import os
 
-from seas.video import load, dfof
+from seas.video import load, dfof, rotate
 from seas.filemanager import sort_experiments, get_exp_span_string
 from seas.rois import roi_loader, make_mask
 from seas.hdf5manager import hdf5manager
 from seas.ica import project, filter_mean
-from seas.signal import sort_noise, lag_n_autocorr 
+from seas.signal import sort_noise, lag_n_autocorr
 from seas.waveletAnalysis import waveletAnalysis
 
 
@@ -21,7 +21,7 @@ class Experiment:
                  loadraw=False,
                  downsample=False,
                  downsample_t=False,
-                 rotate=None):
+                 n_rotations=None):
 
         print('\nInitializing wholeBrain Instance\n-----------------------')
         if isinstance(pathlist, str):
@@ -44,55 +44,27 @@ class Experiment:
         self.bounding_box = np.array([[0, self.movie.shape[1]],
                                       [0, self.movie.shape[2]]])
         self.shape = self.bound_movie().shape
+        self.n_rotations = n_rotations
+
 
         experiments = sort_experiments(pathlist, verbose=False).keys()
         spanstring = get_exp_span_string(experiments)
         self.name = spanstring
 
         self.dir = os.path.dirname(pathlist[0])
+        self.rotate()
 
-        if rotate is not False:
-            try:
-                self.rotate(n=rotate)
-            except Exception as e:
-                print(
-                    'Failed auto-rotating video.  Is the file incorrectly named?'
-                )
-                print('\t', e)
 
-    def rotate(self, n=None):
+    def rotate(self):
         # rotates a t,y,x movie counter-clockwise n times and
         # updates relevant parameters
 
-        if n is None:
-            # Most common rotation is 3x ccw
-            if int(self.name[:2]) < 15:  # if movie is older than 2016
-                print('Movie older than 2015--Not rotating')
-                old = True
-            else:
-                old = False
-
-            if (self.movie.shape[1] < self.movie.shape[2]) & (not old):
-                n = 3
-            else:
-                n = 0
-
-        if n > 0:
-            movie = self.movie
-            movie = (movie.swapaxes(0, 2))
-            movie = movie.swapaxes(0, 1)
-
-            movie = np.rot90(movie, n)
-            movie = movie.swapaxes(0, 1)
-            movie = (movie.swapaxes(0, 2))
-
-            self.movie = movie
-            self.bounding_box = np.array([[0, movie.shape[1]],
-                                          [0, movie.shape[2]]
+        if self.n_rotations > 0:
+            self.movie = rotate(self.movie, self.n_rotations)
+            self.bounding_box = np.array([[0, self.movie.shape[1]],
+                                          [0, self.movie.shape[2]]
                                          ])  #resets to whole movie
             self.shape = self.bound_movie().shape
-
-            # ADD ROTATION OF ROIS/ROIMASK
 
     def load_rois(self, path):
 
@@ -119,11 +91,11 @@ class Experiment:
 
         roimask[np.where(roimask > 1)] = 1
 
-        if roimask.sum().sum() > 0:
-            self.roimask = roimask
-        else:
+        if roimask.sum().sum() == 0:
             print('Roimask contains no ROI regions.  Not storing..')
+            return
 
+        self.roimask = rotate(roimask, self.n_rotations)
         print('')
 
     def load_meta(self, metapath):
@@ -135,11 +107,11 @@ class Experiment:
         self.meta = meta
 
     def load_notifier(self,
-                     path=None,
-                     token=None,
-                     user=None,
-                     alias=None,
-                     verbose=True):
+                      path=None,
+                      token=None,
+                      user=None,
+                      alias=None,
+                      verbose=True):
         '''
         Load slack notifications for code processing notifications.  
         This is optional, and will only run 
@@ -232,17 +204,17 @@ class Experiment:
         return movie * self.bound_mask()
 
     def ica_filter(self,
-                  A=None,
-                  savedata=True,
-                  savefigures=True,
-                  gui=True,
-                  preload_thresholds=True,
-                  calc_dfof=True,
-                  del_movie=True,
-                  n_components=None,
-                  svd_multiplier=None,
-                  suffix=None,
-                  output_folder=None):
+                   A=None,
+                   savedata=True,
+                   savefigures=True,
+                   gui=True,
+                   preload_thresholds=True,
+                   calc_dfof=True,
+                   del_movie=True,
+                   n_components=None,
+                   svd_multiplier=None,
+                   suffix=None,
+                   output_folder=None):
 
         print('\nICA Filtering\n-----------------------')
 
@@ -334,11 +306,11 @@ class Experiment:
 
             try:
                 components = project(vector,
-                                               shape,
-                                               roimask=roimask,
-                                               savepath=savepath,
-                                               n_components=n_components,
-                                               svd_multiplier=svd_multiplier)
+                                     shape,
+                                     roimask=roimask,
+                                     savepath=savepath,
+                                     n_components=n_components,
+                                     svd_multiplier=svd_multiplier)
                 components['expmeta'] = expmeta
 
             except Exception as e:
@@ -352,12 +324,10 @@ class Experiment:
 
         if 'lag_1' not in components.keys():
 
-            components['lag1'] = lag_n_autocorr(components['timecourses'],
-                                                  1)
+            components['lag1'] = lag_n_autocorr(components['timecourses'], 1)
 
             if savedata:
                 f.save({'lag1': components['lag1']})
-
 
         if 'noise_components' not in components.keys():
             components['noise_components'], components['cutoff'] = \
@@ -371,10 +341,9 @@ class Experiment:
 
         filtermethod = 'wavelet'
         low_cutoff = 0.5
-        components['mean_filtered'] = filter_mean(
-            components['mean'],
-            filtermethod=filtermethod,
-            low_cutoff=low_cutoff)
+        components['mean_filtered'] = filter_mean(components['mean'],
+                                                  filtermethod=filtermethod,
+                                                  low_cutoff=low_cutoff)
         components['mean_filter_meta'] = {
             'filtermethod': filtermethod,
             'low_cutoff': low_cutoff

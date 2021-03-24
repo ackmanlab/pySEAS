@@ -4,6 +4,7 @@ import numpy as np
 from io import BytesIO
 import cv2
 
+
 def get_masked_region(A, mask, maskval=None):
     '''
     Extract a spatially masked array where the mask == 1 or 
