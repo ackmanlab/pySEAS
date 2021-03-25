@@ -62,9 +62,11 @@ if __name__ == '__main__':
                     required=False,
                     help='number of times to rotate video ccw')
     ap.add_argument('-rr',
-                    '--rotate_rois'
-                    action='store_true',
-                    help='rotate rois along with video. Default is false.')
+                    '--rotate_rois',
+                    nargs=1,
+                    type=int,
+                    required=False,
+                    help='number of times to rotate rois ccw')
     ap.add_argument('-sf',
                     '--savefigures',
                     action='store_true',
@@ -213,6 +215,11 @@ if __name__ == '__main__':
     else:
         output_folder = None
 
+    if args['rotate_rois'] is not None:
+        rotate_rois = args['rotate_rois'][0]
+    else:
+        rotate_rois = 0
+
     print('\nVideo files ({0}):'.format(len(pathlist)))
     for path in pathlist:
         print('\t' + path)
@@ -251,7 +258,8 @@ if __name__ == '__main__':
 
         if roipath is not None:
             print('Roi path found at:', roipath)
-            exp.load_rois(roipath)
+            exp.load_rois(roipath,
+                         n_roi_rotations=rotate_rois)
             exp.define_mask_boundaries()
         else:
             print('No roi path found.')
