@@ -17,6 +17,7 @@ google-auth==1.23.0
 google-auth-httplib2==0.0.4
 googleapis-common-protos==1.52.0
 gpiozero==1.5.1
+h5py==3.2.1
 httplib2==0.18.1
 idna==2.10
 importlib-metadata==2.0.0

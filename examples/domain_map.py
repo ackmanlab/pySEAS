@@ -49,7 +49,10 @@ ap.add_argument(
     type=argparse.FileType('r'),
     nargs=1,
     help='hdf5 file to load with alternate map to rebuild timecourses')
-ap.add_argument('--rotate', nargs=1, type=int, help='rotate movies before saving')
+ap.add_argument('--rotate',
+                nargs=1,
+                type=int,
+                help='rotate movies before saving')
 args = vars(ap.parse_args())
 
 path = [path.name for path in args['input']][0]
@@ -63,7 +66,10 @@ savepath = savepath.replace('_reduced', '')
 f = hdf5manager(path)
 f.print()
 
-rotate = args['rotate'][0]
+if args['rotate'] is not None:
+    rotate = args['rotate'][0]
+else:
+    rotate = 0
 
 if ('domain_ROIs' not in f.keys()) or args['force']:
 
@@ -93,11 +99,12 @@ if ('domain_ROIs' not in f.keys()) or args['force']:
     else:
         blur = 21
 
-    output = get_domain_map(components,
-                            cutoff=cutoff,
-                            # savepath=savepath + 'domainROIs.png',
-                            maponly=args['maponly'],
-                            blur=blur)
+    output = get_domain_map(
+        components,
+        cutoff=cutoff,
+        # savepath=savepath + 'domainROIs.png',
+        maponly=args['maponly'],
+        blur=blur)
 
     f.save(output)
     domain_ROIs = output['domain_ROIs']
@@ -120,12 +127,18 @@ if args['mosaic_movie']:
         mosaicpath = mosaicpath + '.mp4'
 
     try:
-        mosaic_movie(domain_ROIs, ROI_timecourses, mosaicpath, n_rotations=rotate)
+        mosaic_movie(domain_ROIs,
+                     ROI_timecourses,
+                     mosaicpath,
+                     n_rotations=rotate)
 
     except Exception as e:
         print('An error occured!')
         print('\t', e)
-        rolling_mosaic_movie(domain_ROIs, ROI_timecourses, mosaicpath, n_rotations=rotate)
+        rolling_mosaic_movie(domain_ROIs,
+                             ROI_timecourses,
+                             mosaicpath,
+                             n_rotations=rotate)
 
 if args['mapcomparison'] is not None:
     mappath = args['mapcomparison'][0].name
@@ -167,7 +180,6 @@ if args['figures']:
     save_domain_map(domain_ROIs, savepath, blur_level, n_rotations=rotate)
 
     # savepath=savepath + 'domainROIs.png',
-
 
     # # domainmap
     # wb.saveFile(savepath + 'domainROIs.png', domain_ROIs.copy() + edges,

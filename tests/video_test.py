@@ -22,6 +22,22 @@ def test_tiff_loading_and_saving():
     assert np.allclose(test_video, loaded_video)
 
 
+def test_rotate_image():
+    test_image = np.arange(5*5).reshape((5,5))
+
+    # image rotated by 2 is the same as image flipped vertically and horizontally
+    assert np.allclose(
+        np.fliplr(np.flipud(test_image)), 
+        seas.video.rotate(test_image, 2))
+
+    assert np.allclose(test_image, seas.video.rotate(test_image, 4))
+
+
+def test_rotate_video():
+    test_image = np.arange(3*5*5).reshape((3,5,5))
+    assert np.allclose(test_image, seas.video.rotate(test_image, 4))
+
+
 # need to test other formats.  test loading and saving colorbars, saving 3 color vs greyscale, etc. 
 
 # def test_avi_loading_and_saving():

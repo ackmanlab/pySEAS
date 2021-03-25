@@ -21,7 +21,8 @@ class Experiment:
                  loadraw=False,
                  downsample=False,
                  downsample_t=False,
-                 n_rotations=0):
+                 n_rotations=0,
+                 rotate_rois=False):
 
         print('\nInitializing wholeBrain Instance\n-----------------------')
         if isinstance(pathlist, str):
@@ -40,12 +41,15 @@ class Experiment:
         self.downsample_t = downsample_t
         self.movie = movie
         self.path = pathlist
+        self.n_rotations = n_rotations
+
         # define default bounding box as full size video
         self.bounding_box = np.array([[0, self.movie.shape[1]],
                                       [0, self.movie.shape[2]]])
         self.shape = self.bound_movie().shape
-        self.n_rotations = n_rotations
 
+        # if multiple experiments included, get a span string 
+        # (i.e. 01, 02, 03, 04 - > 01-04)
         experiments = sort_experiments(pathlist, verbose=False).keys()
         spanstring = get_exp_span_string(experiments)
         self.name = spanstring
@@ -64,7 +68,7 @@ class Experiment:
                                          ])  #resets to whole movie
             self.shape = self.bound_movie().shape
 
-    def load_rois(self, path):
+    def load_rois(self, path, n_roi_rotations):
 
         rois = roi_loader(path)
 
@@ -93,7 +97,7 @@ class Experiment:
             print('Roimask contains no ROI regions.  Not storing..')
             return
 
-        self.roimask = rotate(roimask, self.n_rotations)
+        self.roimask = rotate(roimask, n_roi_rotations)
         print('')
 
     def load_meta(self, metapath):
@@ -103,22 +107,6 @@ class Experiment:
         assert metapath.endswith('.yaml'), 'Metadata was not a valid yaml file.'
         meta = mm.readYaml(metapath)
         self.meta = meta
-
-    def load_notifier(self,
-                      path=None,
-                      token=None,
-                      user=None,
-                      alias=None,
-                      verbose=True):
-        '''
-        Load slack notifications for code processing notifications.  
-        This is optional, and will only run 
-        '''
-        try:
-            self.notifications = slackNotify(path, token, user, alias, verbose)
-        except:
-            print('Error in loading notifications!')
-            print('Do you have a .slacker_bot file properly configured?')
 
     def dfof_brain(self, movie=None, roimask=None, bounding_box=None):
 
@@ -204,15 +192,15 @@ class Experiment:
     def ica_filter(self,
                    A=None,
                    savedata=True,
-                   savefigures=True,
-                   gui=True,
                    preload_thresholds=True,
                    calc_dfof=True,
                    del_movie=True,
                    n_components=None,
                    svd_multiplier=None,
                    suffix=None,
-                   output_folder=None):
+                   output_folder=None,
+                   filtermethod = 'wavelet',
+                   low_cutoff = 0.5):
 
         print('\nICA Filtering\n-----------------------')
 
@@ -302,23 +290,13 @@ class Experiment:
             print('M has been reshaped from {0} to {1}\n'.format(
                 A.shape, vector.shape))
 
-            try:
-                components = project(vector,
-                                     shape,
-                                     roimask=roimask,
-                                     savepath=savepath,
-                                     n_components=n_components,
-                                     svd_multiplier=svd_multiplier)
-                components['expmeta'] = expmeta
-
-            except Exception as e:
-                if hasattr(self, 'notifications'):
-                    self.notifications.sendMessage('ICA failed!')
-
-                    if savedata:
-                        self.notifications.sendMessage('File: ' + \
-                            os.path.basename(f.path))
-                raise e
+            components = project(vector,
+                                 shape,
+                                 roimask=roimask,
+                                 savepath=savepath,
+                                 n_components=n_components,
+                                 svd_multiplier=svd_multiplier)
+            components['expmeta'] = expmeta
 
         if 'lag_1' not in components.keys():
 
@@ -337,8 +315,7 @@ class Experiment:
                 'cutoff': components['cutoff']
             })
 
-        filtermethod = 'wavelet'
-        low_cutoff = 0.5
+        
         components['mean_filtered'] = filter_mean(components['mean'],
                                                   filtermethod=filtermethod,
                                                   low_cutoff=low_cutoff)
@@ -353,42 +330,4 @@ class Experiment:
                 'mean_filter_meta': components['mean_filter_meta']
             })
 
-        if savefigures:
-            figpath = os.path.dirname(self.path[0]) + os.path.sep + \
-            self.name + '_components'
-            wbpca.PCfigure(components, figpath)
-
-        if hasattr(self, 'notifications'):
-            self.notifications.sendMessage('ICA code has finished processing.')
-
-            if savedata:
-                self.notifications.sendMessage('Processed file: ' +
-                                               os.path.basename(f.path))
-
-        if gui:
-            components = wbpca.runPCAgui(components, savepath=savepath)
-            self.filtered = wbpca.PCA_rebuild(components, returnmeta=True)
-            components['filter']['artifact_components'] = components[
-                'artifact_components']
-
-            if savedata:  # save filtering metadata
-                f.save({'rebuildmeta': components['rebuildmeta']})
-
         return components
-
-    def save(self, path, saveraw=False, ignore=None):
-
-        if saveraw is False:
-            data = self.__dict__
-            if 'movie' in data:
-                print('Not saving raw movie data')
-                del data['movie']
-        else:
-            data = self.__dict__
-
-        if 'notifications' in data.keys():
-            del data['notifications']
-            print('Removing slack notifier from data')
-
-        f = hdf5manager(path)
-        f.save(self)

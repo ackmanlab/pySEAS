@@ -35,14 +35,12 @@ if __name__ == '__main__':
                     required=False,
                     help='name of experiment to load associated files.  \
             Requires experiment argument -e')
+    ap.add_argument('-of',
+                    '--output_folder',
+                    nargs=1,
+                    required=False,
+                    help='alternate folder for storing output')
     ap.add_argument(
-        '-of',
-        '--output_folder',
-        nargs=1,
-        required=False,
-        help='folder for storing output in separate location from input files')
-    ap.add_argument(
-        '-r',
         '--rois',
         type=argparse.FileType('r'),
         nargs=1,
@@ -57,12 +55,18 @@ if __name__ == '__main__':
                     '--save_roi_overlay',
                     action='store_true',
                     help='create mp4 of filtered video with roi overlay')
-    ap.add_argument('-rt',
+    ap.add_argument('-r',
                     '--rotate',
                     type=int,
                     nargs=1,
                     required=False,
-                    help='number of ccw rotations.  Default is 3 if new videos')
+                    help='number of times to rotate video ccw')
+    ap.add_argument('-rr',
+                    '--rotate_rois',
+                    nargs=1,
+                    type=int,
+                    required=False,
+                    help='number of times to rotate rois ccw')
     ap.add_argument('-sf',
                     '--savefigures',
                     action='store_true',
@@ -108,10 +112,6 @@ if __name__ == '__main__':
         '--filternoise',
         action='store_true',
         help='treat noise components as artifacts; dont rebuild them')
-    ap.add_argument('-g',
-                    '--gui',
-                    action='store_true',
-                    help='flag to force run gui for hdf5 files')
     ap.add_argument('-dsf',
                     '--dsfilter',
                     action='store_true',
@@ -215,6 +215,11 @@ if __name__ == '__main__':
     else:
         output_folder = None
 
+    if args['rotate_rois'] is not None:
+        rotate_rois = args['rotate_rois'][0]
+    else:
+        rotate_rois = 0
+
     print('\nVideo files ({0}):'.format(len(pathlist)))
     for path in pathlist:
         print('\t' + path)
@@ -242,7 +247,7 @@ if __name__ == '__main__':
         if args['rotate'] is not None:
             rotate = args['rotate'][0]
         else:
-            rotate = None
+            rotate = 0
 
         suffix = None
 
@@ -253,7 +258,8 @@ if __name__ == '__main__':
 
         if roipath is not None:
             print('Roi path found at:', roipath)
-            exp.load_rois(roipath)
+            exp.load_rois(roipath,
+                         n_roi_rotations=rotate_rois)
             exp.define_mask_boundaries()
         else:
             print('No roi path found.')
@@ -296,8 +302,6 @@ if __name__ == '__main__':
             calc_dfof = False
 
         components = exp.ica_filter(n_components=n_components,
-                                    gui=False,
-                                    savefigures=args['savefigures'],
                                     calc_dfof=calc_dfof,
                                     suffix=suffix,
                                     svd_multiplier=svd_multiplier,
@@ -343,19 +347,19 @@ if __name__ == '__main__':
                 print('No downsample information found')
 
             filter_comparison(components,
-                             filtered=filtered,
-                             videopath=savepath,
-                             downsample=downsample,
-                             filterpath=filterpath,
-                             filtermean=filtermean,
-                             include_noise=not args['filternoise'],
-                             flip=flip)
+                              filtered=filtered,
+                              videopath=savepath,
+                              downsample=downsample,
+                              filterpath=filterpath,
+                              filtermean=filtermean,
+                              include_noise=not args['filternoise'],
+                              flip=flip)
 
-    # take the processed file, create reduced copy, optionally run gui and
+    # take the processed file, create reduced copy, and
     # create filter comparison
 
     if inputpath is not None:
-        basename = inputpath.replace('_reduced.hdf5', '').replace('.hdf5', '')
+        basename = inputpath.replace('.hdf5', '')
 
         if output_folder is not None:
             output_folder = os.path.dirname(exp.path[0])
@@ -363,14 +367,6 @@ if __name__ == '__main__':
 
         f = h5(inputpath)
         components = f.load(ignore='vector')
-
-        if args['gui']:
-            components = runPCAgui(components)
-            f.save({'artifact_components': components['artifact_components']})
-            f.save({'noise_components': components['noise_components']})
-            f.save({'cutoff': components['cutoff']})
-            if 'region_assignment' in components.keys():
-                f.save({'region_assignment': components['region_assignment']})
 
         if args['savefigures']:
             figpath = basename + '_components'
@@ -419,14 +415,14 @@ if __name__ == '__main__':
             print('Downsampling by:', downsample, '\n')
 
             filter_comparison(components,
-                             videopath=savepath,
-                             downsample=downsample,
-                             filterpath=filterpath,
-                             include_noise=not args['filternoise'],
-                             t_stop=tmax,
-                             t_start=tmin,
-                             filtermean=filtermean,
-                             flip=flip)
+                              videopath=savepath,
+                              downsample=downsample,
+                              filterpath=filterpath,
+                              include_noise=not args['filternoise'],
+                              t_stop=tmax,
+                              t_start=tmin,
+                              filtermean=filtermean,
+                              flip=flip)
 
         if args['save_roi_overlay']:
 
