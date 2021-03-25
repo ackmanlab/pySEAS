@@ -40,4 +40,9 @@ project_ica.py
 It was intuitive how to use the set up the -f and -e flags, for the folder and experiment respectively. I  first tried to run it without using the -rt flag but it did not work, I saw there was a rotation comparison errror going on and assumed if I rotated it by 1 x 90-degrees it might work and it did. 
 
 
+hdf5manager.py 
+
+input argument to the file path is without a flag, just noticed that this is different than what the previous functions. Previous functions ask for a flag for the inputted hdf5 file
+
+
 
