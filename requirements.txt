@@ -1,8 +1,6 @@
 attrs==20.2.0
 backcall==0.2.0
 beautifulsoup4==4.9.3
-boto3==1.17.13
-botocore==1.20.13
 cached-property==1.5.2
 cachetools==4.1.1
 certifi==2020.6.20
@@ -19,7 +17,6 @@ google-auth==1.23.0
 google-auth-httplib2==0.0.4
 googleapis-common-protos==1.52.0
 gpiozero==1.5.1
-h5==0.4.1
 h5py==3.2.1
 httplib2==0.18.1
 idna==2.10
