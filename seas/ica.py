@@ -15,7 +15,6 @@ from seas.video import rotate, save, rescale, play
 def project(vector,
             shape,
             roimask=None,
-            savepath=None,
             n_components=None,
             svd_multiplier=None,
             calc_residuals=True):
@@ -63,23 +62,15 @@ def project(vector,
         try:
             u, ev, _ = linalg.svd(vector, full_matrices=False)
         except ValueError:
+            # LAPACK error if matricies are too big
             u, ev, _ = linalg.svd(
                 vector, full_matrices=False,
-                lapack_driver='gesvd')  # LAPACK error if matricies are too big
+                lapack_driver='gesvd')  
 
         components['svd_eigval'] = ev
-        ev -= ev.min()
-        ev = ev / ev.sum()
-        integrate = np.cumsum(ev)
-        x = np.arange(ev.size)
 
-        p = np.polyfit(x, integrate, deg=2)
-        y = np.polyval(p, x)
-
-        cross_1 = np.where(integrate > y)[0][0]
-        cross_2 = np.where(integrate[cross_1:] < y[cross_1:])[0][0] + cross_1
-
-        # n_components = min(cross_1*svd_multiplier, cross_2 // 2)
+        # get starting point for decomposition based on svd mutliplier * the approximate point of transition to linearity in tail of ev components
+        cross_1 = approximate_svd_linearity_transition(ev)
         n_components = cross_1 * svd_multiplier
 
         components['increased_cutoff'] = 0
@@ -127,33 +118,29 @@ def project(vector,
         components['lag1_full'] = lag_n_autocorr(eig_mix.T, 1)
         components['svd_multiplier'] = svd_multiplier
 
-        try:
-            print('Cropping excess noise components')
-            components['svd_cutoff'] = n_components
-            reduced_n_components = int((noise.size - noise.sum()) * 1.25)
+        print('Cropping excess noise components')
+        components['svd_cutoff'] = n_components
+        reduced_n_components = int((noise.size - noise.sum()) * 1.25)
 
-            print('reduced_n_components:', reduced_n_components)
+        print('reduced_n_components:', reduced_n_components)
 
-            if reduced_n_components < n_components:
-                print('Cropping', n_components, 'to', reduced_n_components)
+        if reduced_n_components < n_components:
+            print('Cropping', n_components, 'to', reduced_n_components)
 
-                ev_sort = np.argsort(eig_mix.std(axis=0))
-                eig_vec = eig_vec[:, ev_sort][:, ::-1]
-                eig_mix = eig_mix[:, ev_sort][:, ::-1]
-                noise = noise[ev_sort][::-1]
+            ev_sort = np.argsort(eig_mix.std(axis=0))
+            eig_vec = eig_vec[:, ev_sort][:, ::-1]
+            eig_mix = eig_mix[:, ev_sort][:, ::-1]
+            noise = noise[ev_sort][::-1]
 
-                eig_vec = eig_vec[:, :reduced_n_components]
-                eig_mix = eig_mix[:, :reduced_n_components]
-                n_components = reduced_n_components
-                noise = noise[:reduced_n_components]
+            eig_vec = eig_vec[:, :reduced_n_components]
+            eig_mix = eig_mix[:, :reduced_n_components]
+            n_components = reduced_n_components
+            noise = noise[:reduced_n_components]
 
-                components['lag1_full'] = components['lag1_full'][ev_sort][::-1]
-            else:
-                print('Less than 75% signal.  Not cropping excess noise.')
+            components['lag1_full'] = components['lag1_full'][ev_sort][::-1]
+        else:
+            print('Less than 75% signal.  Not cropping excess noise.')
 
-        except Exception as e:
-            print('Error cropping!!')
-            print('\t', e)
 
         components['noise_components'] = noise
         components['cutoff'] = cutoff
@@ -181,6 +168,7 @@ def project(vector,
 
     print('components shape:', eig_vec.shape)
 
+    # sort comopnents by their eig val influence (approximated by timecourse standard deviation)
     ev_sort = np.argsort(eig_mix.std(axis=0))
     eig_vec = eig_vec[:, ev_sort][:, ::-1]
     eig_mix = eig_mix[:, ev_sort][:, ::-1]
@@ -232,12 +220,6 @@ def project(vector,
         datetime.now().strftime(fmt)
     filtermeta['n_components'] = n_components
     components['filter'] = filtermeta
-
-    if savepath is not None:
-        f = hdf5manager(savepath)
-        f.save(components)
-    else:
-        print('No path provided, not saving components')
 
     print('\n')
     return components
@@ -387,6 +369,20 @@ def rebuild(components,
         print('Metadata saved.')
 
     return data_r
+
+def approximate_svd_linearity_transition(ev):
+
+    ev -= ev.min()
+    ev = ev / ev.sum()
+    integrate = np.cumsum(ev)
+    x = np.arange(ev.size)
+
+    p = np.polyfit(x, integrate, deg=2)
+    y = np.polyval(p, x)
+
+    cross_1 = np.where(integrate > y)[0][0]
+
+    return cross_1
 
 
 def filter_mean(mean, filtermethod='wavelet', low_cutoff=0.5):

@@ -68,7 +68,7 @@ class Experiment:
                                          ])  #resets to whole movie
             self.shape = self.bound_movie().shape
 
-    def load_rois(self, path, n_roi_rotations):
+    def load_rois(self, path, n_roi_rotations=0):
 
         rois = roi_loader(path)
 
@@ -86,9 +86,8 @@ class Experiment:
         # Initialize Empty Mask
         roimask = np.zeros(self.shape[1:3], dtype='uint8')
 
-        # Add mask region from all ob/cortex/sc rois
+        # Add mask region from all rois
         for i, roi in enumerate(rois):
-            # if re.search('(ob)|(cortex)|(sc)', roi.lower()) is not None:
             roimask += make_mask(rois[roi], self.shape[1:3])
 
         roimask[np.where(roimask > 1)] = 1
@@ -128,7 +127,7 @@ class Experiment:
 
         return movie
 
-    def drawBoundingBox(self, required=True):
+    def draw_bounding_box(self, required=True):
         frame = self.movie[0, :, :].copy()
         frame = rescaleMovie(frame, cap=False).astype('uint8')
 
@@ -293,17 +292,18 @@ class Experiment:
             components = project(vector,
                                  shape,
                                  roimask=roimask,
-                                 savepath=savepath,
                                  n_components=n_components,
                                  svd_multiplier=svd_multiplier)
             components['expmeta'] = expmeta
 
-        if 'lag_1' not in components.keys():
+            if savedata:
+                f.save(components)
 
+
+        if 'lag_1' not in components.keys():
             components['lag1'] = lag_n_autocorr(components['timecourses'], 1)
 
-            if savedata:
-                f.save({'lag1': components['lag1']})
+            if savedata: f.save({'lag1': components['lag1']})
 
         if 'noise_components' not in components.keys():
             components['noise_components'], components['cutoff'] = \

@@ -3,7 +3,9 @@ import sys
 import numpy as np
 import argparse
 
-sys.path.append('..')
+parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.append(parent_dir)
+
 import seas
 from seas.experiment import Experiment
 from seas.video import play, dfof

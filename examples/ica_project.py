@@ -1,6 +1,9 @@
 import os
 import sys
-sys.path.append('..')
+parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.append(parent_dir)
+
+import seas
 
 from seas.filemanager import experiment_sorter
 from seas.experiment import Experiment

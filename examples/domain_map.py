@@ -1,6 +1,7 @@
 import os
 import sys
-sys.path.append('..')
+parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.append(parent_dir)
 
 from seas.domains import get_domain_map, domain_map, rolling_mosaic_movie, mosaic_movie, get_domain_edges, save_domain_map
 from seas.hdf5manager import hdf5manager
