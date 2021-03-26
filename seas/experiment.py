@@ -1,9 +1,9 @@
 import numpy as np
 import os
 
-from seas.video import load, dfof, rotate
+from seas.video import load, dfof, rotate, rescale
 from seas.filemanager import sort_experiments, get_exp_span_string
-from seas.rois import roi_loader, make_mask
+from seas.rois import roi_loader, make_mask, get_masked_region, insert_masked_region, draw_bounding_box
 from seas.hdf5manager import hdf5manager
 from seas.ica import project, filter_mean
 from seas.signal import sort_noise, lag_n_autocorr
@@ -107,40 +107,11 @@ class Experiment:
         meta = mm.readYaml(metapath)
         self.meta = meta
 
-    def dfof_brain(self, movie=None, roimask=None, bounding_box=None):
-
-        if roimask is None:
-            if hasattr(self, 'roimask'):
-                roimask = self.bound_mask(bounding_box)
-
-        if movie is None:
-            movie = self.bound_movie(bounding_box)
-
-        if roimask is not None:
-            dfof_brain = dfof(getMaskedRegion(movie, roimask))
-            dfof_brain = rescaleMovie(dfof_brain).astype(movie.dtype)
-            movie = rescaleMovie(movie, mask=roimask, maskval=0)
-            movie = insertMaskedRegion(movie, dfof_brain, roimask)
-
-        else:
-            movie = rescaleMovie(dfof(movie))
-
-        return movie
-
     def draw_bounding_box(self, required=True):
         frame = self.movie[0, :, :].copy()
-        frame = rescaleMovie(frame, cap=False).astype('uint8')
+        frame = rescale(frame, cap=False).astype('uint8')
 
-        # if class has rois loaded, draw them on image
-        if hasattr(self, 'rois'):
-            rois = self.rois
-            for roi in rois:
-                polylist = rois[roi]
-                cv2.polylines(frame,
-                              [polylist.astype(np.int32).reshape(
-                                  (-1, 1, 2))], 1, 255, 3)
-
-        ROI = drawBoundingBox(frame, required)
+        ROI = draw_bounding_box(frame, required)
 
         if ROI is not None:
             self.bounding_box = ROI
@@ -196,7 +167,7 @@ class Experiment:
                    del_movie=True,
                    n_components=None,
                    svd_multiplier=None,
-                   suffix=None,
+                   suffix='',
                    output_folder=None,
                    filtermethod='wavelet',
                    low_cutoff=0.5):
@@ -204,43 +175,39 @@ class Experiment:
         print('\nICA Projecting\n-----------------------')
 
         if savedata:
+            suffix_list = []
+            if len(suffix) > 0:
+                suffix_list.append(suffix)
+
             if self.downsample:
-                dstype = str(self.downsample) + 'xds_'
-            else:
-                dstype = ''
+                suffix_list.append(str(self.downsample) + 'xds')
 
             if self.downsample_t:
-                tdstype = str(self.downsample_t) + 'xtds_'
-            else:
-                tdstype = ''
+                suffix_list.append(str(self.downsample_t) + 'xtds')
 
             if not calc_dfof:
-                rawtype = 'raw_'
-            else:
-                rawtype = ''
+                suffix_list.append('raw')
 
             if svd_multiplier is not None:
-                svdmtype = str(svd_multiplier) + 'svdmult_'
-            else:
-                svdmtype = ''
-
-            if suffix is None:
-                suffix = ''
-            elif not suffix.endswith('_'):
-                suffix = suffix + '_'
+                suffix_list.append(str(svd_multiplier) + 'svdmult')
 
             if output_folder is None:
                 output_folder = os.path.dirname(self.path[0])
 
-            savepath = output_folder + os.path.sep + \
-            self.name + '_' + dstype + tdstype + rawtype + svdmtype + suffix + \
-            'ica.hdf5'
+            suffix_list.append('ica.hdf5')
+
+            suffix = '_'.join(suffix_list)
+
+            savepath = os.path.join(output_folder,
+                self.name + '_' + suffix
+                )
+            print('Saving ICA data to:', savepath)
         else:
             savepath = None
 
         if savedata:
             f = hdf5manager(savepath)
-            components = f.load()
+            components = f.load() # should be empty if it didn't exist yet.
         else:
             components = {}
 
@@ -278,7 +245,7 @@ class Experiment:
                     A = dfof(A)
 
             if del_movie:
-                print('Deleting movie to save memory..')
+                print('Deleting original movie to save memory..')
                 del self.movie
 
             #drop dimension and flip to prepare timecourse for PCA
@@ -302,18 +269,10 @@ class Experiment:
         if 'lag_1' not in components.keys():
             components['lag1'] = lag_n_autocorr(components['timecourses'], 1)
 
-            if savedata:
-                f.save({'lag1': components['lag1']})
-
         if 'noise_components' not in components.keys():
             components['noise_components'], components['cutoff'] = \
                 sort_noise(components['timecourses'])
 
-        if savedata:
-            f.save({
-                'noise_components': components['noise_components'],
-                'cutoff': components['cutoff']
-            })
 
         components['mean_filtered'] = filter_mean(components['mean'],
                                                   filtermethod=filtermethod,
@@ -325,12 +284,12 @@ class Experiment:
 
         if savedata:
             f.save({
+                'noise_components': components['noise_components'],
+                'cutoff': components['cutoff'], 
+                'lag1': components['lag1']
                 'mean_filtered': components['mean_filtered'],
-                'mean_filter_meta': components['mean_filter_meta']
+                'mean_filter_meta': components['mean_filter_meta'],
             })
-
-
-        if savedata:
             print('Saved all data to file:')
             f.print()
 

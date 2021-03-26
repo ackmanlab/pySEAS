@@ -19,12 +19,6 @@ if __name__ == '__main__':
                     nargs='+',
                     required=False,
                     help='path to the image to be scanned.')
-    ap.add_argument('-i',
-                    '--input',
-                    type=argparse.FileType('r'),
-                    nargs=1,
-                    required=False,
-                    help='path to the ica hdf5 file to load.')
     ap.add_argument(
         '-e',
         '--experiment',
@@ -44,12 +38,11 @@ if __name__ == '__main__':
                     required=False,
                     help='alternate folder for storing output')
     ap.add_argument(
-        '--rois',
-        type=argparse.FileType('r'),
-        nargs=1,
-        required=False,
-        help='path to .zip file with .rois, or .roi file containing '
-        'ROIs to associate with video object.')
+                    '--rois',
+                    type=argparse.FileType('r'),
+                    nargs=1,
+                    required=False,
+                    help='path to .zip file with .rois.')
     ap.add_argument('-s',
                     '--save',
                     action='store_true',
@@ -128,11 +121,6 @@ if __name__ == '__main__':
                     '--raw_movie',
                     action='store_true',
                     help='dont calculate dfof for video')
-    ap.add_argument(
-        '-nf',
-        '--notify',
-        action='store_true',
-        help='use this flag to notify on slack when code is finished')
     ap.add_argument('-avi',
                     action='store_true',
                     help='save avi videos instead of mp4s')
@@ -144,10 +132,6 @@ if __name__ == '__main__':
                     '--filteringresiduals',
                     action='store_true',
                     help='calculate spatial and temporal artifact residuals')
-    ap.add_argument('-pca',
-                    '--pca',
-                    action='store_true',
-                    help='calculate PCA instead of ICA')
     args = vars(ap.parse_args())
 
     # Find all movie and roi paths, load them
@@ -181,11 +165,6 @@ if __name__ == '__main__':
         else:
             roipath = None
         metapath = None
-
-    if args['input'] is not None:
-        inputpath = args['input'][0].name
-    else:
-        inputpath = None
 
     if args['maxtime'] is not None:
         tmax = args['maxtime'][0]
@@ -228,12 +207,12 @@ if __name__ == '__main__':
         print('\t' + path)
     print('Rois:\n\t' + str(roipath))
     print('Metadata:\n\t' + str(metapath))
-    print('Input files:\n\t' + str(inputpath) + '\n')
 
     if len(pathlist) > 0:
 
         print('Loading videos files and running ICA projection.')
         print('If there is a matching _ica.hdf5 file, ', 'it will be loaded.\n')
+
 
         if args['downsample'] is not None:
             downsample = args['downsample'][0]
@@ -252,7 +231,7 @@ if __name__ == '__main__':
         else:
             rotate = 0
 
-        suffix = None
+        suffixes = []
 
         exp = Experiment(pathlist,
                          downsample=downsample,
@@ -273,15 +252,13 @@ if __name__ == '__main__':
             print('new movie shape:', exp.shape)
 
             if tmin is not None:
-                suffix = 'tmin' + str(tmin)
+                suffixes.append('tmin' + str(tmin))
             if tmax is not None:
-                suffix = 'tmax' + str(tmax)
-
-        if args['notify']:
-            exp.load_notifier()
+                suffixes.append('tmax' + str(tmax))
 
         if args['bound']:
             exp.draw_bounding_box()
+            suffixes.append('bound')
 
         if metapath is not None:
             print('Metadata path found at:', metapath)
@@ -291,10 +268,7 @@ if __name__ == '__main__':
 
         if args['ncomponents'] is not None:
             n_components = args['ncomponents'][0]
-            if suffix is not None:
-                suffix = suffix + '_{0}components'.format(n_components)
-            else:
-                suffix = '{0}components'.format(n_components)
+            suffixes.append('_{0}components'.format(n_components))
         else:
             n_components = None
 
@@ -303,6 +277,7 @@ if __name__ == '__main__':
         else:
             calc_dfof = False
 
+        suffix = '_'.join(suffixes)
         components = exp.ica_filter(n_components=n_components,
                                     calc_dfof=calc_dfof,
                                     suffix=suffix,
@@ -356,171 +331,3 @@ if __name__ == '__main__':
                               filtermean=filtermean,
                               include_noise=not args['filternoise'],
                               flip=flip)
-
-    # take the processed file, create reduced copy, and
-    # create filter comparison
-
-    if inputpath is not None:
-        basename = inputpath.replace('.hdf5', '')
-
-        if output_folder is not None:
-            output_folder = os.path.dirname(exp.path[0])
-            basename = os.path.join(output_folder, os.path.basename(basename))
-
-        f = h5(inputpath)
-        components = f.load(ignore='vector')
-
-        if args['savefigures']:
-            figpath = basename + '_components'
-            PCfigure(components, figpath)
-
-        if tmax is not None:
-            basename = basename + '_tmax' + str(tmax)
-
-        if tmin is not None:
-            basename = basename + '_tmin' + str(tmin)
-
-        savepath = basename + '_filtercomparison'
-
-        if save_avi:
-            savepath = savepath + '.avi'
-        else:
-            savepath = savepath + '.mp4'
-
-        filterpath = basename + '_filtered.hdf5'
-
-        if args['save']:
-            ds = args['downsample']
-            if ds is None:
-                ds = [4]
-            ds = int(ds[0])
-
-            if 'expmeta' in components.keys():
-                print('Found expmeta, looking for downsample..')
-
-                ica_downsample = components['expmeta']['downsample']
-                if ica_downsample:
-                    print('Video was downsampled by', ica_downsample,
-                          'before ICA')
-
-                if ica_downsample:
-                    downsample = ds // ica_downsample
-                else:
-                    downsample = ds
-
-                if downsample < 1:
-                    downsample = 1
-            else:
-                print('No downsample information found')
-                downsample = ds
-
-            print('Downsampling by:', downsample, '\n')
-
-            filter_comparison(components,
-                              videopath=savepath,
-                              downsample=downsample,
-                              filterpath=filterpath,
-                              include_noise=not args['filternoise'],
-                              t_stop=tmax,
-                              t_start=tmin,
-                              filtermean=filtermean,
-                              flip=flip)
-
-        if args['save_roi_overlay']:
-
-            assert 'domain_ROIs' in f.keys(), 'ROI overlay requires'\
-                'domain ROIs to be calculated!  Run wholeBrainDomainROIs.py first.'
-
-            filterpath = basename + '_filtered.hdf5'
-
-            if os.path.isfile(filterpath):
-                g = h5(filterpath)
-                filtered = g.load('filtered')
-            else:
-                filtered = rebuild(components,
-                                   returnmeta=True,
-                                   include_noise=not args['filternoise'],
-                                   t_stop=tmax,
-                                   t_start=tmin,
-                                   filtermean=filtermean)
-
-            domainROIs = f.load('domain_ROIs')
-            edges = wb.cv2.Canny((domainROIs + 1).astype('uint8'), 1, 1)
-
-            overlay = np.zeros(domainROIs.shape)
-            overlay[np.isnan(domainROIs)] = 1
-            overlay += edges
-
-            overlaypath = basename + '_filtered_overlaymovie'
-
-            if save_avi:
-                overlaypath = overlaypath + '.avi'
-            else:
-                overlaypath = overlaypath + '.mp4'
-
-            if flip:
-                filtered = filtered[:, ::-1]
-                overlay = np.flipud(overlay)
-
-            wb.saveFile(overlaypath,
-                        filtered,
-                        overlay=overlay,
-                        save_cbar=True,
-                        rescale=True)
-
-        if args['dsfilter']:
-            ds = args['downsample']
-            if ds is None:
-                ds = [5]
-            ds = int(ds[0])
-
-            dspath = basename + '_filtered_{0}xds.hdf5'.format(ds)
-            filterpath = basename + '_filtered.hdf5'
-            downsampleFiltered(filterpath, dspath, downsample=ds)
-
-        if 'rebuildmeta' in components.keys():
-            f.save({'rebuildmeta': components['rebuildmeta']})
-
-        if args['filteringresiduals']:
-            assert 'artifact_components' in components, 'Assign artifact_components first'
-
-            # invert indices and get signal components to exclude rebuilding:
-            signal_components = (
-                components['artifact_components'] == 0).astype('uint8')
-            artifact_movie = rebuild(components,
-                                     artifact_components=signal_components)
-
-            if 'roimask' in components:
-                roimask = components['roimask']
-                outsideind = np.where(roimask == 0)
-
-                artifact_movie = artifact_movie - components[
-                    'mean_filtered'][:, None, None]
-                artifact_movie[:, outsideind[0], outsideind[1]] = 0
-
-            filtering_residuals = {}
-            residuals_spatial = np.abs(artifact_movie).sum(axis=0)
-            residuals_temporal = np.abs(artifact_movie).sum(axis=1).sum(axis=1)
-
-            filtering_residuals['artifact_residuals'] = {
-                'residuals_spatial': residuals_spatial,
-                'residuals_temporal': residuals_temporal
-            }
-
-            # get total signal from video:
-            original_movie = rebuild(components, artifact_components='none')
-
-            if 'roimask' in components:
-                original_movie = original_movie - components[
-                    'mean_filtered'][:, None, None]
-                original_movie[:, outsideind[0], outsideind[1]] = 0
-
-            residuals_spatial = np.abs(original_movie).sum(axis=0)
-            residuals_temporal = np.abs(original_movie).sum(axis=1).sum(axis=1)
-
-            filtering_residuals['total_signal'] = {
-                'residuals_spatial': residuals_spatial,
-                'residuals_temporal': residuals_temporal
-            }
-
-            f.save({'filtering_residuals': filtering_residuals})
