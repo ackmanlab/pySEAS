@@ -261,8 +261,7 @@ if __name__ == '__main__':
 
         if roipath is not None:
             print('Roi path found at:', roipath)
-            exp.load_rois(roipath,
-                         n_roi_rotations=rotate_rois)
+            exp.load_rois(roipath, n_roi_rotations=rotate_rois)
             exp.define_mask_boundaries()
         else:
             print('No roi path found.')

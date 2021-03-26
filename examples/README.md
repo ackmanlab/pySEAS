@@ -4,6 +4,19 @@
 
     python play_dfof_movie.py -m [DIRECTORY]/testmovie.tiff -d 10
 
+
+for our movies, use the following rotations:
+
+older:
+
+    python ica_project.py -f /home/sydney/Lab/testfiles/ -e 170721_02 -d 10 -r 3
+
+newer:
+
+    python ica_project.py -f /home/sydney/Lab/testfiles/ -e 200220_01 -d 10 -r 1 -rr 2
+
+
+
 ## ica_project
 
 ica projects an experiment listed with -e at directory -f. 

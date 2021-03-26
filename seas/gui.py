@@ -1118,7 +1118,8 @@ def run_gui(components, rotate=0, savepath=None, default_assignment=None):
 
                         if rotate > 0:
                             domain_ROIs = np.rot90(domain_ROIs, rotate)
-                            xcorr = np.corrcoef(components['ROI_timecourses'] + \
+
+                        xcorr = np.corrcoef(components['ROI_timecourses'] + \
                             components['mean_filtered'])
 
                         self.domain_ROIs = domain_ROIs
@@ -1561,9 +1562,9 @@ def run_gui(components, rotate=0, savepath=None, default_assignment=None):
         raise Exception('Operation was cancelled')
 
     if toggle.sum() == 0:
-        print('All eigenbrains are being used')
+        print('All components are classified as signal')
     else:
-        print('{0} eigenbrains ignored, {1} '
+        print('{0} components classified as signal, {1} '
               'will be used for signal reconstruction.'.format(
                   toggle.sum(), int(toggle.size - toggle.sum())))
 

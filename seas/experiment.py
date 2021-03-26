@@ -24,7 +24,7 @@ class Experiment:
                  n_rotations=0,
                  rotate_rois=False):
 
-        print('\nInitializing wholeBrain Instance\n-----------------------')
+        print('\nInitializing Experiment\n-----------------------')
         if isinstance(pathlist, str):
             pathlist = [pathlist]
 
@@ -48,7 +48,7 @@ class Experiment:
                                       [0, self.movie.shape[2]]])
         self.shape = self.bound_movie().shape
 
-        # if multiple experiments included, get a span string 
+        # if multiple experiments included, get a span string
         # (i.e. 01, 02, 03, 04 - > 01-04)
         experiments = sort_experiments(pathlist, verbose=False).keys()
         spanstring = get_exp_span_string(experiments)
@@ -198,10 +198,10 @@ class Experiment:
                    svd_multiplier=None,
                    suffix=None,
                    output_folder=None,
-                   filtermethod = 'wavelet',
-                   low_cutoff = 0.5):
+                   filtermethod='wavelet',
+                   low_cutoff=0.5):
 
-        print('\nICA Filtering\n-----------------------')
+        print('\nICA Projecting\n-----------------------')
 
         if savedata:
             if self.downsample:
@@ -299,11 +299,11 @@ class Experiment:
             if savedata:
                 f.save(components)
 
-
         if 'lag_1' not in components.keys():
             components['lag1'] = lag_n_autocorr(components['timecourses'], 1)
 
-            if savedata: f.save({'lag1': components['lag1']})
+            if savedata:
+                f.save({'lag1': components['lag1']})
 
         if 'noise_components' not in components.keys():
             components['noise_components'], components['cutoff'] = \
@@ -315,7 +315,6 @@ class Experiment:
                 'cutoff': components['cutoff']
             })
 
-        
         components['mean_filtered'] = filter_mean(components['mean'],
                                                   filtermethod=filtermethod,
                                                   low_cutoff=low_cutoff)
@@ -329,5 +328,10 @@ class Experiment:
                 'mean_filtered': components['mean_filtered'],
                 'mean_filter_meta': components['mean_filter_meta']
             })
+
+
+        if savedata:
+            print('Saved all data to file:')
+            f.print()
 
         return components

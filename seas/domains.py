@@ -10,6 +10,7 @@ from seas.ica import rebuild_mean_roi_timecourse, filter_mean
 from seas.rois import make_mask
 from seas.colormaps import DEFAULT_COLORMAP, save_colorbar
 
+
 def get_domain_map(components,
                    cutoff=None,
                    blur=21,
@@ -176,8 +177,8 @@ def get_domain_map(components,
     if ('expmeta' in components.keys()):
         if 'rois' in components['expmeta'].keys():
             padmask = get_padded_borders(domain_ROIs, blur,
-                                       components['expmeta']['rois'],
-                                       components['expmeta']['bounding_box'])
+                                         components['expmeta']['rois'],
+                                         components['expmeta']['bounding_box'])
             domain_ROIs[np.where(padmask == 0)] = np.nan
     else:
         print('Couldnt make padded mask')
@@ -193,6 +194,7 @@ def get_domain_map(components,
         print('not calculating domain timecourses')
 
     return output
+
 
 def save_domain_map(domain_ROIs, basepath, blur_level, n_rotations=0):
 
@@ -218,7 +220,6 @@ def save_domain_map(domain_ROIs, basepath, blur_level, n_rotations=0):
          rescale_range=True)
 
 
-
 def get_domain_rebuilt_timecourses(domain_ROIs, components, filtermean=True):
 
     output = {}
@@ -231,8 +232,6 @@ def get_domain_rebuilt_timecourses(domain_ROIs, components, filtermean=True):
         output['mean_filtered'] = mean_filtered
 
     return output
-
-
 
 
 def get_domain_edges(domain_ROIs, clearbg=False, linepad=None):
@@ -261,10 +260,13 @@ def get_padded_borders(domain_ROIs, blur, rois, bounding_box=None):
     for i, roi in enumerate(rois):
         mask = make_mask(rois[roi], shape, bounding_box)
 
-        mask = np.pad(mask.astype('float64'), 1, 'constant', constant_values=np.nan)
+        mask = np.pad(mask.astype('float64'),
+                      1,
+                      'constant',
+                      constant_values=np.nan)
         mask[np.where(mask == 0)] = np.nan
 
-        blurred = cv2.GaussianBlur(mask, (blur,blur), 0)
+        blurred = cv2.GaussianBlur(mask, (blur, blur), 0)
         blurred = blurred[1:-1, 1:-1]
         padmask[np.where(~np.isnan(blurred))] = 1
 
@@ -286,7 +288,6 @@ def domain_map(domain_ROIs, values=None):
         domainmap = domain_ROIs
 
     return domainmap
-
 
 
 # def borderLevels(domain_ROIs, region_assignment, pad=15, flip=False, returnlayers=False):
@@ -743,15 +744,24 @@ def domain_map(domain_ROIs, values=None):
 
 #     return grid_ROIs
 
-def rolling_mosaic_movie(domain_ROIs, ROI_timecourses, savepath,
-    resize_factor=1, codec=None, speed=1, fps=10, cmap=DEFAULT_COLORMAP,
-    t_start=None, t_stop=None, n_rotations=0):
+
+def rolling_mosaic_movie(domain_ROIs,
+                         ROI_timecourses,
+                         savepath,
+                         resize_factor=1,
+                         codec=None,
+                         speed=1,
+                         fps=10,
+                         cmap=DEFAULT_COLORMAP,
+                         t_start=None,
+                         t_stop=None,
+                         n_rotations=0):
 
     print('\nWriting Rolling Mosiac Movie\n-----------------------')
 
     # Initialize Parameters
-    resize_factor = 1/resize_factor
-    x,y = domain_ROIs.shape
+    resize_factor = 1 / resize_factor
+    x, y = domain_ROIs.shape
     n_domains = ROI_timecourses.shape[0]
     t = np.arange(ROI_timecourses.shape[1])
     t = t[t_start:t_stop]
@@ -778,34 +788,36 @@ def rolling_mosaic_movie(domain_ROIs, ROI_timecourses, savepath,
     # initialize movie writer
     display_speed = fps * speed
     fourcc = cv2.VideoWriter_fourcc(*codec)
-    out = cv2.VideoWriter(savepath, fourcc, display_speed, (h,w), isColor=True)
+    out = cv2.VideoWriter(savepath, fourcc, display_speed, (h, w), isColor=True)
 
     def write_frame(frame):
         # rescale and convert to uint8
-        frame = rescale(frame, min_max=(scale['min'], scale['max']),
-            cap=False, verbose=False).astype('uint8')
-        frame = cv2.resize(frame, (h,w), interpolation = cv2.INTER_AREA)
+        frame = rescale(frame,
+                        min_max=(scale['min'], scale['max']),
+                        cap=False,
+                        verbose=False).astype('uint8')
+        frame = cv2.resize(frame, (h, w), interpolation=cv2.INTER_AREA)
         frame = rotate(frame, n_rotations)
 
         # apply colormap, write frame to .avi
         if cmap is not None:
             frame = cv2.applyColorMap(frame, cmap)
         else:
-            frame = np.repeat(frame[:,:,None], 3, axis=2)
+            frame = np.repeat(frame[:, :, None], 3, axis=2)
 
         out.write(frame)
 
     print('Saving dfof video to: ' + savepath)
 
-    frame = np.empty((x,y))
+    frame = np.empty((x, y))
     for f in t:
 
         if f % 10 == 0:
             print('on frame:', f, '/', t.size)
 
-        frame[:]=np.nan
+        frame[:] = np.nan
         for i in range(n_domains):
-            frame[np.where(domain_ROIs == i)] = ROI_timecourses[i,f]
+            frame[np.where(domain_ROIs == i)] = ROI_timecourses[i, f]
 
         # if first frame, calculate scaling parameters
         if (f == 0):
@@ -815,9 +827,7 @@ def rolling_mosaic_movie(domain_ROIs, ROI_timecourses, savepath,
             fmin = mean - 3 * std
             fmax = mean + 7 * std
 
-            scale = {'scale': 255.0/(fmax-fmin), 
-                        'min': fmin, 
-                        'max': fmax}
+            scale = {'scale': 255.0 / (fmax - fmin), 'min': fmin, 'max': fmax}
 
         write_frame(frame)
 
@@ -830,12 +840,19 @@ def rolling_mosaic_movie(domain_ROIs, ROI_timecourses, savepath,
 
     return
 
-def mosaic_movie(domain_ROIs, ROI_timecourses, savepath=None,
-        t_start=None, t_stop=None, n_rotations=0, cmap=DEFAULT_COLORMAP):
+
+def mosaic_movie(domain_ROIs,
+                 ROI_timecourses,
+                 savepath=None,
+                 t_start=None,
+                 t_stop=None,
+                 n_rotations=0,
+                 cmap=DEFAULT_COLORMAP):
 
     print('\nRebuilding Mosiac Movie\n-----------------------')
 
-    t,x,y = (ROI_timecourses.shape[1], domain_ROIs.shape[0], domain_ROIs.shape[1])
+    t, x, y = (ROI_timecourses.shape[1], domain_ROIs.shape[0],
+               domain_ROIs.shape[1])
 
     if (t_start is not None) or (t_stop is not None):
         frames = np.arange(t)
@@ -846,9 +863,9 @@ def mosaic_movie(domain_ROIs, ROI_timecourses, savepath=None,
 
     for roi in np.arange(ROI_timecourses.shape[0]):
         roi_ind = np.where(domain_ROIs.flat == roi)[0]
-        movie[roi_ind,:] = ROI_timecourses[roi,t_start:t_stop]
+        movie[roi_ind, :] = ROI_timecourses[roi, t_start:t_stop]
 
-    movie = movie.T.reshape((t,x,y))
+    movie = movie.T.reshape((t, x, y))
     overlay = np.isnan(domain_ROIs).astype('uint8')
 
     movie = rotate(movie, n_rotations)
@@ -860,7 +877,13 @@ def mosaic_movie(domain_ROIs, ROI_timecourses, savepath=None,
     else:
         print('Finished rebuilding.  Saving file...')
 
-        save(movie, savepath, rescale_range=True, save_cbar=True, overlay=overlay, colormap=DEFAULT_COLORMAP)
+        save(movie,
+             savepath,
+             rescale_range=True,
+             save_cbar=True,
+             overlay=overlay,
+             colormap=DEFAULT_COLORMAP)
+
 
 # def makeRegionMap(region_components, domain_ROIs, roimask=None, shape=None):
 
@@ -878,7 +901,6 @@ def mosaic_movie(domain_ROIs, ROI_timecourses, savepath=None,
 #         for region in region_components[key]:
 #             regionmap[np.where(domain_ROIs == region)] = i + 5
 #     return(regionmap)
-
 
 # def adjustMapIndices(domain_ROIs, verbose=False):
 

@@ -925,7 +925,7 @@ def rotate(array, n):
         ndim = array.ndim
 
         if ndim == 3:
-            array = np.rot90(array, n, axes=(1,2))
+            array = np.rot90(array, n, axes=(1, 2))
 
         elif (ndim == 2) or (ndim == 3):
             array = np.rot90(array, n)
@@ -933,4 +933,3 @@ def rotate(array, n):
         else:
             raise TypeError('Input of dimension {0} was invalid'.format(n))
     return array
-
