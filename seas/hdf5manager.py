@@ -157,7 +157,7 @@ class hdf5manager:
                     data[gkey] = g.attrs[gkey]
                 elif type(g.attrs[gkey] is np.void):
                     out = g.attrs[gkey]
-                    data[gkey] = pickle.loads(out.tostring())
+                    data[gkey] = pickle.loads(out.tobytes())
                 else:
                     print('INVALID TYPE:', type(g.attrs[gkey]))
 
@@ -213,7 +213,7 @@ class hdf5manager:
                         print('\t\t-', 'loading', key, 'from file...')
 
                     if f[key].dtype.type is np.void:
-                        data[key] = pickle.loads(np.array(f[key]).tostring())
+                        data[key] = pickle.loads(np.array(f[key]).tobytes())
                     else:
                         data[key] = np.array(f[key])
                 else:
@@ -235,7 +235,7 @@ class hdf5manager:
                     data[key] = f.attrs[key]
                 elif type(f.attrs[key] is np.void):
                     out = f.attrs[key]
-                    data[key] = pickle.loads(out.tostring())
+                    data[key] = pickle.loads(out.tobytes())
 
         if verbose:
             print('Keys extracted from file:')

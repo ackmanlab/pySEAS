@@ -374,7 +374,13 @@ class waveletAnalysis:
                         zorder=3)
         ax.plot(self.time, self.coi, 'k')
         # # format y-scale
-        ax.set_yscale('log', base=2, subs=None)
+
+        # different matplotlib versions available for python < 3.8.
+        try:
+            ax.set_yscale('log', base=2, subs=None)
+        except ValueError: 
+            ax.set_yscale('log', basey=2, subsy=None)
+        
         ax.set_ylim([np.min(self.period), np.max(self.period)])
         axy = ax.yaxis
         axy.set_major_formatter(matplotlib.ticker.ScalarFormatter())
