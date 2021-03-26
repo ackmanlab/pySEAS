@@ -62,7 +62,6 @@ scipy==1.6.1
 simplejson==3.17.2
 six==1.15.0
 sklearn==0.0
-smbus==1.1.post2
 soupsieve==2.0.1
 threadpoolctl==2.1.0
 tifffile==2021.3.5

@@ -31,7 +31,7 @@ I've experienced issues getting tkinter to work on a python installation that is
 
 Debian-based linux:
 
-    sudo apt-get install python3.[X] python3-tk
+    sudo apt-get install python3.8 python3-tk python3.8-tk
 
 If you experience problems with the GUI, check your tk version with the following terminal command:
     python -m tkinter
