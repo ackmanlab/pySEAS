@@ -87,7 +87,7 @@ def movie_sorter(pathlist, verbose=True):
     fnum_list = []
 
     # only match movie files that have a specific file format
-    matchstr = '(\d{6}_\d{2})(?:[@-](\d{4}))?\.tif'
+    matchstr = r'(\d{6}_\d{2})(?:[@-](\d{4}))?\.tif'
 
     for i, file in enumerate(pathlist):
         name = os.path.basename(file)
@@ -136,19 +136,19 @@ def experiment_sorter(folder_path, experimentstr=None, verbose=True):
     # experimentstr must have a specific file format
 
     if experimentstr is not None:
-        if re.match('^\d{6}_\d{2}-\d{2}$', experimentstr) is not None:
+        if re.match(r'^\d{6}_\d{2}-\d{2}$', experimentstr) is not None:
             print('matching multiple experiments')
-            match = re.match('^(\d{6})_(\d{2})-(\d{2})$', experimentstr)
+            match = re.match(r'^(\d{6})_(\d{2})-(\d{2})$', experimentstr)
             groups = match.groups()
 
             experimentlist = [groups[0]+'_{:02d}'.format(i) \
                     for i in range(int(groups[1]), int(groups[2])+1)]
         else:
-            assert re.match('^\d{6}_\d{2}$', experimentstr) is not None, \
+            assert re.match(r'^\d{6}_\d{2}$', experimentstr) is not None, \
                 'experimentstr input was not a valid YYMMDD_EE experiment name'
             experimentlist = [experimentstr]
     else:
-        experimentlist = ['\d{6}_\d{2}']
+        experimentlist = [r'\d{6}_\d{2}']
 
     files = os.listdir(folder_path)
     if verbose:
@@ -168,15 +168,15 @@ def experiment_sorter(folder_path, experimentstr=None, verbose=True):
 
         movies_unsorted = []
 
-        moviestr = experimentstr + '(?:[@-](\d{4}))?\.tif'
-        metastr = experimentstr + '_meta\.yaml'
-        icastr = experimentstr + '_(.*)(ica|pca)\.hdf5'
-        processedstr = experimentstr + '_(ica|pca)(.+)\.hdf5'
-        roistr = experimentstr + '_roiset\.zip'
-        dfofstr = experimentstr + '_(\d+x)_dfof\.mp4'
-        bodystr = experimentstr + '_c(\d)-body_cam\.mp4'
-        oflowstr = experimentstr + '_(\w+)OpticFlow\.hdf5'  ######
-        videodatastr = experimentstr + '_videodata\.hdf5'
+        moviestr = experimentstr + r'(?:[@-](\d{4}))?\.tif'
+        metastr = experimentstr + r'_meta\.yaml'
+        icastr = experimentstr + r'_(.*)(ica|pca)\.hdf5'
+        processedstr = experimentstr + r'_(ica|pca)(.+)\.hdf5'
+        roistr = experimentstr + r'_roiset\.zip'
+        dfofstr = experimentstr + r'_(\d+x)_dfof\.mp4'
+        bodystr = experimentstr + r'_c(\d)-body_cam\.mp4'
+        oflowstr = experimentstr + r'_(\w+)OpticFlow\.hdf5'  ######
+        videodatastr = experimentstr + r'_videodata\.hdf5'
 
         for file in files:
             filepath = os.path.join(folder_path, file)
@@ -235,10 +235,10 @@ def sort_experiments(files, experimentstr=None, verbose=True):
         print('\nSorting Keys\n-----------------------')
 
     if experimentstr is not None:
-        assert re.match('\d{6}_\d{2}', experimentstr) is not None, \
+        assert re.match(r'\d{6}_\d{2}', experimentstr) is not None, \
             'experimentstr input was not a valid YYMMDD_EE experiment name'
     else:
-        experimentstr = '(\d{6}_\d{2})'
+        experimentstr = r'(\d{6}_\d{2})'
 
     exps = {}
 
@@ -268,7 +268,7 @@ def get_exp_span_string(experiments):
         expspanstring = [get_basename(experiment) for experiment in experiments]
         return expspanstring[0]
     else:
-        experimentstr = '(\d{6})_(\d{2})'
+        experimentstr = r'(\d{6})_(\d{2})'
 
     explist = {}
 
@@ -293,7 +293,7 @@ def get_exp_span_string(experiments):
 def get_basename(path):
 
     name = os.path.basename(path)
-    name = re.sub('(\.)(\w){3,4}$', '', name)  # remove extension
-    name = re.sub('([@-])(\d){4}', '', name)  # remove @0001 from path
+    name = re.sub(r'(\.)(\w){3,4}$', '', name)  # remove extension
+    name = re.sub(r'([@-])(\d){4}', '', name)  # remove @0001 from path
 
     return name

@@ -8,6 +8,7 @@ import os
 import seas
 from seas.experiment import Experiment
 from seas.video import save
+import seas.ica
 
 # create a temporary folder for test files
 TEMP_FOLDER_HANDLE = tempfile.TemporaryDirectory()
@@ -22,6 +23,21 @@ test_video_path = os.path.join(TEMP_FOLDER, '123456_78.tiff')
 save(test_video, test_video_path)
 
 TEST_ROI_DICT = {'roi': np.array([[0, 10], [30, 50], [20, 80]], dtype=np.int16)}
+
+
+@pytest.fixture(autouse=True)
+def clear_ica_files():
+    # Code that runs before each test
+    for file in os.listdir(TEMP_FOLDER):
+        assert not file.endswith('.hdf5')
+        if file.endswith('.hdf5'):
+            os.remove(os.path.join(TEMP_FOLDER, file))
+    yield
+
+    # code that runs after each test
+    for file in os.listdir(TEMP_FOLDER):
+        if file.endswith('.hdf5'):
+            os.remove(os.path.join(TEMP_FOLDER, file))
 
 
 @patch('seas.experiment.roi_loader', return_value=TEST_ROI_DICT)
@@ -54,25 +70,23 @@ def test_ica_decompose_with_rois_n_components(mock_rois):
     exp.define_mask_boundaries()
     exp.ica_filter(n_components=10)
 
-    print(os.listdir(TEMP_FOLDER))
-    raise SystemError
-
 
 def test_ica_decompose_without_rois_n_components():
     exp = Experiment(pathlist=test_video_path)
     exp.ica_filter(n_components=10)
 
 
-@patch('seas.experiment.roi_loader', return_value=TEST_ROI_DICT)
-def test_ica_decompose_wit_rois_auto_components(mock_rois):
-    exp = Experiment(pathlist=test_video_path)
-    exp.load_rois('fake_roi_path')
-    exp.define_mask_boundaries()
-    exp.ica_filter()
+# @patch('seas.experiment.roi_loader', return_value=TEST_ROI_DICT)
+# @patch('seas.ica.approximate_svd_linearity_transition', return_value=5)
+# def test_ica_decompose_wit_rois_auto_components(mock_cutoff, mock_rois):
+#     exp = Experiment(pathlist=test_video_path)
+#     exp.load_rois('fake_roi_path')
+#     exp.define_mask_boundaries()
+#     exp.ica_filter()
 
 
-def test_ica_decompose_without_rois_auto_components():
-    exp = Experiment(pathlist=test_video_path)
-    exp.ica_filter()
+# def test_ica_decompose_without_rois_auto_components():
+#     exp = Experiment(pathlist=test_video_path)
+#     exp.ica_filter()
 
 # def test_ica_naming
