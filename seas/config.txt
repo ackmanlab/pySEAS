@@ -3,16 +3,6 @@ domains = twilight_r
 components = coolwarm
 correlation = RdGy_r
 
-[filestrings]
-movies = (?:[@-](\d{4}))?\.tif
-meta = _meta\.yaml
-processed = _ica\.hdf5
-roi = _roiset\.zip
-
-[expstring]
-single_experiment = (\d{6}_\d{2})
-experiment_span = ^\d{6}_\d{2}-\d{2}$
-
 [regions]
 motor = 1
 motor-medial = 1.25

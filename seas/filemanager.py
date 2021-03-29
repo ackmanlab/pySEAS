@@ -1,6 +1,15 @@
 #!/usr/bin/env python3
 '''
-Functions used for loading and finding files for seas analysis.  Loads experiment strings from config.ini defaults
+Functions used for loading and finding files for brain analysis.
+
+Importing from python terminal/script:
+    - import fileManager as fm
+    - from fileManager import functionName
+
+If fileManager.py file not within folder of script to import in, 
+first add its containing folder to the python path with:
+    sys.path.append('/home/sydney/Lab/pyWholeBrain/')
+    from fileManager import *
 
 Authors: Sydney C. Weiser
 Date: 2017-07-28
@@ -11,7 +20,6 @@ import sys
 import time
 from subprocess import call
 
-from seas.defaults import config
 
 def find_files(folder_path,
                match_string,
@@ -79,7 +87,7 @@ def movie_sorter(pathlist, verbose=True):
     fnum_list = []
 
     # only match movie files that have a specific file format
-    matchstr = config['expstring']['single_experiment'] + config['filestrings']['movies']
+    matchstr = r'(\d{6}_\d{2})(?:[@-](\d{4}))?\.tif'
 
     for i, file in enumerate(pathlist):
         name = os.path.basename(file)
@@ -118,7 +126,7 @@ def movie_sorter(pathlist, verbose=True):
     return experiments
 
 
-def experiment_sorter(folder_path, experimentstr, verbose=True):
+def experiment_sorter(folder_path, experimentstr=None, verbose=True):
     '''
     Finds all files associated with an experiment in a particular folder, 
     organizes them by filetype: movie files, processed files, metadata files.
@@ -127,27 +135,49 @@ def experiment_sorter(folder_path, experimentstr, verbose=True):
 
     # experimentstr must have a specific file format
 
-    if re.match(config['expstring']['experiment_span'], experimentstr) is not None:
-        print('matching multiple experiments')
-        match = re.match(config['expstring']['experiment_span'], experimentstr)
-        groups = match.groups()
+    if experimentstr is not None:
+        if re.match(r'^\d{6}_\d{2}-\d{2}$', experimentstr) is not None:
+            print('matching multiple experiments')
+            match = re.match(r'^(\d{6})_(\d{2})-(\d{2})$', experimentstr)
+            groups = match.groups()
 
-        experimentlist = [groups[0]+'_{:02d}'.format(i) \
-                for i in range(int(groups[1]), int(groups[2])+1)]
+            experimentlist = [groups[0]+'_{:02d}'.format(i) \
+                    for i in range(int(groups[1]), int(groups[2])+1)]
+        else:
+            assert re.match(r'^\d{6}_\d{2}$', experimentstr) is not None, \
+                'experimentstr input was not a valid YYMMDD_EE experiment name'
+            experimentlist = [experimentstr]
     else:
-        assert re.match(config['expstring']['single_experiment'], experimentstr) is not None, \
-            'experimentstr input was not a valid YYMMDD_EE experiment name'
-        experimentlist = [experimentstr]
+        experimentlist = [r'\d{6}_\d{2}']
 
     files = os.listdir(folder_path)
     if verbose:
         print("all matching found in folder '{0}':".format(folder_path))
 
-    exp = dict()
-    for key in config['filestrings']:
-        exp[key] = []
+    movies = []
+    meta = []
+    ica = []
+    processed = []
+    roi = []
+    dfof = []
+    body = []
+    oflow = []
+    videodata = []
 
     for experimentstr in experimentlist:
+
+        movies_unsorted = []
+
+        moviestr = experimentstr + r'(?:[@-](\d{4}))?\.tif'
+        metastr = experimentstr + r'_meta\.yaml'
+        icastr = experimentstr + r'_(.*)(ica|pca)\.hdf5'
+        processedstr = experimentstr + r'_(ica|pca)(.+)\.hdf5'
+        roistr = experimentstr + r'_roiset\.zip'
+        dfofstr = experimentstr + r'_(\d+x)_dfof\.mp4'
+        bodystr = experimentstr + r'_c(\d)-body_cam\.mp4'
+        oflowstr = experimentstr + r'_(\w+)OpticFlow\.hdf5'  ######
+        videodatastr = experimentstr + r'_videodata\.hdf5'
+
         for file in files:
             filepath = os.path.join(folder_path, file)
 
@@ -155,14 +185,39 @@ def experiment_sorter(folder_path, experimentstr, verbose=True):
                 if re.match(experimentstr, file):
                     print('\t', file)
 
+            if re.match(moviestr, file, re.IGNORECASE):
+                movies_unsorted.append(filepath)
+            elif re.match(metastr, file, re.IGNORECASE):
+                meta.append(filepath)
+            elif re.match(icastr, file, re.IGNORECASE):
+                ica.append(filepath)
+            elif re.match(processedstr, file, re.IGNORECASE):
+                processed.append(filepath)
+            elif re.match(roistr, file, re.IGNORECASE):
+                roi.append(filepath)
+            elif re.match(dfofstr, file, re.IGNORECASE):
+                dfof.append(filepath)
+            elif re.match(bodystr, file, re.IGNORECASE):
+                body.append(filepath)
+            elif re.match(oflowstr, file, re.IGNORECASE):
+                oflow.append(filepath)
+            elif re.match(videodatastr, file, re.IGNORECASE):
+                videodata.append(filepath)
 
-            for key in config['filestrings']:
-                if re.match(experimentstr + config['filestrings'][key], file, re.IGNORECASE):
-                    exp[key].append(filepath)
-                    continue
+        movies.extend(
+            movie_sorter(movies_unsorted, verbose=False)[experimentstr])
 
-        exp['movies'] = movie_sorter(exp['movies'], verbose=False)[experimentstr]
-
+    exp = {
+        'movies': movies,
+        'meta': meta,
+        'processed': processed,
+        'ica': ica,
+        'roi': roi,
+        'dfof': dfof,
+        'body': body,
+        'oflow': oflow,
+        'videodata': videodata
+    }
 
     if verbose:
         print('Matches:')
@@ -180,10 +235,10 @@ def sort_experiments(files, experimentstr=None, verbose=True):
         print('\nSorting Keys\n-----------------------')
 
     if experimentstr is not None:
-        assert re.match(config['expstring']['single_experiment'], experimentstr) is not None, \
+        assert re.match(r'\d{6}_\d{2}', experimentstr) is not None, \
             'experimentstr input was not a valid YYMMDD_EE experiment name'
     else:
-        experimentstr = config['expstring']['single_experiment']
+        experimentstr = r'(\d{6}_\d{2})'
 
     exps = {}
 
@@ -213,7 +268,7 @@ def get_exp_span_string(experiments):
         expspanstring = [get_basename(experiment) for experiment in experiments]
         return expspanstring[0]
     else:
-        experimentstr = config['expstring']['single_experiment']
+        experimentstr = r'(\d{6})_(\d{2})'
 
     explist = {}
 

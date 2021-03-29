@@ -166,7 +166,7 @@ def project(vector,
         eig_mix = ica.mixing_  # Get estimated mixing matrix
 
     print('components shape:', eig_vec.shape)
-
+    
     # sort components by their eig val influence (approximated by timecourse standard deviation)
     ev_sort = np.argsort(eig_mix.std(axis=0))
     eig_vec = eig_vec[:, ev_sort][:, ::-1]
