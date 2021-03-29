@@ -293,6 +293,9 @@ def run_gui(components, rotate=0, savepath=None, default_assignment=None):
             self.bind("<Down>",
                       lambda event: self.current_page.callback_manager(event))
 
+            # When window is closed, cancel and don't save results.
+            self.protocol('WM_DELETE_WINDOW', lambda: self.cancelcallback(toggle))
+
         # Methods for main app:
         def show_frame(self, cont):
             # selects frame, raises it

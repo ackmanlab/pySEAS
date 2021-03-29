@@ -286,7 +286,7 @@ class Experiment:
             f.save({
                 'noise_components': components['noise_components'],
                 'cutoff': components['cutoff'], 
-                'lag1': components['lag1']
+                'lag1': components['lag1'],
                 'mean_filtered': components['mean_filtered'],
                 'mean_filter_meta': components['mean_filter_meta'],
             })
