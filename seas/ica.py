@@ -63,9 +63,9 @@ def project(vector,
             u, ev, _ = linalg.svd(vector, full_matrices=False)
         except ValueError:
             # LAPACK error if matricies are too big
-            u, ev, _ = linalg.svd(
-                vector, full_matrices=False,
-                lapack_driver='gesvd')  
+            u, ev, _ = linalg.svd(vector,
+                                  full_matrices=False,
+                                  lapack_driver='gesvd')
 
         components['svd_eigval'] = ev
 
@@ -141,7 +141,6 @@ def project(vector,
         else:
             print('Less than 75% signal.  Not cropping excess noise.')
 
-
         components['noise_components'] = noise
         components['cutoff'] = cutoff
         t = timer() - t0
@@ -167,8 +166,8 @@ def project(vector,
         eig_mix = ica.mixing_  # Get estimated mixing matrix
 
     print('components shape:', eig_vec.shape)
-
-    # sort comopnents by their eig val influence (approximated by timecourse standard deviation)
+    
+    # sort components by their eig val influence (approximated by timecourse standard deviation)
     ev_sort = np.argsort(eig_mix.std(axis=0))
     eig_vec = eig_vec[:, ev_sort][:, ::-1]
     eig_mix = eig_mix[:, ev_sort][:, ::-1]
@@ -187,8 +186,8 @@ def project(vector,
         try:
             vector = vector.astype('float64')
             rebuilt = rebuild(components,
-                                  artifact_components='none',
-                                  vector=True).T
+                              artifact_components='none',
+                              vector=True).T
 
             rebuilt -= rebuilt.mean(axis=0)
             vector -= vector.mean(axis=0)
@@ -226,17 +225,17 @@ def project(vector,
 
 
 def rebuild(components,
-                artifact_components=None,
-                verbose=True,
-                filtermean=True,
-                filtermethod='wavelet',
-                returnmeta=False,
-                svd_vector=None,
-                low_cutoff=0.5,
-                t_start=None,
-                t_stop=None,
-                include_noise=True,
-                vector=False):
+            artifact_components=None,
+            verbose=True,
+            filtermean=True,
+            filtermethod='wavelet',
+            returnmeta=False,
+            svd_vector=None,
+            low_cutoff=0.5,
+            t_start=None,
+            t_stop=None,
+            include_noise=True,
+            vector=False):
     '''
     Rebuild original vector space based on a subset of principal 
     components of the data.  Eigenvectors to use are specified where 
@@ -369,6 +368,7 @@ def rebuild(components,
         print('Metadata saved.')
 
     return data_r
+
 
 def approximate_svd_linearity_transition(ev):
 
@@ -542,12 +542,19 @@ def remove_pixel_outliers(array, verbose=True, nstd=100):
     return array
 
 
-def filter_comparison(components, downsample=4, filterpath=None, filtered=None,
-    videopath=None, include_noise=True, t_start=None, t_stop=None, filtermean=True, n_rotations=0):
+def filter_comparison(components,
+                      downsample=4,
+                      filterpath=None,
+                      filtered=None,
+                      videopath=None,
+                      include_noise=True,
+                      t_start=None,
+                      t_stop=None,
+                      filtermean=True,
+                      n_rotations=0):
 
-    print('\n-----------------------',
-        '\nBuilding Filter Comparison Movies',
-        '\n-----------------------')
+    print('\n-----------------------', '\nBuilding Filter Comparison Movies',
+          '\n-----------------------')
 
     if filterpath is not None:
         g = h5(filterpath)
@@ -560,23 +567,31 @@ def filter_comparison(components, downsample=4, filterpath=None, filtered=None,
     elif (g is not None) and ('filtered' in g.keys()):
         filtered = g.load('filtered')
     else:
-        filtered = PCA_rebuild(components, returnmeta=True, 
-        include_noise=include_noise, t_start=t_start, t_stop=t_stop, 
-        filtermean=filtermean)
+        filtered = PCA_rebuild(components,
+                               returnmeta=True,
+                               include_noise=include_noise,
+                               t_start=t_start,
+                               t_stop=t_stop,
+                               filtermean=filtermean)
 
     if 'filter' in components.keys():
-        components['filter']['artifact_components'] = components['artifact_components']
+        components['filter']['artifact_components'] = components[
+            'artifact_components']
     else:
-        components['filter'] = {'artifact_components':components['artifact_components']}
+        components['filter'] = {
+            'artifact_components': components['artifact_components']
+        }
 
     if filterpath is not None:
         if 'filtered' not in g.keys():
-            g.save({'filtered':filtered.astype('float32'), 
-                'filter':components['filter']})
+            g.save({
+                'filtered': filtered.astype('float32'),
+                'filter': components['filter']
+            })
         if 'expmeta' in components.keys():
-            g.save({'expmeta':components['expmeta']})
+            g.save({'expmeta': components['expmeta']})
         if 'roimask' in components.keys():
-            g.save({'roimask':components['roimask']})
+            g.save({'roimask': components['roimask']})
     filtered = scale_video(filtered, downsample)
     filtered = rotate(filtered, n_rotations)
 
@@ -588,16 +603,22 @@ def filter_comparison(components, downsample=4, filterpath=None, filtered=None,
     if not include_noise:
         components['artifact_components'][np.where(
             components['noise_components'] == 1)] = 0
-    artifact_movie = rebuild(components, returnmeta=False, t_start=t_start, 
-        t_stop=t_stop)
+    artifact_movie = rebuild(components,
+                             returnmeta=False,
+                             t_start=t_start,
+                             t_stop=t_stop)
     print('rescaling video...')
     artifact_movie = scale_video(artifact_movie, downsample)
     artifact_movie = rotate(artifact_movie, n_rotations)
 
     print('\nOriginal Movie\n-----------------------')
-    components['artifact_components'] = np.zeros(components['artifact_components'].shape)
-    raw_movie = rebuild(components, returnmeta=False, t_start=t_start, 
-        t_stop=t_stop, filtermean=False)
+    components['artifact_components'] = np.zeros(
+        components['artifact_components'].shape)
+    raw_movie = rebuild(components,
+                        returnmeta=False,
+                        t_start=t_start,
+                        t_stop=t_stop,
+                        filtermean=False)
     print('rescaling video...')
     raw_movie = scale_video(raw_movie, downsample)
     raw_movie = rotate(raw_movie, n_rotations)
@@ -609,8 +630,7 @@ def filter_comparison(components, downsample=4, filterpath=None, filtered=None,
         overlay = (roimask == 0).astype('uint8')
         overlay = rotate(overlay, n_rotations)
 
-
-        overlay = scale_video(overlay[None,:,:], downsample)[0]
+        overlay = scale_video(overlay[None, :, :], downsample)[0]
         overlay = np.concatenate((overlay, overlay, overlay), axis=1)
 
     else:
@@ -620,8 +640,12 @@ def filter_comparison(components, downsample=4, filterpath=None, filtered=None,
     print('movies', movies.shape)
 
     if videopath is not None:
-        save(videopath, movies, resize_factor = 1/2, rescale=True, 
-            save_cbar=True, overlay=overlay)
+        save(videopath,
+             movies,
+             resize_factor=1 / 2,
+             rescale=True,
+             save_cbar=True,
+             overlay=overlay)
     else:
         movies = rescale(movies)
         play(movies, rescale=False)

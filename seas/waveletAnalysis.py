@@ -378,9 +378,9 @@ class waveletAnalysis:
         # different matplotlib versions available for python < 3.8.
         try:
             ax.set_yscale('log', base=2, subs=None)
-        except ValueError: 
+        except ValueError:
             ax.set_yscale('log', basey=2, subsy=None)
-        
+
         ax.set_ylim([np.min(self.period), np.max(self.period)])
         axy = ax.yaxis
         axy.set_major_formatter(matplotlib.ticker.ScalarFormatter())

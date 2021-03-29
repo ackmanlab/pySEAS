@@ -432,7 +432,9 @@ class hdf5manager:
                     print('\t\t\t', key, 'did not save')
                     print('\t\t\t', 'type:', type(data[key]).__name__)
 
-        self.print()
+        if verbose:
+            print('All info saved to hdf5 file:')
+            self.print()
 
         del self.f
         f.close()

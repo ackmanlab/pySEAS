@@ -84,7 +84,6 @@ def test_ica_decompose_without_rois_n_components():
 #     exp.define_mask_boundaries()
 #     exp.ica_filter()
 
-
 # def test_ica_decompose_without_rois_auto_components():
 #     exp = Experiment(pathlist=test_video_path)
 #     exp.ica_filter()
