@@ -37,12 +37,11 @@ if __name__ == '__main__':
                     nargs=1,
                     required=False,
                     help='alternate folder for storing output')
-    ap.add_argument(
-                    '--rois',
+    ap.add_argument('--rois',
                     type=argparse.FileType('r'),
                     nargs=1,
                     required=False,
-                    help='path to .zip file with .rois.')
+                    help='path to .zip file with rois.')
     ap.add_argument('-s',
                     '--save',
                     action='store_true',
