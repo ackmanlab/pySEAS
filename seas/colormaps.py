@@ -5,18 +5,115 @@ from matplotlib.colors import ListedColormap
 import warnings
 
 
-def get_mpl_colormap(cmap_name):
-    assert float(
-        cv2.__version__[:3]) > 3.3, 'OpenCV version {0} not compatible with \
-vector colormaps.\n\t(Must be > 3.3)'.format(cv2.__version__)
+def get_mpl_colormap(colormap_name):
+    '''
+    Convert a matplotlib colormap to a cv2-compatible colormap.
 
-    ## from: https://stackoverflow.com/questions/52498777/apply-matplotlib-or-custom-colormap-to-opencv-image
-    cmap = plt.get_cmap(cmap_name)
-    # Initialize the matplotlib color map
-    sm = plt.cm.ScalarMappable(cmap=cmap)
+    Arguments:
+        colormap_name: The name of the matplotlib colormap
+
+    Returns:
+        color_range: a 256x1x3 dimensional array holding the 8-bit color map representation compatible with opencv
+
+    Raises:
+        ValueError: if colormap_name was invalid
+    '''
+    # Initialize the matplotlib color map, convert to scalar mappable colormap
+    matplotlib_colormap = plt.get_cmap(colormap_name)
+    scalarmappable_colormap = plt.cm.ScalarMappable(cmap=matplotlib_colormap)
+
     # Obtain linear color range
-    color_range = sm.to_rgba(np.linspace(0, 1, 256), bytes=True)[:, 2::-1]
-    return color_range.reshape(256, 1, 3)
+    cv2_colormap = scalarmappable_colormap.to_rgba(np.linspace(0, 1, 256),
+                                                   bytes=True)[:, 2::-1]
+
+    return cv2_colormap.reshape(256, 1, 3)
+
+
+# Functions for colormap manipulation
+#------------------------------------
+
+
+def rescaled_to_dfof(rescaled_value, slope, array_min):
+    '''
+    Convert a value in 8-bit rescaled units (0-255) to a dfof value.
+
+    Arguments:
+        rescaled_value: The rescaled_value in rescaled units to convert
+        slope: The slope returned by video.rescale during the dfof to rescaled operation
+        array_min: The new minimum value returned by video.rescale during the dfof to rescaled operation
+
+    Returns:
+        dfof_value: The rescaled_value converted back to dfof by the scale and array_min parameters.
+    '''
+    return slope * (rescaled_value - array_min)
+
+
+def dfof_to_rescaled(dfof_value, slope, array_min):
+    '''
+    Convert a dfof value to 8-bit rescaled units (0-255).
+
+    Arguments:
+        dfof_value: The rescaled_value in dfof units to convert
+        slope: The slope returned by video.rescale during the dfof to rescaled operation
+        array_min: The new minimum value returned by video.rescale during the dfof to rescaled operation
+
+    Returns:
+        rescaled_value: The rescaled_value converted to rescaled units by the scale and array_min parameters.
+    '''
+    return dfof_value / slope + array_min
+
+
+def save_colorbar(scale, path, colormap='default'):
+    '''
+    Save a plt colorbar with a given scale to a specified path.  Accepts plt or cv2 colormap objects.
+
+    Arguments:
+        scale: The rescaled_value in dfof units to convert
+
+    Returns:
+        rescaled_value: The rescaled_value converted to rescaled units by the scale and array_min parameters.
+    '''
+
+
+    if colormap == 'default':
+        colormap = DEFAULT_COLORMAP
+
+    if np.allclose(colormap, DEFAULT_COLORMAP):
+        colormap = 'rainbow'
+    else:
+        colormap = ListedColormap(colormap.squeeze() / 256)
+
+    ticks = np.linspace(scale['min'], scale['max'], 5).round(4)
+    # print(ticks)
+
+    plt.figure(figsize=(1, 2))
+    plt.imshow([[0, 0], [0, 0]], cmap=colormap)
+
+    cb = plt.colorbar()
+    cb.ax.set_yticklabels(ticks)
+
+    plt.cla()
+    plt.axis('off')
+
+    plt.savefig(path, bbox_inches='tight')
+    plt.close()
+
+
+def apply_colormap(video, cmap='default'):
+
+    print('\nApplying Color Map to Movie\n-----------------------')
+
+    if colormap == 'default':
+        colormap = DEFAULT_COLORMAP
+
+    sz = video.shape
+    A2 = np.zeros((sz[0], sz[1], sz[2], 3),
+                  dtype='uint8')  #create extra 4th dim for color
+    for i in range(sz[0]):
+        cv2.applyColorMap(video[i, :, :].astype('uint8'), cmap, A2[i, :, :, :])
+
+    print('\n')
+    return A2
 
 
 # Get or set default parameters.
@@ -50,57 +147,3 @@ REGION_CM_COLORS = np.array([[123, 219, 148, 255], [255, 178, 240, 255],
                              [183, 200, 196, 255], [190, 237, 232, 255]]) / 255
 
 REGION_CM = ListedColormap(REGION_CM_COLORS)
-
-# Functions for colormap manipulation
-#------------------------------------
-
-
-def rescaletodfof(value, scale, amin):
-    return scale * (value - amin)
-
-
-def dfoftorescale(value, scale, amin):
-    return value / scale + amin
-
-
-def save_colorbar(scale, path, colormap='default'):
-
-    if colormap == 'default':
-        colormap = DEFAULT_COLORMAP
-
-    if np.allclose(colormap, DEFAULT_COLORMAP):
-        colormap = 'rainbow'
-    else:
-        colormap = ListedColormap(DEFAULT_COLORMAP.squeeze() / 256)
-
-    ticks = np.linspace(scale['min'], scale['max'], 5).round(4)
-    # print(ticks)
-
-    plt.figure(figsize=(1, 2))
-    plt.imshow([[0, 0], [0, 0]], cmap=colormap)
-
-    cb = plt.colorbar()
-    cb.ax.set_yticklabels(ticks)
-
-    plt.cla()
-    plt.axis('off')
-
-    plt.savefig(path, bbox_inches='tight')
-    plt.close()
-
-
-def apply_colormap(video, cmap='default'):
-
-    print('\nApplying Color Map to Movie\n-----------------------')
-
-    if colormap == 'default':
-        colormap = DEFAULT_COLORMAP
-
-    sz = video.shape
-    A2 = np.zeros((sz[0], sz[1], sz[2], 3),
-                  dtype='uint8')  #create extra 4th dim for color
-    for i in range(sz[0]):
-        cv2.applyColorMap(video[i, :, :].astype('uint8'), cmap, A2[i, :, :, :])
-
-    print('\n')
-    return A2

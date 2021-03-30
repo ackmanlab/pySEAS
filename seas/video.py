@@ -526,7 +526,7 @@ def dfof(A, win_size=None, win_type='box'):
     return A
 
 
-def rescale(A,
+def rescale(array,
             low=3,
             high=7,
             cap=True,
@@ -548,21 +548,21 @@ def rescale(A,
 
     # Mask the region if mask provided
     if mask is not None:
-        copy = A.copy()
-        A = get_masked_region(A, mask, maskval)
+        copy = array.copy()
+        array = get_masked_region(array, mask, maskval)
 
-    if np.isnan(A).any():
-        A[np.where(np.isnan(A))] = 0
+    if np.isnan(array).any():
+        array[np.where(np.isnan(array))] = 0
 
     # if unmasked color image, add extra temporary first dimension
-    if A.ndim == 3:
-        if A.shape[2] == 3:
-            A = A[None, :]
+    if array.ndim == 3:
+        if array.shape[2] == 3:
+            array = array[None, :]
 
     if min_max is None:
         if mean_std is None:
-            mean = np.nanmean(A, dtype=np.float64)
-            std = np.nanstd(A, dtype=np.float64)
+            mean = np.nanmean(array, dtype=np.float64)
+            std = np.nanstd(array, dtype=np.float64)
         else:
             mean = mean_std[0]
             std = mean_std[1]
@@ -582,44 +582,44 @@ def rescale(A,
 
     if cap:  # don't reduce dynamic range
         if verbose:
-            print('amin', np.nanmin(A))
-        if newMin < A.min():
-            newMin = A.min()
+            print('array min', np.nanmin(array))
+        if newMin < array.min():
+            newMin = array.min()
             if verbose:
-                print('amin scaled', newMin)
+                print('array min scaled', newMin)
 
         if verbose:
-            print('amax', np.nanmax(A))
-        if newMax > A.max():
-            newMax = A.max()
+            print('amax', np.nanmax(array))
+        if newMax > array.max():
+            newMax = array.max()
             if verbose:
                 print('amax scaled', newMax)
 
     newSlope = 255.0 / (newMax - newMin)
     if verbose:
         print('newSlope:', newSlope)
-    A = A - newMin
-    A = A * newSlope
+    array = array - newMin
+    array = array * newSlope
 
     if mask is not None:
-        A = insert_masked_region(copy, A, mask, maskval)
+        array = insert_masked_region(copy, A, mask, maskval)
 
-    A[np.where(A > 255)] = 255
-    A[np.where(A < 0)] = 0
+    array[np.where(array > 255)] = 255
+    array[np.where(array < 0)] = 0
 
-    if A.shape[0] == 1:  #if was converted to one higher dimension
-        A = A[0, :]
+    if array.shape[0] == 1:  #if was converted to one higher dimension
+        array = array[0, :]
 
     if verbose:
         print('\n')
 
     if not return_scale:
-        return A
+        return array
     else:
-        return A, {'scale': newSlope, 'min': newMin, 'max': newMax}
+        return array, {'scale': newSlope, 'min': newMin, 'max': newMax}
 
 
-def play(A,
+def play(array,
          textsavepath=None,
          min_max=None,
          preprocess=True,
@@ -630,7 +630,7 @@ def play(A,
          loop=True):
     '''
     play movie in opencv after normalizing display range
-    A is a numpy 3-dimensional movie
+    array is a numpy 3-dimensional movie
     newMinMax is an optional tuple of length 2, the new display range
 
     Note: if preprocess is set to true, the array normalization is done 
@@ -641,7 +641,7 @@ def play(A,
     if colormap == 'default':
         colormap = DEFAULT_COLORMAP
 
-    sz = A.shape
+    sz = array.shape
 
     def frameWrite(w, savepath=textsavepath):
         update = open(savepath, 'a', buffering=1)
@@ -662,8 +662,8 @@ def play(A,
         overlay = overlay.astype(np.uint8)
 
     print('\nPlaying Movie\n-----------------------')
-    assert (type(A) == np.ndarray), 'A was not a numpy array'
-    assert (A.ndim == 3) | (A.ndim == 4), ('A was not three or '
+    assert (type(array) == np.ndarray), 'array was not a numpy array'
+    assert (array.ndim == 3) | (array.ndim == 4), ('array was not three or '
                                            'four-dimensional array')
 
     windowname = "Press Esc to Close"
@@ -671,9 +671,9 @@ def play(A,
     print('preprocessing data...')
     #Create a resizable window
 
-    sz = A.shape
+    sz = array.shape
 
-    if A.ndim == 3:
+    if array.ndim == 3:
         if min_max == None:
             # if min/max aren't set, default to 3 and 7
             lowB = [3]
@@ -695,34 +695,34 @@ def play(A,
             print('Pre-processing movie rescaling...')
             #Normalize movie range and change to uint8 before display
             if toolbarsMinMax:
-                imgclone = A.copy()
+                imgclone = array.copy()
             t0 = timer()
-            A = np.reshape(A, (sz[0], int(A.size / sz[0])))
-            A = rescale(A, low=lowB[0], high=highB[0], mean_std=(mean, std))
+            array = np.reshape(array, (sz[0], int(array.size / sz[0])))
+            array = rescale(array, low=lowB[0], high=highB[0], mean_std=(mean, std))
 
-            A = np.reshape(A, sz)
-            A = A.astype('uint8', copy=False)
+            array = np.reshape(array, sz)
+            array = array.astype('uint8', copy=False)
             print("Movie range normalization: {0}".format(timer() - t0))
 
         if toolbarsMinMax:
 
-            def updateColormap(A):
+            def updateColormap(array):
                 lowB[0] = 0.5 * (8 -
                                  cv2.getTrackbarPos("Low Limit", windowname))
                 highB[0] = 0.5 * cv2.getTrackbarPos("High Limit", windowname)
 
                 if preprocess:
-                    A = imgclone.copy()
-                    A = rescale(A,
+                    array = imgclone.copy()
+                    array = rescale(array,
                                 low=lowB[0],
                                 high=highB[0],
                                 mean_std=(mean, std))
                 return
 
             cv2.createTrackbar("Low Limit", windowname, (-2 * lowB[0] + 8), 8,
-                               lambda e: updateColormap(A))
+                               lambda e: updateColormap(array))
             cv2.createTrackbar("High Limit", windowname, (2 * highB[0]), 16,
-                               lambda e: updateColormap(A))
+                               lambda e: updateColormap(array))
 
     i = 0
     toggleNext = True
@@ -734,7 +734,7 @@ def play(A,
     print('starting video playback..')
 
     while True:
-        im = np.copy(A[i])
+        im = np.copy(array[i])
         if zoom != 1:
             im = cv2.resize(im,
                             None,
