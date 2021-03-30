@@ -198,16 +198,14 @@ class Experiment:
 
             suffix = '_'.join(suffix_list)
 
-            savepath = os.path.join(output_folder,
-                self.name + '_' + suffix
-                )
+            savepath = os.path.join(output_folder, self.name + '_' + suffix)
             print('Saving ICA data to:', savepath)
         else:
             savepath = None
 
         if savedata:
             f = hdf5manager(savepath)
-            components = f.load() # should be empty if it didn't exist yet.
+            components = f.load()  # should be empty if it didn't exist yet.
         else:
             components = {}
 
@@ -273,7 +271,6 @@ class Experiment:
             components['noise_components'], components['cutoff'] = \
                 sort_noise(components['timecourses'])
 
-
         components['mean_filtered'] = filter_mean(components['mean'],
                                                   filtermethod=filtermethod,
                                                   low_cutoff=low_cutoff)
@@ -285,7 +282,7 @@ class Experiment:
         if savedata:
             f.save({
                 'noise_components': components['noise_components'],
-                'cutoff': components['cutoff'], 
+                'cutoff': components['cutoff'],
                 'lag1': components['lag1'],
                 'mean_filtered': components['mean_filtered'],
                 'mean_filter_meta': components['mean_filter_meta'],
