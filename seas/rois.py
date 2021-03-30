@@ -7,13 +7,16 @@ import cv2
 def get_masked_region(A, mask, maskval=None):
     '''
     Extract a spatially masked array where the mask == 1 or 
-    mask == maskval. 
+    mask == maskval. Reinsert masked region using insert_masked_region function.
     
-    Accepts (t,x,y) arrays or (x,y,c) arrays.
+    Arguments:
+        A: a (t,x,y) numpy array or an (x,y,c) numpy array
 
-    Returns the masked array in (t,xy) or (xy,c) format.
+    Returns:
+        M: the masked array in (t,xy) or (xy,c) format.
 
-    Reinsert masked region using insert_masked_region function.
+    Raises:
+        Exception: if (x,y) mask indices did not match the shape of the input array.
     '''
 
     if maskval == None:
