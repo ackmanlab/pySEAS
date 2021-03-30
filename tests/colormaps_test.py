@@ -69,8 +69,9 @@ def test_saving_colorbar_fails_txt_file():
 
 def test_apply_colormap():
 
-    test_shape = (3,10,10)
+    test_shape = (3, 10, 10)
     test_video = np.random.random(test_shape)
     colored_video = seas.colormaps.apply_colormap(test_video)
 
-    assert colored_video.shape == (test_shape[0], test_shape[1], test_shape[2], 3)
+    assert colored_video.shape == (test_shape[0], test_shape[1], test_shape[2],
+                                   3)

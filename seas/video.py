@@ -664,7 +664,7 @@ def play(array,
     print('\nPlaying Movie\n-----------------------')
     assert (type(array) == np.ndarray), 'array was not a numpy array'
     assert (array.ndim == 3) | (array.ndim == 4), ('array was not three or '
-                                           'four-dimensional array')
+                                                   'four-dimensional array')
 
     windowname = "Press Esc to Close"
     cv2.namedWindow(windowname, cv2.WINDOW_NORMAL)
@@ -698,7 +698,10 @@ def play(array,
                 imgclone = array.copy()
             t0 = timer()
             array = np.reshape(array, (sz[0], int(array.size / sz[0])))
-            array = rescale(array, low=lowB[0], high=highB[0], mean_std=(mean, std))
+            array = rescale(array,
+                            low=lowB[0],
+                            high=highB[0],
+                            mean_std=(mean, std))
 
             array = np.reshape(array, sz)
             array = array.astype('uint8', copy=False)
@@ -714,9 +717,9 @@ def play(array,
                 if preprocess:
                     array = imgclone.copy()
                     array = rescale(array,
-                                low=lowB[0],
-                                high=highB[0],
-                                mean_std=(mean, std))
+                                    low=lowB[0],
+                                    high=highB[0],
+                                    mean_std=(mean, std))
                 return
 
             cv2.createTrackbar("Low Limit", windowname, (-2 * lowB[0] + 8), 8,

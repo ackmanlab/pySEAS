@@ -1,3 +1,11 @@
+#!/usr/bin/env python3
+'''
+Functions for manipulating matploblib and cv2 colormaps, as well as some functions for converting between rescaled to dfof values.  On first import, loads defaults set by seas.defaults configuration into REGION_COLORMAP, DEFAULT_COLORMAP, and COMPONENT_COLORMAP.
+
+Authors: Sydney C. Weiser
+Date: 2020-03-28
+'''
+
 import cv2
 import numpy as np
 from matplotlib import pyplot as plt
@@ -91,7 +99,10 @@ def save_colorbar(scale, path, colormap='default'):
     ticks = np.linspace(scale['min'], scale['max'], 5).round(4)
 
     plt.figure(figsize=(1, 2))
-    plt.imshow([[0, 0], [0, 0]], vmin=scale['min'], vmax=scale['max'], cmap=colormap)
+    plt.imshow([[0, 0], [0, 0]],
+               vmin=scale['min'],
+               vmax=scale['max'],
+               cmap=colormap)
 
     cb = plt.colorbar()
     cb.set_ticks(ticks)
@@ -117,21 +128,20 @@ def apply_colormap(video, colormap='default'):
     Raises:
         AssertionError: The colormap was invalid.
     '''
-
-
     print('\nApplying Color Map to Movie\n-----------------------')
 
     if colormap == 'default':
         colormap = DEFAULT_COLORMAP
 
     assert type(colormap) is np.ndarray, 'Colormap was not cv2 compatible'
-    assert colormap.shape == (256,1,3), 'Colormap input was not understood'
+    assert colormap.shape == (256, 1, 3), 'Colormap input was not understood'
 
     sz = video.shape
     video_color = np.zeros((sz[0], sz[1], sz[2], 3),
-                  dtype='uint8')  #create extra 4th dim for color
+                           dtype='uint8')  #create extra 4th dim for color
     for i in range(sz[0]):
-        cv2.applyColorMap(video[i, :, :].astype('uint8'), colormap, video_color[i, :, :, :])
+        cv2.applyColorMap(video[i, :, :].astype('uint8'), colormap,
+                          video_color[i, :, :, :])
 
     return video_color
 
@@ -141,11 +151,11 @@ def apply_colormap(video, colormap='default'):
 DEFAULT_COLORMAP = get_mpl_colormap(config['colormap']['videos'])
 COMPONENT_COLORMAP = get_mpl_colormap(config['colormap']['components'])
 
-CUSTOM_PASTEL_LISTED_VALUES = np.array([[123, 219, 148, 255], [255, 178, 240, 255],
-                             [153, 85, 255, 255], [102, 191, 213, 255],
-                             [183, 200, 196, 255], [190, 237, 232, 255]]) / 255
+CUSTOM_PASTEL_LISTED_VALUES = np.array(
+    [[123, 219, 148, 255], [255, 178, 240, 255], [153, 85, 255, 255],
+     [102, 191, 213, 255], [183, 200, 196, 255], [190, 237, 232, 255]]) / 255
 
 if config['colormap']['regions'] == 'custom_pastel':
-    REGION_CM = ListedColormap(CUSTOM_PASTEL_LISTED_VALUES)
+    REGION_COLORMAP = ListedColormap(CUSTOM_PASTEL_LISTED_VALUES)
 else:
-    REGION_CM = get_mpl_colormap(config['colormap']['components'])
+    REGION_COLORMAP = get_mpl_colormap(config['colormap']['components'])

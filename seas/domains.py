@@ -1,29 +1,62 @@
+#!/usr/bin/env python3
+'''
+Functions for creating and manipulating domain maps, created from maximum projections of independent components detected from mesoscale calcium imaging videos. 
+
+Authors: Sydney C. Weiser
+Date: 2019-06-16
+'''
 import numpy as np
 import os
 import scipy.ndimage
 import cv2
 
 from seas.hdf5manager import hdf5manager
-from seas.colormaps import REGION_CM
 from seas.video import save, rescale, rotate
 from seas.ica import rebuild_mean_roi_timecourse, filter_mean
 from seas.rois import make_mask
-from seas.colormaps import DEFAULT_COLORMAP, save_colorbar
+from seas.colormaps import save_colorbar, REGION_COLORMAP, DEFAULT_COLORMAP
 
 
 def get_domain_map(components,
-                   cutoff=None,
                    blur=21,
-                   minratio=0.1,
-                   savepath=None,
-                   maponly=True,
+                   min_size_ratio=0.1,
+                   map_only=True,
                    filtermean=True,
                    max_loops=2,
                    ignore_small=True):
+    '''
+    Creates a domain map from extracted independent components.  A pixelwise maximum projection of the blurred signal components is taken through the n_components axis, to create a flattened representation of where a domain was maximally significant across the cortical surface.  Components with multiple noncontiguous significant regions are counted as two distinct domains.
 
-    # uses pixel assignment to domains for better coverage of the brain,
-    # and extracts timecourse ROI within each given region
+    Arguments:
+        components: 
+            The dictionary of components returned from seas.ica.project.  Domains are most interesting if artifacts has already been assigned through seas.gui.run_gui.
+        blur: 
+            An odd integer kernel Gaussian blur to run before segmenting.  Domains look smoother with larger blurs, but you can lose some smaller domains.
+        map_only:
+            If true, compute the map only, do not rebuild time courses under each domain.
+        min_size_ratio:
+            The minimum size ratio of the mean component size to allow for a component.  If a the size of a component is under (min_size_ratio x mean_domain_size), and the next most significant domain over the pixel would result in a larger size domain, this next domain is chosen.
+        max_loops:
+            The number of times to check if the next most significant domain would result in a larger domain size.  To entirely disable this, set max_loops to 0.
+        ignore_small:
+            If True, assign undersize domains that were not reassigned during max_loops to np.nan.
 
+    Returns:
+        output: a dictionary containing the results of the operation, containing the following keys
+            domain_blur:
+                The Gaussian blur value used when generating the map
+            component_assignment: 
+                A map showing the index of which *component* was maximally significant over a given pixel.  Here, 
+                This is in contrast to the domain map, where each domain is a unique integer.  
+            domain_ROIs: 
+                The computed np.array domain map (x,y).  Each domain is represented by a unique integer, and represents a discrete continuous unit.  Values that are masked, or where large enough domains were not detected are set to np.nan.
+
+        if not map_only, the following are also included in the output dictionary:
+            ROI_timecourses: 
+                The time courses rebuilt from the video under each ROI.  The frame mean is not included in this calculation, and must be re-added from mean_filtered.
+            mean_filtered: 
+                The frame mean, filtered by the default method.
+    '''
     print('\nExtracting Domain ROIs\n-----------------------')
     output = {}
     output['domain_blur'] = blur
@@ -96,7 +129,7 @@ def get_domain_map(components,
                         return_counts=True)
 
     meansize = size.mean()
-    minsize = meansize * minratio
+    minsize = meansize * min_size_ratio
 
     def replaceindex():
         if n_loops < max_loops:
@@ -117,7 +150,7 @@ def get_domain_map(components,
                 domain_ROIs[np.where(cc == n + 1)] = np.nan
 
     n_loops = 0
-    while n_loops <= max_loops:
+    while n_loops < max_loops:
         n_found = 0
         for i in np.arange(np.nanmax(domain_ROIs) + 1, dtype='uint16'):
             roi = np.zeros(domain_ROIs.shape, dtype='uint8')
@@ -185,7 +218,7 @@ def get_domain_map(components,
 
     output['domain_ROIs'] = domain_ROIs
 
-    if not maponly:
+    if not map_only:
         timecourseresults = get_domain_rebuilt_timecourses(
             domain_ROIs, components, filtermean=filtermean)
         for key in timecourseresults:

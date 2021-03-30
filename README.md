@@ -77,14 +77,14 @@ before committing, be sure to:
     make clean
 
 
-To generate function help from PEP257-formatted docstrings, run from the project root:
+To gather all modules and functions from the package, run from the project root:
 
     sphinx-apidoc -o docs seas
 
-this only has to be done once.  
-
+this only has to be done once.  For some reason it won't rerun once ./docs/seas.rst and ./docs/modules.rst are created, and keeps looking for files even if they were deleted.  Maybe there is a way to fix it, but I just deleted the extra module from modules.rst manually.
 
 Settings are all in docs/conf.py, including modifying the system path to see the seas module. 
 
 https://dev.to/dev0928/how-to-generate-professional-documentation-with-sphinx-4n78
 https://www.sphinx-doc.org/en/master/usage/quickstart.html
+https://stackoverflow.com/questions/2701998/sphinx-autodoc-is-not-automatic-enough

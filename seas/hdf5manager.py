@@ -4,18 +4,20 @@ Tools for standardized saving/loading a class or dictionary to a .hdf5 file.
 Strings are saved as attributes of the file; lists of strings are saved as tab 
 delimited strings; arrays are saved as datasets.  Dicts are saved as a new folder, 
 with data saved as numpy datasets.  Other objects are saved as pickle dumps.
+
 Useage:
-* listing objects in an hdf5 file:
-    f = hdf5manager(mypath)
-    f.print()
-* saving data to file:
-    f = hdf5manager(mypath)
-    f.save(mydict)
-  OR:
-    f.save(myClass)
-* loading data from file:
-    f = hdf5manager(mypath)
-    data = f.load()
+    * listing objects in an hdf5 file:
+        f = hdf5manager(mypath)
+        f.print()
+    * saving data to file:
+        f = hdf5manager(mypath)
+        f.save(mydict)
+      OR:
+        f.save(myClass)
+    * loading data from file:
+        f = hdf5manager(mypath)
+        data = f.load()
+        
 Authors: Sydney C. Weiser
 Date: 2017-01-13
 '''

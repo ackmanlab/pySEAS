@@ -20,13 +20,6 @@ seas.defaults module
    :undoc-members:
    :show-inheritance:
 
-seas.domain module
-------------------
-
-.. automodule:: seas.domain
-   :members:
-   :undoc-members:
-   :show-inheritance:
 
 seas.domains module
 -------------------

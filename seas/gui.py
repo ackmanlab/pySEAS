@@ -13,7 +13,7 @@ from matplotlib.figure import Figure
 from seas.signal import lag_n_autocorr, sort_noise, short_time_fourier_transform
 from seas.waveletAnalysis import waveletAnalysis
 from seas.hdf5manager import hdf5manager
-from seas.defaults import defaults
+from seas.defaults import config
 from seas.ica import rebuild_eigenbrain, remove_pixel_outliers
 from seas.domains import get_domain_map, domain_map, get_domain_edges
 

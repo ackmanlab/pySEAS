@@ -2,15 +2,6 @@
 '''
 Functions used for loading and finding files for brain analysis.
 
-Importing from python terminal/script:
-    - import fileManager as fm
-    - from fileManager import functionName
-
-If fileManager.py file not within folder of script to import in, 
-first add its containing folder to the python path with:
-    sys.path.append('/home/sydney/Lab/pyWholeBrain/')
-    from fileManager import *
-
 Authors: Sydney C. Weiser
 Date: 2017-07-28
 '''

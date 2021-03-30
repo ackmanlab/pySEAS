@@ -15,7 +15,9 @@ https://doi.org/10.1101/2020.12.30.424865
 Installation:
 ^^^^^^^^^^^^^
 
-    pip install seas
+.. code-block:: bash
+
+   pip install seas
 
 
 
