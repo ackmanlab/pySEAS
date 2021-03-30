@@ -13,7 +13,7 @@ from matplotlib.figure import Figure
 from seas.signal import lag_n_autocorr, sort_noise, short_time_fourier_transform
 from seas.waveletAnalysis import waveletAnalysis
 from seas.hdf5manager import hdf5manager
-from seas.defaults import load_defaults
+from seas.defaults import defaults
 from seas.ica import rebuild_eigenbrain, remove_pixel_outliers
 from seas.domains import get_domain_map, domain_map, get_domain_edges
 
@@ -137,8 +137,6 @@ def run_gui(components, rotate=0, savepath=None, default_assignment=None):
         maskind = np.where(roimask.flat == 1)
     else:
         maskind = None
-
-    config = load_defaults()
 
     region_cm = config['colormap']['domains']
     component_cmap = config['colormap']['components']

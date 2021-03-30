@@ -4,6 +4,8 @@ from matplotlib import pyplot as plt
 from matplotlib.colors import ListedColormap
 import warnings
 
+from seas.defaults import config
+
 
 def get_mpl_colormap(colormap_name):
     '''
@@ -68,29 +70,31 @@ def save_colorbar(scale, path, colormap='default'):
     Save a plt colorbar with a given scale to a specified path.  Accepts plt or cv2 colormap objects.
 
     Arguments:
-        scale: The rescaled_value in dfof units to convert
+        scale: The scale dictionary returned by rescale_movie.  Must have keys 'min' and 'max' providing the range of the rescale.
+        path: Where to save the file to. (supported formats: eps, jpeg, jpg, pdf, pgf, png, ps, raw, rgba, svg, svgz, tif, tiff)
+        colormap: Which colormap to save.  Should be a cv2 colormap object or name of a plt colormap.  If left as 'default', the default colormap will be loaded.  
 
     Returns:
-        rescaled_value: The rescaled_value converted to rescaled units by the scale and array_min parameters.
+        Nothing
+
+    Raises:
+        KeyError: The scale
+        ValueError: The path provided was not supported by plt figure outputs.
     '''
+    if type(colormap) is str:
+        if colormap == 'default':
+            colormap = DEFAULT_COLORMAP
 
-
-    if colormap == 'default':
-        colormap = DEFAULT_COLORMAP
-
-    if np.allclose(colormap, DEFAULT_COLORMAP):
-        colormap = 'rainbow'
-    else:
+    if type(colormap) is np.ndarray:
         colormap = ListedColormap(colormap.squeeze() / 256)
 
     ticks = np.linspace(scale['min'], scale['max'], 5).round(4)
-    # print(ticks)
 
     plt.figure(figsize=(1, 2))
-    plt.imshow([[0, 0], [0, 0]], cmap=colormap)
+    plt.imshow([[0, 0], [0, 0]], vmin=scale['min'], vmax=scale['max'], cmap=colormap)
 
     cb = plt.colorbar()
-    cb.ax.set_yticklabels(ticks)
+    cb.set_ticks(ticks)
 
     plt.cla()
     plt.axis('off')
@@ -99,51 +103,49 @@ def save_colorbar(scale, path, colormap='default'):
     plt.close()
 
 
-def apply_colormap(video, cmap='default'):
+def apply_colormap(video, colormap='default'):
+    '''
+    Save a plt colorbar with a given scale to a specified path.  Accepts plt or cv2 colormap objects.
+
+    Arguments:
+        video: The video to apply the colormap to.  Should be in format (t,x,y)
+        colormap: Which colormap to apply  Should be a cv2 colormap object.  If left as 'default', the default colormap will be loaded.  
+
+    Returns:
+        video_color: The video with colormap applied, in format (t,x,y,c)
+
+    Raises:
+        AssertionError: The colormap was invalid.
+    '''
+
 
     print('\nApplying Color Map to Movie\n-----------------------')
 
     if colormap == 'default':
         colormap = DEFAULT_COLORMAP
 
+    assert type(colormap) is np.ndarray, 'Colormap was not cv2 compatible'
+    assert colormap.shape == (256,1,3), 'Colormap input was not understood'
+
     sz = video.shape
-    A2 = np.zeros((sz[0], sz[1], sz[2], 3),
+    video_color = np.zeros((sz[0], sz[1], sz[2], 3),
                   dtype='uint8')  #create extra 4th dim for color
     for i in range(sz[0]):
-        cv2.applyColorMap(video[i, :, :].astype('uint8'), cmap, A2[i, :, :, :])
+        cv2.applyColorMap(video[i, :, :].astype('uint8'), colormap, video_color[i, :, :, :])
 
-    print('\n')
-    return A2
+    return video_color
 
 
 # Get or set default parameters.
 #------------------------------------
+DEFAULT_COLORMAP = get_mpl_colormap(config['colormap']['videos'])
+COMPONENT_COLORMAP = get_mpl_colormap(config['colormap']['components'])
 
-try:
-    DEFAULT_COLORMAP = get_mpl_colormap('rainbow')
-    COMPONENT_COLORMAP = get_mpl_colormap('coolwarm')
-
-except Exception as e:
-
-    message = '''Encountered error when converting mpl colormap.
-    Error: {0}'''.format(e)
-
-    warnings.warn(message)
-    warnings.warn(
-        'Reverting to similar cv2 colormaps, instead of mpl equivalents.')
-
-    DEFAULT_COLORMAP = cv2.COLORMAP_JET
-    COMPONENT_COLORMAP = cv2.COLORMAP_JET
-
-# colormap for assigning different brain regions to custom pastel cmap
-# motor
-# somatosensory
-# auditory
-# visual
-# retrosplenial
-# olfactory bulb
-REGION_CM_COLORS = np.array([[123, 219, 148, 255], [255, 178, 240, 255],
+CUSTOM_PASTEL_LISTED_VALUES = np.array([[123, 219, 148, 255], [255, 178, 240, 255],
                              [153, 85, 255, 255], [102, 191, 213, 255],
                              [183, 200, 196, 255], [190, 237, 232, 255]]) / 255
 
-REGION_CM = ListedColormap(REGION_CM_COLORS)
+if config['colormap']['regions'] == 'custom_pastel':
+    REGION_CM = ListedColormap(CUSTOM_PASTEL_LISTED_VALUES)
+else:
+    REGION_CM = get_mpl_colormap(config['colormap']['components'])

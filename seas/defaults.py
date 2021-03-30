@@ -8,6 +8,10 @@ Date: 2020-04-21
 
 import configparser
 import os
+import numpy
+
+
+
 
 
 def load_defaults(path=None):
@@ -26,9 +30,11 @@ def load_defaults(path=None):
         print('No Config file found.. resetting defaults to', path)
 
         config['colormap'] = {
+            'videos': 'rainbow',
             'domains': 'twilight_r',
             'components': 'coolwarm',
-            'correlation': 'RdGy_r'
+            'correlation': 'RdGy_r',
+            'regions': 'custom_pastel'
         }
 
         config['regions'] = {
@@ -80,8 +86,7 @@ def load_defaults(path=None):
         with open(path, 'w') as configfile:
             config.write(configfile)
 
-    except Exception as e:
-        print('Uncaught error!:')
-        print(e)
 
     return config
+
+config = load_defaults()
