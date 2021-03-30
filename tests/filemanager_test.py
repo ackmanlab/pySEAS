@@ -38,4 +38,3 @@ def test_experiment_sorter(mock_listdir):
 
     assert len(files['movies']) == 1
     assert len(files['roi']) == 1
-

@@ -1,7 +1,9 @@
 [colormap]
+videos = rainbow
 domains = twilight_r
 components = coolwarm
 correlation = RdGy_r
+regions = custom_pastel
 
 [regions]
 motor = 1
