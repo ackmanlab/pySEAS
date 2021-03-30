@@ -85,3 +85,6 @@ this only has to be done once.
 
 
 Settings are all in docs/conf.py, including modifying the system path to see the seas module. 
+
+https://dev.to/dev0928/how-to-generate-professional-documentation-with-sphinx-4n78
+https://www.sphinx-doc.org/en/master/usage/quickstart.html
