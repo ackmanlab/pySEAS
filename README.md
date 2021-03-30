@@ -63,5 +63,21 @@ This will launch a GUI that tells you your tk version.  Make sure it is >=8.6
 * explicitly return ica_project output to bash.
 
 
+# Developer Notes:
 
-<!--DA: Note that on my branch I erased the boto dependencies from the requirements.txt file -->
+Using sphinx docstring documentation.
+
+To load html docs locally:
+
+from docs, run:
+
+    make html
+
+before committing, be sure to:
+
+    make clean
+
+
+to generate function help from PEP257-formatted docstrings, run from the project root:
+
+    sphinx-apidoc -o docs seas
