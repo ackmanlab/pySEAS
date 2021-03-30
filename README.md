@@ -81,4 +81,7 @@ To generate function help from PEP257-formatted docstrings, run from the project
 
     sphinx-apidoc -o docs seas
 
-this only has to be done once.  Settings are all in docs/conf.py, including modifying the system path to see the seas module. 
+this only has to be done once.  
+
+
+Settings are all in docs/conf.py, including modifying the system path to see the seas module. 
