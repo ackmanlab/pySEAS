@@ -752,12 +752,15 @@ def rolling_mosaic_movie(domain_ROIs,
                          codec=None,
                          speed=1,
                          fps=10,
-                         cmap=DEFAULT_COLORMAP,
+                         cmap='default',
                          t_start=None,
                          t_stop=None,
                          n_rotations=0):
 
     print('\nWriting Rolling Mosiac Movie\n-----------------------')
+
+    if cmap == 'default':
+        cmap = DEFAULT_COLORMAP
 
     # Initialize Parameters
     resize_factor = 1 / resize_factor
@@ -847,9 +850,12 @@ def mosaic_movie(domain_ROIs,
                  t_start=None,
                  t_stop=None,
                  n_rotations=0,
-                 cmap=DEFAULT_COLORMAP):
+                 cmap='default'):
 
     print('\nRebuilding Mosiac Movie\n-----------------------')
+
+    if cmap == 'default':
+        cmap = DEFAULT_COLORMAP
 
     t, x, y = (ROI_timecourses.shape[1], domain_ROIs.shape[0],
                domain_ROIs.shape[1])
@@ -882,7 +888,7 @@ def mosaic_movie(domain_ROIs,
              rescale_range=True,
              save_cbar=True,
              overlay=overlay,
-             colormap=DEFAULT_COLORMAP)
+             colormap=cmap)
 
 
 # def makeRegionMap(region_components, domain_ROIs, roimask=None, shape=None):

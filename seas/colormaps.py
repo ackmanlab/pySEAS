@@ -63,7 +63,11 @@ def dfoftorescale(value, scale, amin):
     return value / scale + amin
 
 
-def save_colorbar(scale, path, colormap=DEFAULT_COLORMAP):
+def save_colorbar(scale, path, colormap='default'):
+
+    if colormap == 'default':
+        colormap = DEFAULT_COLORMAP
+
     if np.allclose(colormap, DEFAULT_COLORMAP):
         colormap = 'rainbow'
     else:
@@ -85,9 +89,12 @@ def save_colorbar(scale, path, colormap=DEFAULT_COLORMAP):
     plt.close()
 
 
-def apply_colormap(video, cmap=DEFAULT_COLORMAP):
+def apply_colormap(video, cmap='default'):
 
     print('\nApplying Color Map to Movie\n-----------------------')
+
+    if colormap == 'default':
+        colormap = DEFAULT_COLORMAP
 
     sz = video.shape
     A2 = np.zeros((sz[0], sz[1], sz[2], 3),

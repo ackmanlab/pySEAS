@@ -275,7 +275,7 @@ def save(array,
          resize_factor=1,
          apply_cmap=True,
          rescale_range=False,
-         colormap=DEFAULT_COLORMAP,
+         colormap='default',
          speed=1,
          fps=10,
          codec=None,
@@ -300,6 +300,9 @@ def save(array,
     print('\nSaving File\n-----------------------')
     assert (type(array) == np.ndarray), ('Movie to save was not a '
                                          'numpy array')
+
+    if colormap == 'default':
+        colormap = DEFAULT_COLORMAP
 
     if path.endswith('.tif') | path.endswith('.tiff'):
         print('Saving to: ' + path)
@@ -623,7 +626,7 @@ def play(A,
          overlay=None,
          toolbarsMinMax=False,
          rescale_movie=True,
-         cmap=DEFAULT_COLORMAP,
+         cmap='default',
          loop=True):
     '''
     play movie in opencv after normalizing display range
@@ -634,6 +637,10 @@ def play(A,
     in place, thus the array will be rescaled outside scope of 
     this function
     '''
+
+    if colormap == 'default':
+        colormap = DEFAULT_COLORMAP
+
     sz = A.shape
 
     def frameWrite(w, savepath=textsavepath):
