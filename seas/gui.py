@@ -57,7 +57,6 @@ def run_gui(components, rotate=0, savepath=None, default_assignment=None):
 
     # load all components from dict
     eig_vec = components['eig_vec']
-    eig_val = components['eig_val']
     if 'thresholds' in components.keys():
         thresholds = components['thresholds']
     roimask = components['roimask']
@@ -1504,13 +1503,14 @@ def run_gui(components, rotate=0, savepath=None, default_assignment=None):
                 f = self.fig
 
                 self.ax = f.add_subplot(131)
-                self.ax.plot(eig_val, '.r')
+                eig_std = components['timecourses'].std(axis=1)
+                self.ax.plot(eig_std, '.r')
                 print('cutoff:', cutoff)
                 self.ax.plot(
                     np.where(lag1[:n_components] > cutoff)[0],
-                    eig_val[np.where(lag1[:n_components] > cutoff)[0]], '.b')
+                    eig_std[np.where(lag1[:n_components] > cutoff)[0]], '.b')
                 self.ax.set_xlabel('Independent Component')
-                self.ax.set_ylabel('Timecourse Variance')
+                self.ax.set_ylabel('Timecourse Standard Deviation')
 
                 self.ax = f.add_subplot(132)
                 self.ax.set_ylim(-0.2, 1.2)

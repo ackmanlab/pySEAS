@@ -68,24 +68,12 @@ def test_ica_decompose_with_rois_n_components(mock_rois):
     exp = Experiment(pathlist=test_video_path)
     exp.load_rois('fake_roi_path')
     exp.define_mask_boundaries()
-    exp.ica_filter(n_components=10)
+    results = exp.ica_project(n_components=10)
 
+    assert 'eig_mix' in results
 
 def test_ica_decompose_without_rois_n_components():
     exp = Experiment(pathlist=test_video_path)
-    exp.ica_filter(n_components=10)
+    results = exp.ica_project(n_components=10)
 
-
-# @patch('seas.experiment.roi_loader', return_value=TEST_ROI_DICT)
-# @patch('seas.ica.approximate_svd_linearity_transition', return_value=5)
-# def test_ica_decompose_wit_rois_auto_components(mock_cutoff, mock_rois):
-#     exp = Experiment(pathlist=test_video_path)
-#     exp.load_rois('fake_roi_path')
-#     exp.define_mask_boundaries()
-#     exp.ica_filter()
-
-# def test_ica_decompose_without_rois_auto_components():
-#     exp = Experiment(pathlist=test_video_path)
-#     exp.ica_filter()
-
-# def test_ica_naming
+    assert 'eig_mix' in results

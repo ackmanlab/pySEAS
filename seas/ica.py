@@ -171,16 +171,13 @@ def project(vector,
     ev_sort = np.argsort(eig_mix.std(axis=0))
     eig_vec = eig_vec[:, ev_sort][:, ::-1]
     eig_mix = eig_mix[:, ev_sort][:, ::-1]
-    eig_val = eig_mix.std(axis=0)
 
     components['eig_mix'] = eig_mix
     components['timecourses'] = eig_mix.T
 
     n_components = eig_vec.shape[1]
     components['eig_vec'] = eig_vec
-    components['eig_val'] = eig_val
     components['n_components'] = n_components
-    components['time'] = t
 
     if calc_residuals:
         try:
@@ -210,15 +207,16 @@ def project(vector,
             print('Residual Calculation Failed!!')
             print('\t', e)
 
-    # Save information about how and when movie was filtered in dictionary
-    filtermeta = {}
-    filtermeta['date'] = \
+    # Save filter metadata information about how and when movie was filtered in dictionary
+    project_meta = {}
+    project_meta['time_elapsed'] = t
+    project_meta['date'] = \
         datetime.now().strftime('%Y%m%d')[2:]
     fmt = '%Y-%m-%dT%H:%M:%SZ'
-    filtermeta['tstmp'] = \
+    project_meta['tstmp'] = \
         datetime.now().strftime(fmt)
-    filtermeta['n_components'] = n_components
-    components['filter'] = filtermeta
+    project_meta['n_components'] = n_components
+    components['project_meta'] = project_meta
 
     print('\n')
     return components
@@ -228,7 +226,7 @@ def rebuild(components,
             artifact_components=None,
             verbose=True,
             filter_mean=True,
-            filtermethod='wavelet',
+            filter_method='wavelet',
             returnmeta=False,
             svd_vector=None,
             low_cutoff=0.5,
@@ -252,10 +250,10 @@ def rebuild(components,
     assert type(components) is dict, 'Components were not in format expected'
 
     eig_vec = components['eig_vec']
-    eig_val = components['eig_val']
     roimask = components['roimask']
     shape = components['shape']
     mean = components['mean']
+    n_components = components['n_components']
     dtype = np.float32
 
     t, x, y = shape
@@ -268,7 +266,7 @@ def rebuild(components,
         artifact_components = components['artifact_components']
     elif artifact_components == 'none':
         print('including all components')
-        artifact_components = np.zeros(eig_val.shape)
+        artifact_components = np.zeros(n_components)
     elif ((not include_noise) and ('noise_components' in components.keys())):
         print('Not rebuilding noise components')
         artifact_components += components['noise_components']
@@ -322,7 +320,7 @@ def rebuild(components,
                     eig_mix[t_start:t_stop, reconstruct_indices].T).T
 
     if filter_mean:
-        mean_filtered = filter_mean(mean, filtermethod, low_cutoff)
+        mean_filtered = filter_mean(mean, filter_method, low_cutoff)
         data_r += mean_filtered[t_start:t_stop, None]
 
     else:
@@ -358,7 +356,7 @@ def rebuild(components,
         rebuildmeta['n_components'] = n_components
         rebuildmeta['reconstruct_indices'] = reconstruct_indices
         rebuildmeta['filter_mean'] = filter_mean
-        rebuildmeta['filtermethod'] = filtermethod
+        rebuildmeta['filter_method'] = filter_method
         rebuildmeta['low_cutoff'] = low_cutoff
         rebuildmeta['include_noise'] = include_noise
         rebuildmeta['mean_filtered'] = mean_filtered
@@ -385,23 +383,23 @@ def approximate_svd_linearity_transition(ev):
     return cross_1
 
 
-def filter_mean(mean, filtermethod='wavelet', low_cutoff=0.5):
+def filter_mean(mean, filter_method='wavelet', low_cutoff=0.5):
 
     print('Highpass filter signal timecourse: ' + str(low_cutoff) + 'Hz')
-    print('Filter method:', filtermethod)
+    print('Filter method:', filter_method)
 
-    if filtermethod == 'butterworth':
+    if filter_method == 'butterworth':
         variance = mean.var()
         mean_filtered = butterworth(mean, low=low_cutoff)
         percent_variance = np.round(mean.var() / variance * 100)
         print(str(percent_variance) + '% variance retained')
 
-    elif filtermethod == 'wavelet':
+    elif filter_method == 'wavelet':
         wavelet = waveletAnalysis(mean.astype('float64'), fps=10)
         mean_filtered = wavelet.noiseFilter(upperPeriod=1 / low_cutoff)
 
     else:
-        raise Exception("Filter method '" + str(filtermethod)\
+        raise Exception("Filter method '" + str(filter_method)\
          + "' not supported!\n\t Supported methods: butterworth, wavelet")
 
     return mean_filtered

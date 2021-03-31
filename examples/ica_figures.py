@@ -217,7 +217,7 @@ if __name__ == '__main__':
         else:
             calc_dfof = False
 
-        components = exp.ica_filter(n_components=n_components,
+        components = exp.ica_project(n_components=n_components,
                                     calc_dfof=calc_dfof,
                                     suffix=suffix,
                                     svd_multiplier=svd_multiplier,

@@ -20,7 +20,6 @@ seas.defaults module
    :undoc-members:
    :show-inheritance:
 
-
 seas.domains module
 -------------------
 
@@ -77,10 +76,10 @@ seas.rois module
    :undoc-members:
    :show-inheritance:
 
-seas.signal module
-------------------
+seas.signalanalysis module
+--------------------------
 
-.. automodule:: seas.signal
+.. automodule:: seas.signalanalysis
    :members:
    :undoc-members:
    :show-inheritance:

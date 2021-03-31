@@ -22,12 +22,14 @@ Installation:
 
 
 Guide:
-^^^^^^
+======
 
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
 
+   ../modules.rst
+   ../seas.rst
 
 
 Indices and tables

@@ -78,7 +78,7 @@ To gather all modules and functions from the package, run from the project root:
 
     sphinx-apidoc -o docs seas
 
-this only has to be done once.  For some reason it won't rerun once ./docs/seas.rst and ./docs/modules.rst are created, and keeps looking for files even if they were deleted.  Maybe there is a way to fix it, but I just deleted the extra module from modules.rst manually.
+this only has to be done once.  If modules were changed, delete the old ./docs/seas.rst and ./docs/modules.rst, and rerun sphinx-apidoc.
 
 Settings are all in docs/conf.py, including modifying the system path to see the seas module. 
 
