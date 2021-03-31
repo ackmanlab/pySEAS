@@ -122,9 +122,9 @@ if __name__ == '__main__':
         save_avi = False
 
     if args['nomeanfilter']:
-        filtermean = False
+        filter_mean = False
     else:
-        filtermean = True
+        filter_mean = True
 
     if args['output_folder'] is not None:
         output_folder = args['output_folder'][0]
@@ -267,7 +267,7 @@ if __name__ == '__main__':
                               videopath=savepath,
                               downsample=downsample,
                               filterpath=filterpath,
-                              filtermean=filtermean,
+                              filter_mean=filter_mean,
                               include_noise=not args['filternoise'],
                               flip=flip)
 
@@ -337,7 +337,7 @@ if __name__ == '__main__':
                               include_noise=not args['filternoise'],
                               t_stop=tmax,
                               t_start=tmin,
-                              filtermean=filtermean,
+                              filter_mean=filter_mean,
                               flip=flip)
 
         if args['save_roi_overlay']:
@@ -356,7 +356,7 @@ if __name__ == '__main__':
                                    include_noise=not args['filternoise'],
                                    t_stop=tmax,
                                    t_start=tmin,
-                                   filtermean=filtermean)
+                                   filter_mean=filter_mean)
 
             domainROIs = f.load('domain_ROIs')
             edges = wb.cv2.Canny((domainROIs + 1).astype('uint8'), 1, 1)

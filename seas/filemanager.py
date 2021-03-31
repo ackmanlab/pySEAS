@@ -10,6 +10,7 @@ import re
 import sys
 import time
 from subprocess import call
+import yaml
 
 
 def find_files(folder_path,
@@ -288,3 +289,17 @@ def get_basename(path):
     name = re.sub(r'([@-])(\d){4}', '', name)  # remove @0001 from path
 
     return name
+
+
+def read_yaml(path):
+    '''
+    loads nested dictionaries from .yaml formated files
+    '''
+    meta = dict()
+    with open(path, 'r') as data:
+        try:
+            meta = yaml.load(data)
+        except yaml.YAMLError as exc:
+            print(exc)
+
+    return meta

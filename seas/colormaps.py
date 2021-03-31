@@ -20,10 +20,12 @@ def get_mpl_colormap(colormap_name):
     Convert a matplotlib colormap to a cv2-compatible colormap.
 
     Arguments:
-        colormap_name: The name of the matplotlib colormap
+        colormap_name: 
+            The name of the matplotlib colormap
 
     Returns:
-        color_range: a 256x1x3 dimensional array holding the 8-bit color map representation compatible with opencv
+        color_range: 
+            a 256x1x3 dimensional array holding the 8-bit color map representation compatible with opencv
 
     Raises:
         ValueError: if colormap_name was invalid
@@ -48,12 +50,16 @@ def rescaled_to_dfof(rescaled_value, slope, array_min):
     Convert a value in 8-bit rescaled units (0-255) to a dfof value.
 
     Arguments:
-        rescaled_value: The rescaled_value in rescaled units to convert
-        slope: The slope returned by video.rescale during the dfof to rescaled operation
-        array_min: The new minimum value returned by video.rescale during the dfof to rescaled operation
+        rescaled_value: 
+            The rescaled_value in rescaled units to convert
+        slope: 
+            The slope returned by video.rescale during the dfof to rescaled operation
+        array_min: 
+            The new minimum value returned by video.rescale during the dfof to rescaled operation
 
     Returns:
-        dfof_value: The rescaled_value converted back to dfof by the scale and array_min parameters.
+        dfof_value: 
+            The rescaled_value converted back to dfof by the scale and array_min parameters.
     '''
     return slope * (rescaled_value - array_min)
 
@@ -63,12 +69,16 @@ def dfof_to_rescaled(dfof_value, slope, array_min):
     Convert a dfof value to 8-bit rescaled units (0-255).
 
     Arguments:
-        dfof_value: The rescaled_value in dfof units to convert
-        slope: The slope returned by video.rescale during the dfof to rescaled operation
-        array_min: The new minimum value returned by video.rescale during the dfof to rescaled operation
+        dfof_value: 
+            The rescaled_value in dfof units to convert
+        slope: 
+            The slope returned by video.rescale during the dfof to rescaled operation
+        array_min: 
+            The new minimum value returned by video.rescale during the dfof to rescaled operation
 
     Returns:
-        rescaled_value: The rescaled_value converted to rescaled units by the scale and array_min parameters.
+        rescaled_value: 
+            The rescaled_value converted to rescaled units by the scale and array_min parameters.
     '''
     return dfof_value / slope + array_min
 
@@ -78,16 +88,21 @@ def save_colorbar(scale, path, colormap='default'):
     Save a plt colorbar with a given scale to a specified path.  Accepts plt or cv2 colormap objects.
 
     Arguments:
-        scale: The scale dictionary returned by rescale_movie.  Must have keys 'min' and 'max' providing the range of the rescale.
-        path: Where to save the file to. (supported formats: eps, jpeg, jpg, pdf, pgf, png, ps, raw, rgba, svg, svgz, tif, tiff)
-        colormap: Which colormap to save.  Should be a cv2 colormap object or name of a plt colormap.  If left as 'default', the default colormap will be loaded.  
+        scale: 
+            The scale dictionary returned by rescale_movie.  Must have keys 'min' and 'max' providing the range of the rescale.
+        path: 
+            Where to save the file to. (supported formats: eps, jpeg, jpg, pdf, pgf, png, ps, raw, rgba, svg, svgz, tif, tiff)
+        colormap: 
+            Which colormap to save.  Should be a cv2 colormap object or name of a plt colormap.  If left as 'default', the default colormap will be loaded.  
 
     Returns:
         Nothing
 
     Raises:
-        KeyError: The scale
-        ValueError: The path provided was not supported by plt figure outputs.
+        KeyError: 
+            The min and/or max keys were not in scale dictionary
+        ValueError: 
+            The path provided was not supported by plt figure outputs.
     '''
     if type(colormap) is str:
         if colormap == 'default':
@@ -119,11 +134,14 @@ def apply_colormap(video, colormap='default'):
     Save a plt colorbar with a given scale to a specified path.  Accepts plt or cv2 colormap objects.
 
     Arguments:
-        video: The video to apply the colormap to.  Should be in format (t,x,y)
-        colormap: Which colormap to apply  Should be a cv2 colormap object.  If left as 'default', the default colormap will be loaded.  
+        video: 
+            The video to apply the colormap to.  Should be in format (t,x,y)
+        colormap: 
+            Which colormap to apply  Should be a cv2 colormap object.  If left as 'default', the default colormap will be loaded.  
 
     Returns:
-        video_color: The video with colormap applied, in format (t,x,y,c)
+        video_color: 
+            The video with colormap applied, in format (t,x,y,c)
 
     Raises:
         AssertionError: The colormap was invalid.

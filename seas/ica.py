@@ -7,7 +7,7 @@ from scipy import linalg
 from timeit import default_timer as timer
 
 from seas.waveletAnalysis import waveletAnalysis
-from seas.signal import butterworth, sort_noise, lag_n_autocorr
+from seas.signalanalysis import butterworth, sort_noise, lag_n_autocorr
 from seas.hdf5manager import hdf5manager
 from seas.video import rotate, save, rescale, play
 
@@ -227,7 +227,7 @@ def project(vector,
 def rebuild(components,
             artifact_components=None,
             verbose=True,
-            filtermean=True,
+            filter_mean=True,
             filtermethod='wavelet',
             returnmeta=False,
             svd_vector=None,
@@ -321,7 +321,7 @@ def rebuild(components,
     data_r = np.dot(eig_vec[:, reconstruct_indices],
                     eig_mix[t_start:t_stop, reconstruct_indices].T).T
 
-    if filtermean:
+    if filter_mean:
         mean_filtered = filter_mean(mean, filtermethod, low_cutoff)
         data_r += mean_filtered[t_start:t_stop, None]
 
@@ -357,7 +357,7 @@ def rebuild(components,
         rebuildmeta['tstmp'] = datetime.now().strftime(fmt)
         rebuildmeta['n_components'] = n_components
         rebuildmeta['reconstruct_indices'] = reconstruct_indices
-        rebuildmeta['filtermean'] = filtermean
+        rebuildmeta['filter_mean'] = filter_mean
         rebuildmeta['filtermethod'] = filtermethod
         rebuildmeta['low_cutoff'] = low_cutoff
         rebuildmeta['include_noise'] = include_noise
@@ -550,7 +550,7 @@ def filter_comparison(components,
                       include_noise=True,
                       t_start=None,
                       t_stop=None,
-                      filtermean=True,
+                      filter_mean=True,
                       n_rotations=0):
 
     print('\n-----------------------', '\nBuilding Filter Comparison Movies',
@@ -572,7 +572,7 @@ def filter_comparison(components,
                                include_noise=include_noise,
                                t_start=t_start,
                                t_stop=t_stop,
-                               filtermean=filtermean)
+                               filter_mean=filter_mean)
 
     if 'filter' in components.keys():
         components['filter']['artifact_components'] = components[
@@ -618,7 +618,7 @@ def filter_comparison(components,
                         returnmeta=False,
                         t_start=t_start,
                         t_stop=t_stop,
-                        filtermean=False)
+                        filter_mean=False)
     print('rescaling video...')
     raw_movie = scale_video(raw_movie, downsample)
     raw_movie = rotate(raw_movie, n_rotations)

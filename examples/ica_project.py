@@ -37,8 +37,7 @@ if __name__ == '__main__':
                     nargs=1,
                     required=False,
                     help='alternate folder for storing output')
-    ap.add_argument(
-                    '--rois',
+    ap.add_argument('--rois',
                     type=argparse.FileType('r'),
                     nargs=1,
                     required=False,
@@ -187,9 +186,9 @@ if __name__ == '__main__':
         save_avi = False
 
     if args['nomeanfilter']:
-        filtermean = False
+        filter_mean = False
     else:
-        filtermean = True
+        filter_mean = True
 
     if args['output_folder'] is not None:
         output_folder = args['output_folder'][0]
@@ -212,7 +211,6 @@ if __name__ == '__main__':
 
         print('Loading videos files and running ICA projection.')
         print('If there is a matching _ica.hdf5 file, ', 'it will be loaded.\n')
-
 
         if args['downsample'] is not None:
             downsample = args['downsample'][0]
@@ -328,6 +326,6 @@ if __name__ == '__main__':
                               videopath=savepath,
                               downsample=downsample,
                               filterpath=filterpath,
-                              filtermean=filtermean,
+                              filter_mean=filter_mean,
                               include_noise=not args['filternoise'],
                               flip=flip)

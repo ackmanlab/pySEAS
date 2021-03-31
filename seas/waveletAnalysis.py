@@ -10,7 +10,7 @@ import math
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 from matplotlib.gridspec import GridSpec
 from datetime import datetime
-from seas.signal import local_max, linear_regression, abline, gaussian_smooth_2d, lag_n_autocorr
+from seas.signalanalysis import local_max, linear_regression, abline, gaussian_smooth_2d, lag_n_autocorr
 #sys.path.insert(0, '/home/mike/Dropbox/0_firebird_research/microburst_characterization/')
 #from src import remove_dropouts
 import operator

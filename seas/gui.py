@@ -10,7 +10,7 @@ matplotlib.use("TkAgg")
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
 
-from seas.signal import lag_n_autocorr, sort_noise, short_time_fourier_transform
+from seas.signalanalysis import lag_n_autocorr, sort_noise, short_time_fourier_transform
 from seas.waveletAnalysis import waveletAnalysis
 from seas.hdf5manager import hdf5manager
 from seas.defaults import config
@@ -1322,7 +1322,7 @@ def run_gui(components, rotate=0, savepath=None, default_assignment=None):
                     print('n domains',
                           np.unique(domain_ROIs[~np.isnan(domain_ROIs)]).size)
                     self.edges = get_domain_edges(
-                        domain_ROIs, linepad=5, clearbg=True).astype('float64')
+                        domain_ROIs, linepad=5, clear_bg=True).astype('float64')
                     self.dmap = domain_map(domain_ROIs,
                                            values=region_assignment)
                     self.loaded = True

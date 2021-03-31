@@ -7,7 +7,7 @@ sys.path.append(parent_dir)
 from seas.domains import get_domain_map, domain_map, \
     rolling_mosaic_movie, mosaic_movie, get_domain_edges, save_domain_map
 from seas.hdf5manager import hdf5manager
-from seas.defaults import load_defaults
+from seas.defaults import config
 
 import argparse
 import time
@@ -86,16 +86,9 @@ if ('domain_ROIs' not in f.keys()) or args['force']:
                   'flag due to force option')
 
     components = f.load([
-        'eig_vec', 'artifact_components', 'cutoff', 'expmeta', 'roimask',
-        'shape', 'n_components', 'eig_mix', 'noise_components', 'mean'
+        'eig_vec', 'artifact_components', 'expmeta', 'roimask', 'shape',
+        'n_components', 'eig_mix', 'noise_components', 'mean'
     ])
-
-    if 'cutoff' in components.keys():
-        cutoff = components['cutoff']
-        print('found cutoff:', cutoff, '\n')
-    else:
-        print('cutoff not found.. using all components')
-        cutoff = components['n_components']
 
     if args['blur'] is not None:
         blur = args['blur']
@@ -104,9 +97,8 @@ if ('domain_ROIs' not in f.keys()) or args['force']:
 
     output = get_domain_map(
         components,
-        cutoff=cutoff,
         # savepath=savepath + 'domainROIs.png',
-        maponly=args['maponly'],
+        map_only=args['maponly'],
         blur=blur)
 
     f.save(output)
@@ -159,8 +151,8 @@ if args['mapcomparison'] is not None:
         print(e)
 
     components = f.load([
-        'eig_vec', 'artifact_components', 'cutoff', 'expmeta', 'roimask',
-        'shape', 'n_components', 'eig_mix', 'noise_components', 'mean'
+        'eig_vec', 'artifact_components', 'expmeta', 'roimask', 'shape',
+        'n_components', 'eig_mix', 'noise_components', 'mean'
     ])
     output = get_domain_rebuilt_timecourses(alternate_ROIs, components)
     output['alternate_ROIs'] = alternate_ROIs
@@ -197,8 +189,6 @@ if args['figures']:
         region_assignment = f.load('region_assignment')
         from convertcmap import region_cm, region_cm_colors, get_mpl_colormap
         # region_cm_colors = (region_cm_colors * 255)
-
-        config = load_defaults()
 
         # region_cm_colors = get_mpl_colormap(config['colormap']['domains'])
         # region_cm_colors = np.squeeze(region_cm_colors)

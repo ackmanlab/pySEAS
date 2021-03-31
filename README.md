@@ -37,20 +37,15 @@ If you experience problems with the GUI, check your tk version with the followin
     python -m tkinter
 This will launch a GUI that tells you your tk version.  Make sure it is >=8.6
 
+# Examples:
+
+    python ica_project.py -f /home/sydney/Lab/testfiles/ -e 200220_01 -d 10 -r 1 -rr 2
+    python ica_project.py -f /home/sydney/Lab/testfiles/ -e 170721_02 -d 10 -r 3
+
 
 # TODO:
 
 ---
-
-* fix rotate with better implementation of np.rot90, using axes key.
-
-* fix the following warning:
-
-    Saving Colorbar to:/home/sydney/Lab/testfiles/200220_01_ica_mosaic_movie_colorbar.pdf
-    ../seas/colormaps.py:79: UserWarning: FixedFormatter should only be used together with FixedLocator
-      cb.ax.set_yticklabels(ticks)
-
-* fix rotation issue in experiment
 
 * clean up ROIs and other things in exp
 
@@ -59,6 +54,8 @@ This will launch a GUI that tells you your tk version.  Make sure it is >=8.6
 * documentation
 
 * clean up and unify script parameters
+
+* better error than KeyError when experiment string was invalid.
 
 * explicitly return ica_project output to bash.
 

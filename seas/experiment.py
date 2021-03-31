@@ -6,24 +6,64 @@ from seas.filemanager import sort_experiments, get_exp_span_string
 from seas.rois import roi_loader, make_mask, get_masked_region, insert_masked_region, draw_bounding_box
 from seas.hdf5manager import hdf5manager
 from seas.ica import project, filter_mean
-from seas.signal import sort_noise, lag_n_autocorr
+from seas.signalanalysis import sort_noise, lag_n_autocorr
 from seas.waveletAnalysis import waveletAnalysis
 
 
 class Experiment:
     '''
-    Define the Experiment class.  Must be a (t,x,y) 3 dimensinal video 
-    (no color!)
+    A class to store mesoscale calcium imaging experiment information and provide functions used for common experiment and video manipulations.
+
+    Attributes:
+        
+
+    Functions:
+        load_rois:
+        load_meta:
+        rotate: 
+
+        define_mask_boundaries:
+        draw_bounding_box: 
+        
+        bound_mask:
+        bound_movie:
+        masked_movie:
+
+        ica_filter:
+
+    Initialization Arguments:
+        pathlist: 
+            The list of paths to load raw video data from, in order.  To sort, use seas.filemanager functions.
+        downsample: 
+            An integer factor to spatially downsample frames with.  Implements an integer averaging spatial downsample where downsample x downsample pixels are reduced to 1.
+        downsample_t: 
+            An integer factor to spatially downsample frames with.  Takes the mean between sets of downsample_t frames.
+        n_rotations: 
+            The number of ccw rotations to rotate the video.
+        rotate_rois_with_video: 
+            If true, rotate all loaded rois by n_rotations as well.
+
     '''
 
     def __init__(self,
                  pathlist,
-                 loadraw=False,
                  downsample=False,
                  downsample_t=False,
                  n_rotations=0,
-                 rotate_rois=False):
-
+                 rotate_rois_with_video=False):
+        '''
+        Arguments:
+        pathlist: 
+            The list of paths to load raw video data from, in order.  To sort, use seas.filemanager functions.
+        downsample: 
+            An integer factor to spatially downsample frames with.  Implements an integer averaging spatial downsample where downsample x downsample pixels are reduced to 1.
+        downsample_t: 
+            An integer factor to spatially downsample frames with.  Takes the mean between sets of downsample_t frames.
+        n_rotations: 
+            The number of ccw rotations to rotate the video.
+        rotate_rois_with_video: 
+            If true, rotate all loaded rois by n_rotations as well.  This parameter overrides roi rotations set by load_rois.
+        '''
         print('\nInitializing Experiment\n-----------------------')
         if isinstance(pathlist, str):
             pathlist = [pathlist]
@@ -42,6 +82,7 @@ class Experiment:
         self.movie = movie
         self.path = pathlist
         self.n_rotations = n_rotations
+        self.rotate_rois_with_video = rotate_rois_with_video
 
         # define default bounding box as full size video
         self.bounding_box = np.array([[0, self.movie.shape[1]],
@@ -70,7 +111,11 @@ class Experiment:
 
     def load_rois(self, path, n_roi_rotations=0):
 
+        if self.rotate_rois_with_video:
+            n_roi_rotations = self.n_rotations
+
         rois = roi_loader(path)
+        self.n_roi_rotations = n_roi_rotations
 
         # Store in class file
         print(len(rois), 'ROIs found')
