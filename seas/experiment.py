@@ -16,20 +16,54 @@ class Experiment:
     Includes functionality for loading and rotating videos, cropping to a specific region of interest (defined by user input and/or roi files, loading and storing yaml metadata, etc.)
 
     Attributes:
-        
+        downsample: 
+            The spatial downsampling factor
+        downsample_t:
+            The temporal downsampling factor
+        movie:
+            The loaded raw movie file 
+        path:
+            The pathlist of loaded videos
+        n_rotations:
+            The number of times the video was rotated
+        rotate_rois_with_video:
+            Whether rois are rotated with the video or not
+        bounding_box:
+            The bounding coordinates selected for the content of interest from the video file
+        shape:
+            The video shape
+        name:
+            The detected name of the experiment from the input files
+        dir:
+            The directory the video files reside in
+
+    The following attributes are also available if rois are loaded:        
+        n_roi_rotations:
+            The number of times the rois were rotated
+        rois:
+            The roi dictionary loaded from FIJI RoiSet.zip file
+        roimask:
+            A binary masked array denoting where the movie should be masked
+        meta:
+            The experiment metadata loaded from a yaml file
 
     Functions:
-        load_rois:
+        load_rois: 
+            Load rois from a FIJI RoiSet.zip file
         load_meta:
+            Load metadata from a yaml file
         rotate: 
-
+            Rotate the video CCW, adjust mask and bounding box accordingly
         define_mask_boundaries:
+            Auto detect the mask boundaries from the loaded roimask
         draw_bounding_box: 
-        
+            Launch a GUI to draw a bounding box to crop the movie
         bound_mask:
+            Returns the mask bound to the bounding box
         bound_movie:
-
+            Returns the movie bound to the bounding box
         ica_project:
+            Perform an ICA projection to the movie
 
     Initialization Arguments:
         pathlist: 
@@ -220,16 +254,16 @@ class Experiment:
             return None
 
     def ica_project(self,
-                   movie=None,
-                   savedata=True,
-                   calc_dfof=True,
-                   del_movie=True,
-                   n_components=None,
-                   svd_multiplier=None,
-                   suffix='',
-                   output_folder=None,
-                   mean_filter_method='wavelet',
-                   low_cutoff=0.5):
+                    movie=None,
+                    savedata=True,
+                    calc_dfof=True,
+                    del_movie=True,
+                    n_components=None,
+                    svd_multiplier=None,
+                    suffix='',
+                    output_folder=None,
+                    mean_filter_method='wavelet',
+                    low_cutoff=0.5):
         '''
         Apply an ica decomposition to the experiment.  If rois and/or a bounding box have been defined, these will be used to crop the movie before filtration.
 
@@ -398,9 +432,10 @@ class Experiment:
             components['noise_components'], components['cutoff'] = \
                 sort_noise(components['timecourses'])
 
-        components['mean_filtered'] = filter_mean(components['mean'],
-                                                  filter_method=mean_filter_method,
-                                                  low_cutoff=low_cutoff)
+        components['mean_filtered'] = filter_mean(
+            components['mean'],
+            filter_method=mean_filter_method,
+            low_cutoff=low_cutoff)
         components['mean_filter_meta'] = {
             'mean_filter_method': mean_filter_method,
             'low_cutoff': low_cutoff
