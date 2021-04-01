@@ -2,6 +2,8 @@
 
 python Signal Extraction and Segmentation
 
+See readme files in examples for basic usage.
+
 ---
 
 # Installation Notes
@@ -20,8 +22,7 @@ Manually install all dependencies with:
 
     pip install -r requirements.txt
 
-Note the system site packages flag.  This allows the venv installation to access your systemwide tk installation.
-
+Right now the dependencies are the latest versions of all packages.  I'm planning on lowering some requirements once they're tested.
 
 ## Tkinter
 
@@ -36,6 +37,10 @@ Debian-based linux:
 If you experience problems with the GUI, check your tk version with the following terminal command:
     python -m tkinter
 This will launch a GUI that tells you your tk version.  Make sure it is >=8.6
+
+# Tests:
+
+Run tests locally by running `pytest` from root or ./tests folder.
 
 # Examples:
 
@@ -61,13 +66,17 @@ This will launch a GUI that tells you your tk version.  Make sure it is >=8.6
 
 # Developer Notes:
 
+## Documentation
+
 Using sphinx docstring documentation.
 
 To load html docs locally:
 
-from docs, run:
+from ./docs, run:
 
     make html
+
+this will generate a bunch of html files in ./docs/\_build/html.  Open up index.html in your favorite browser to view.
 
 before committing, be sure to:
 
@@ -78,7 +87,7 @@ To gather all modules and functions from the package, run from the project root:
 
     sphinx-apidoc -o docs seas
 
-this only has to be done once.  If modules were changed, delete the old ./docs/seas.rst and ./docs/modules.rst, and rerun sphinx-apidoc.
+this only has to be done once (and has already been done).  If modules were changed, delete the old ./docs/seas.rst and ./docs/modules.rst, and rerun sphinx-apidoc.
 
 Settings are all in docs/conf.py, including modifying the system path to see the seas module. 
 
@@ -87,7 +96,7 @@ https://www.sphinx-doc.org/en/master/usage/quickstart.html
 https://stackoverflow.com/questions/2701998/sphinx-autodoc-is-not-automatic-enough
 
 
-## Making the python package
+## Making and locally installing the python package
 
 to test and install the python package locally
 
