@@ -416,7 +416,7 @@ def approximate_svd_linearity_transition(eig_val):
             The estimate of the SVD noise floor cutoff
     '''
     eig_val -= eig_val.min()
-    eig_val = eig_val / ev.sum()
+    eig_val = eig_val / eig_val.sum()
     eig_val_integrated = np.cumsum(eig_val)
     x = np.arange(eig_val.size)
 
