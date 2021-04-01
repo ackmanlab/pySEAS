@@ -12,12 +12,11 @@ def get_masked_region(A, mask, maskval=None):
     
     Arguments:
         A: a (t,x,y) numpy array or an (x,y,c) numpy array
+        mask: A binarized masked array  
 
     Returns:
         M: the masked array in (t,xy) or (xy,c) format.
 
-    Raises:
-        Exception: if (x,y) mask indices did not match the shape of the input array.
     '''
 
     if maskval == None:
@@ -46,9 +45,16 @@ def insert_masked_region(A, M, mask, maskval=1):
     Accepts (t,x,y) arrays or (x,y,c) arrays, returns them in the 
     same format.
 
-    dfjnfdjsbf
+    Arguments:
+        A: a (t,x,y) numpy array or an (x,y,c) numpy array
+        M: masked array in (t,xy) or (xy,c) format
+        mask: A binarized mask array 
 
-    
+    Returns:
+        A: array in (t,xy) or (xy,c) format.
+
+    Raises:
+        Exception: if the mask indices do not match the necessary dimensions.
     '''
     maskind = np.where(mask == maskval)
 
@@ -150,6 +156,14 @@ def make_mask(polylist, shape, bounding_box=None):
     
     Polylist is a list of numpy arrays, each representing a 
     closed polygon to draw.
+
+
+    Arguments:
+        polylist: a list of numpy arrays, each representing a closed polygon to draw.
+        shape: a 2 dimensional array
+
+    Returns:
+        roimask: generated binarized mask 
     '''
     assert (len(shape) == 2), 'Shape was not 2D'
 
@@ -167,6 +181,13 @@ def draw_bounding_box(image, required=True):
     Draw a bounding box on a two dimensional image.  
     Image should already be scaled to 0-255 in uint8.
     Returns a ROI bounding box with shape [[x0,x1],[y0,y1]]
+
+    Arguments:
+        image: [dimensions] array that is scaled 0-255 and in uint8
+
+    Returns:
+        ref_coord: roi bounding box with shape [[x0,x1],[y0,y1]]
+
     '''
     print('\nDrawing Bounding Box\n-----------------------')
 
@@ -185,6 +206,13 @@ def draw_bounding_box(image, required=True):
     zfactor = 5 / 4
 
     def click_and_crop(event, x, y, flags, param):
+
+    	'''
+		
+		This seems to be a function for the GUI or something
+		I don't know if this is a function useful for the user 
+
+    	'''
         global refPt, cropping
         # if the left mouse button was clicked, record the starting
         # (x, y) coordinates and indicate that cropping is being
