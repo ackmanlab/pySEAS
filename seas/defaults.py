@@ -187,7 +187,7 @@ def load_config(path=None):
         path = os.path.join(folder, 'config.txt')
 
     try:
-        print('Loaded defaults from config file:', path)
+        # print('Loaded defaults from config file:', path)
         with open(path, 'r') as configfile:
             config.read(path)
 

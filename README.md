@@ -85,3 +85,18 @@ Settings are all in docs/conf.py, including modifying the system path to see the
 https://dev.to/dev0928/how-to-generate-professional-documentation-with-sphinx-4n78
 https://www.sphinx-doc.org/en/master/usage/quickstart.html
 https://stackoverflow.com/questions/2701998/sphinx-autodoc-is-not-automatic-enough
+
+
+## Making the python package
+
+to test and install the python package locally
+
+from the root dir:
+
+generate package formatting:
+
+    python setup.py sdist bdist_wheel
+
+install it to environment
+
+    pip install -e .

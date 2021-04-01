@@ -6,9 +6,6 @@ import numpy as np
 import os
 
 import seas
-from seas.experiment import Experiment
-from seas.video import save
-import seas.ica
 
 # create a temporary folder for test files
 TEMP_FOLDER_HANDLE = tempfile.TemporaryDirectory()
@@ -20,7 +17,7 @@ test_video = (test_video * 255).astype('uint8')
 
 # save a test file to load as an experiment
 test_video_path = os.path.join(TEMP_FOLDER, '123456_78.tiff')
-save(test_video, test_video_path)
+seas.video.save(test_video, test_video_path)
 
 TEST_ROI_DICT = {'roi': np.array([[0, 10], [30, 50], [20, 80]], dtype=np.int16)}
 
@@ -42,7 +39,7 @@ def clear_ica_files():
 
 @patch('seas.experiment.roi_loader', return_value=TEST_ROI_DICT)
 def test_load_experiment(mock_rois):
-    exp = Experiment(pathlist=test_video_path)
+    exp = seas.experiment.Experiment(pathlist=test_video_path)
     assert not exp.downsample
     assert not exp.downsample_t
 
@@ -65,7 +62,7 @@ def test_load_experiment(mock_rois):
 
 @patch('seas.experiment.roi_loader', return_value=TEST_ROI_DICT)
 def test_ica_decompose_with_rois_n_components(mock_rois):
-    exp = Experiment(pathlist=test_video_path)
+    exp = seas.experiment.Experiment(pathlist=test_video_path)
     exp.load_rois('fake_roi_path')
     exp.define_mask_boundaries()
     results = exp.ica_project(n_components=10)
@@ -73,7 +70,7 @@ def test_ica_decompose_with_rois_n_components(mock_rois):
     assert 'eig_mix' in results
 
 def test_ica_decompose_without_rois_n_components():
-    exp = Experiment(pathlist=test_video_path)
+    exp = seas.experiment.Experiment(pathlist=test_video_path)
     results = exp.ica_project(n_components=10)
 
     assert 'eig_mix' in results

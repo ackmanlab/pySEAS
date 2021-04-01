@@ -1,7 +1,11 @@
 import numpy as np
 import os
 
+import seas.video 
+
 from seas.video import load, dfof, rotate, rescale
+
+
 from seas.filemanager import sort_experiments, get_exp_span_string, read_yaml
 from seas.rois import roi_loader, make_mask, get_masked_region, insert_masked_region, draw_bounding_box
 from seas.hdf5manager import hdf5manager
@@ -102,7 +106,7 @@ class Experiment:
         if isinstance(pathlist, str):
             pathlist = [pathlist]
 
-        movie = load(pathlist, downsample, downsample_t)
+        movie = seas.video.load(pathlist, downsample, downsample_t)
         assert (len(movie.shape) == 3), 'File was not a 3 dimensional video.\n'
 
         if np.any(np.isnan(movie)):

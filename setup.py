@@ -9,7 +9,7 @@ setuptools.setup(
     author="Sydney Weiser",
     author_email="scweiser@ucsc.edu",
     description="python Signal Extraction and Segmentation",
-    long_description=long_description,
+    long_description="Data-driven filtration and segmentation of mesoscale neural dynamics",
     long_description_content_type="text/markdown",
     url="https://github.com/ackmanlab/pySEAS",
     packages=setuptools.find_packages(),
