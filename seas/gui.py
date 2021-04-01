@@ -14,7 +14,7 @@ from seas.signalanalysis import lag_n_autocorr, sort_noise, short_time_fourier_t
 from seas.waveletAnalysis import waveletAnalysis
 from seas.hdf5manager import hdf5manager
 from seas.defaults import config
-from seas.ica import rebuild_eigenbrain, remove_pixel_outliers
+from seas.ica import rebuild_eigenbrain
 from seas.domains import get_domain_map, domain_map, get_domain_edges
 
 

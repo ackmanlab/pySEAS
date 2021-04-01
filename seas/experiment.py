@@ -331,7 +331,6 @@ class Experiment:
                     the lag-1 autocorrelation of the full set of components decomposed before cropping to only 25% noise components
                 svd_multiplier: 
                     the svd multiplier value used to determine cutoff
-
         '''
         print('\nICA Projecting\n-----------------------')
 
@@ -415,23 +414,25 @@ class Experiment:
             print('M has been reshaped from {0} to {1}\n'.format(
                 movie.shape, vector.shape))
 
-            components = project(vector,
-                                 shape,
-                                 roimask=roimask,
-                                 n_components=n_components,
-                                 svd_multiplier=svd_multiplier)
+            # run ICA projection
+            ica_project_kwargs = {'vector': vector, 'shape': shape}
+
+            if svd_multiplier is not None:
+                ica_project_kwargs['svd_multiplier'] = svd_multiplier
+
+            if roimask is not None:
+                ica_project_kwargs['roimask'] = roimask
+
+            if n_components is not None:
+                ica_project_kwargs['n_components'] = n_components
+
+            components = project(**ica_project_kwargs)
             components['expmeta'] = expmeta
 
             if savedata:
                 f.save(components)
 
-        if 'lag_1' not in components.keys():
-            components['lag1'] = lag_n_autocorr(components['timecourses'], 1)
-
-        if 'noise_components' not in components.keys():
-            components['noise_components'], components['cutoff'] = \
-                sort_noise(components['timecourses'])
-
+        # Calculate other relevant parameters
         components['mean_filtered'] = filter_mean(
             components['mean'],
             filter_method=mean_filter_method,

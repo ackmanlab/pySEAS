@@ -16,15 +16,65 @@ def project(vector,
             shape,
             roimask=None,
             n_components=None,
-            svd_multiplier=None,
+            svd_multiplier=5,
             calc_residuals=True):
     '''
-    Find eigenvectors of a 2D vector, projecting along the first 
-    dimension.  Generally, we want the first dimension to be the spatial 
-    component of our matrix.  PCA_project returns a list with sorted 
-    significance of the PC vectors, and a 3D reshaped eigenbrain matrix 
-    for easy spatial visualization.  This matrix has dimensions 
-    (PCcomponent, x, y).
+    Apply an ica decomposition to the first axis of the input vector.  If a roimask is provided, the flattened roimask will be used to crop the vector before decomposition.
+
+    If n_components is not set, an adaptive svd threshold is used (see approximate_svd_linearity_transition), with the hyperparameter svd_mutliplier.  
+
+    Residuals lost in the ICA projection are captured if calc_residuals == True.  This represents the signal lost by ICA compression.
+
+    Arguments:
+        vector: 
+            The (x*y, t) vector to be spatially ICA projected
+        shape:
+            The shape of the original movie (t,x,y)
+        roimask:
+            The roimask to crop the vectorized movie (x,y)
+        n_components:
+            Manually request a set number of ICA components
+        svd_multiplier:
+            The hyperparameter for svd adaptive thresholding
+        calc_residuals:
+            Whether to calculate spatial and temporal residuals of projection compression.
+
+    Returns:
+        components: A dictionary containing all the results, metadata, and information regarding the filter applied.
+
+            mean: 
+                the original video mean
+            roimask: 
+                the mask applied to the video before decomposing
+            shape: 
+                the original shape of the movie array
+            eig_mix: 
+                the ICA mixing matrix
+            timecourses: 
+                the ICA component time series
+            eig_vec: 
+                the eigenvectors
+            n_components:
+                the number of components in eig_vec (reduced to only have 25% of total components as noise)
+            project_meta:
+                The metadata for the ica projection
+            expmeta:
+                All metadata created for this class
+            lag1: 
+                the lag-1 autocorrelation
+            noise_components: 
+                a vector (n components long) to store binary representation of which components were detected as noise 
+            cutoff: 
+                the signal-noise cutoff value
+
+        if the n_components was automatically set, the following additional keys are also returned in components
+
+            svd_cutoff: 
+                the number of components originally decomposed
+            lag1_full: 
+                the lag-1 autocorrelation of the full set of components decomposed before cropping to only 25% noise components
+            svd_multiplier: 
+                the svd multiplier value used to determine cutoff
     '''
     print('\nCalculating Eigenspace\n-----------------------')
     assert (vector.ndim == 2), (
@@ -163,14 +213,18 @@ def project(vector,
 
         t = timer() - t0
         print('Independent Component Analysis took: {0} sec'.format(t))
-        eig_mix = ica.mixing_  # Get estimated mixing matrix
+        eig_mix = ica.mixing_
+
+        # sort components by their eig val influence (approximated by timecourse standard deviation)
+        ev_sort = np.argsort(eig_mix.std(axis=0))
+        eig_vec = eig_vec[:, ev_sort][:, ::-1]
+        eig_mix = eig_mix[:, ev_sort][:, ::-1]
+
+        noise, cutoff = sort_noise(eig_mix.T)
+        components['noise_components'] = noise
+        components['cutoff'] = cutoff
 
     print('components shape:', eig_vec.shape)
-
-    # sort components by their eig val influence (approximated by timecourse standard deviation)
-    ev_sort = np.argsort(eig_mix.std(axis=0))
-    eig_vec = eig_vec[:, ev_sort][:, ::-1]
-    eig_mix = eig_mix[:, ev_sort][:, ::-1]
 
     components['eig_mix'] = eig_mix
     components['timecourses'] = eig_mix.T
@@ -178,6 +232,7 @@ def project(vector,
     n_components = eig_vec.shape[1]
     components['eig_vec'] = eig_vec
     components['n_components'] = n_components
+    components['lag1'] = lag_n_autocorr(components['timecourses'], 1)
 
     if calc_residuals:
         try:
@@ -224,24 +279,33 @@ def project(vector,
 
 def rebuild(components,
             artifact_components=None,
-            verbose=True,
-            filter_mean=True,
-            filter_method='wavelet',
-            returnmeta=False,
-            svd_vector=None,
-            low_cutoff=0.5,
             t_start=None,
             t_stop=None,
-            include_noise=True,
-            vector=False):
+            include_noise=True):
     '''
     Rebuild original vector space based on a subset of principal 
     components of the data.  Eigenvectors to use are specified where 
     artifact_components == False.  Returns a matrix data_r, the reconstructed 
     vector projected back into its original dimensions.
+
+    The filtered mean is *NOT* readded by this function.
+
+    Arguments:
+        components: 
+            The components from ica_project.  artifact_components must be assigned to components before rebuilding, or passed in explicitly
+        artifact_components:
+            Overrides the artifact_components key in components, to rebuild all components except those specified
+        t_start: 
+            The frame to start rebuilding the movie at.  If none is provided, the rebuilt movie starts at the first frame
+        t_stop: 
+            The frame to stop rebuilding the movie at.  If none is provided, the rebuilt movie ends at the last frame
+        include_noise:
+            Whether to include noise components when rebuilding.  If noise_components should not be included in the rebuilt movie, set this to False
+
+    Returns:
+        data_r: The ICA filtered video.
     '''
-    if verbose:
-        print('\nRebuilding Data from Selected PCs\n-----------------------')
+    print('\nRebuilding Data from Selected ICs\n-----------------------')
 
     if type(components) is str:
         f = h5(components)
@@ -290,8 +354,6 @@ def rebuild(components,
             'matrix')
     else:
         maskind = np.where(roimask.flat == 1)
-        if verbose:
-            print('mask size:', maskind[0].size)
         assert eig_vec[:,0].size == maskind[0].size, \
         "Eigenvector size is not compatible with the masked region's size"
 
@@ -308,12 +370,10 @@ def rebuild(components,
 
     t = t_stop - t_start
 
-    if verbose:
-        print('\nRebuilding ICA...')
-        print('number of elements included:', n_components)
-        print('eig_vec:', eig_vec.shape)
-        print('eig_mix:', eig_mix.shape)
-        # print('signal_mean:', signal_mean.shape)
+    print('\nRebuilding ICA...')
+    print('number of elements included:', n_components)
+    print('eig_vec:', eig_vec.shape)
+    print('eig_mix:', eig_mix.shape)
 
     print('\nReconstructing....')
     data_r = np.dot(eig_vec[:, reconstruct_indices],
@@ -330,61 +390,60 @@ def rebuild(components,
 
     print('Done!')
 
-    if not vector:
-        if roimask is None:
-            data_r = data_r.reshape(shape)
-        else:
-            reconstructed = np.zeros((x * y, t), dtype=dtype)
-            reconstructed[maskind] = data_r.swapaxes(0, 1)
-            reconstructed = reconstructed.swapaxes(0, 1)
-            data_r = reconstructed.reshape(t, x, y)
-
-    if verbose:
-        # reshaped components often from complex eigenvectors
-        print('Data reshaped into: {0} \nFormat:{1}'.format(
-            data_r.shape, data_r.dtype))
-
-    if verbose:
-        print('\n')
-
-    if returnmeta:
-        print('Saving rebuilding metadata back to components...')
-        rebuildmeta = {}
-        rebuildmeta['date'] = datetime.now().strftime('%Y%m%d')[2:]
-        fmt = '%Y-%m-%dT%H:%M:%SZ'
-        rebuildmeta['tstmp'] = datetime.now().strftime(fmt)
-        rebuildmeta['n_components'] = n_components
-        rebuildmeta['reconstruct_indices'] = reconstruct_indices
-        rebuildmeta['filter_mean'] = filter_mean
-        rebuildmeta['filter_method'] = filter_method
-        rebuildmeta['low_cutoff'] = low_cutoff
-        rebuildmeta['include_noise'] = include_noise
-        rebuildmeta['mean_filtered'] = mean_filtered
-        rebuildmeta['mean'] = components['mean']
-
-        components['rebuildmeta'] = rebuildmeta
-        print('Metadata saved.')
+    if roimask is None:
+        data_r = data_r.reshape(shape)
+    else:
+        reconstructed = np.zeros((x * y, t), dtype=dtype)
+        reconstructed[maskind] = data_r.swapaxes(0, 1)
+        reconstructed = reconstructed.swapaxes(0, 1)
+        data_r = reconstructed.reshape(t, x, y)
 
     return data_r
 
 
-def approximate_svd_linearity_transition(ev):
+def approximate_svd_linearity_transition(eig_val):
+    '''
+    Approximates the transition between the svd signal distribution and the noise floor.
 
-    ev -= ev.min()
-    ev = ev / ev.sum()
-    integrate = np.cumsum(ev)
-    x = np.arange(ev.size)
+    Calculates the integral of the eigenvalue 'influence' per component, fits a 2 degree polynomial to the curve, and looks for the point at which the integrated eigenvalues first overshoot the polynomial fit.  This transition point (multiplied by a hyperparameter) is used to inform the ICA n_components parameter.
 
-    p = np.polyfit(x, integrate, deg=2)
+    Arguments:
+        eig_val: 
+            The eigenvalues of the SVD decomposition
+
+    Returns:
+        transition: 
+            The estimate of the SVD noise floor cutoff
+    '''
+    eig_val -= eig_val.min()
+    eig_val = eig_val / ev.sum()
+    eig_val_integrated = np.cumsum(eig_val)
+    x = np.arange(eig_val.size)
+
+    p = np.polyfit(x, eig_val_integrated, deg=2)
     y = np.polyval(p, x)
 
-    cross_1 = np.where(integrate > y)[0][0]
+    transition = np.where(eig_val_integrated > y)[0][0]
 
-    return cross_1
+    return transition
 
 
 def filter_mean(mean, filter_method='wavelet', low_cutoff=0.5):
+    '''
+    Applies a high pass filtration to the ica mean signal.
 
+    Arguments:
+        mean: 
+            The mean timecourse signal
+        filter_method:
+            Which filtration method to apply.  Default is 'wavelet', but 'butterworth' is also accepted
+        low_cutoff:
+            The frequency cutoff to apply the high pass filter at 
+
+    Returns:
+        mean_filtered:
+            The filtered mean
+    '''
     print('Highpass filter signal timecourse: ' + str(low_cutoff) + 'Hz')
     print('Filter method:', filter_method)
 
@@ -411,7 +470,19 @@ def rebuild_mean_roi_timecourse(components,
                                 filter=True,
                                 invert_artifact=False,
                                 include_noise=True):
+    '''
+    Rebuild a mean timecourse under a specific region of interest (ROI), or set of ROIs.
 
+    Arguments:
+        components: 
+            The components result dictionary from ica.project
+        mask:
+            The (x,y) mask to apply to the video for rebuilding.  If the mask has multiple unique indices (n_components), rather than just a single domain, they are all returned in an array
+
+    Returns:
+        timecourses:
+            The set of rebuilt time courses (n_components,t)
+    '''
     eig_vec = components['eig_vec']
     roimask = components['roimask']
     eig_mix = components['eig_mix']
@@ -468,20 +539,37 @@ def rebuild_eigenbrain(eig_vec,
                        index=None,
                        roimask=None,
                        eigb_shape=None,
-                       maskind=None,
                        bulk=False):
     '''
-    Rebuild a single or all eigenbrain(s) into the empty space of `roimask` or an 
-    empty matrix with `eigb_shape` dimensions
-    '''
+    Reshape components from (n_components, xy) shape into (n_components, x, y), either through reassigning pixels where the roimask indicates, or by reshaping it into the original dimensions.
 
+    If one component is requested with index, just that components is returned.  If the bulk flag is used instead, all are rebuilt and returned.
+
+    Arguments:
+        eig_vec: 
+            The component eigenvectors (from components dictionary)
+        index:
+            Which index to rebuild
+        roimask:
+            The roimask used to extract the xy coordinates (if applicable)
+        eigb_shape:
+            The xy shape of the original movie (if roimask was not used)
+        bulk:
+            Whether to rebuild all components, or just the one indicated by index
+
+    Returns:
+        eigenbrain:
+            The reshaped eigenvector (x,y)
+        OR eigenbrains:
+            The array of reshaped eigenvectors (n_components, x, y)
+    '''
     assert (roimask is not None) or (eigb_shape is not None), (
         'Not enough information to rebuild eigenbrain')
 
     if bulk:
         assert eig_vec.ndim == 2, (
             'For bulk rebuild, give a 2d array of the eigenbrains')
-        if (roimask is not None) and (maskind is None):
+        if roimask is not None:
             x, y = np.where(roimask == 1)
 
         if roimask is None:
@@ -499,7 +587,7 @@ def rebuild_eigenbrain(eig_vec,
 
     else:
         assert index != None, ('Provide index to rebuild')
-        if (roimask is not None) and (maskind is None):
+        if roimask is not None:
             maskind = np.where(roimask.flat == 1)
 
         if roimask is None:
@@ -513,44 +601,39 @@ def rebuild_eigenbrain(eig_vec,
         return eigenbrain
 
 
-def remove_pixel_outliers(array, verbose=True, nstd=100):
-    '''Analyzes the pixel intensities of vectorized eigenbrains along axis 0:
-    the pixel dimension of the eigenbrains. 
-    Removes data intensity points that are significantly different from other pixel 
-    intensities'''
-
-    if verbose:
-        print('finding sorting indices..')
-    sort_ind = np.argsort(array, axis=0)  # find order along pixel axis.
-    # (must use argsort to preserve original shape for rebuilding)
-    if verbose:
-        print('taking pixel differences..')
-    diff = np.diff(array[sort_ind, np.arange(np.shape(array)[1])], axis=0)
-    # index along that axis, get diff
-
-    if verbose:
-        print(
-            np.where(diff > diff.std(axis=0) * nstd)[0].size,
-            'outliers will be removed')
-
-    array[sort_ind[np.where(diff > diff.std(axis=0) * nstd)]] = 0
-    array[sort_ind[-1]] = 0
-    if verbose:
-        print('done!')
-    return array
-
-
 def filter_comparison(components,
                       downsample=4,
-                      filterpath=None,
-                      filtered=None,
-                      videopath=None,
+                      savepath=None,
                       include_noise=True,
                       t_start=None,
                       t_stop=None,
                       filter_mean=True,
                       n_rotations=0):
+    '''
+    Create a filter comparison movie, displaying the original movie, artifacts removed, and the filtered movie side by side.
 
+
+    Arguments:
+        components: 
+            The ICA components returned by ica.project
+        downsample:
+            The factor to downsample by before writing the video
+        savepath:
+            The path to save the video at
+        include_noise:
+            Whether noise components should be included in the filtered video
+        t_start: 
+            The frame to start rebuilding the movie at.  If none is provided, the rebuilt movie starts at the first frame
+        t_stop: 
+            The frame to stop rebuilding the movie at.  If none is provided, the rebuilt movie ends at the last frame
+        filter_mean:
+            Whether to filter the mean before readding
+        n_rotations:
+            The number of CCW rotations to apply before saving the video
+
+    Returns:
+        Nothing.
+    '''
     print('\n-----------------------', '\nBuilding Filter Comparison Movies',
           '\n-----------------------')
 
@@ -560,36 +643,13 @@ def filter_comparison(components,
         g = None
 
     print('\nFiltered Movie\n-----------------------')
-    if filtered is not None:
-        print('Filtered video file found as input.')
-    elif (g is not None) and ('filtered' in g.keys()):
-        filtered = g.load('filtered')
-    else:
-        filtered = PCA_rebuild(components,
-                               returnmeta=True,
-                               include_noise=include_noise,
-                               t_start=t_start,
-                               t_stop=t_stop,
-                               filter_mean=filter_mean)
+    filtered = PCA_rebuild(components,
+                           returnmeta=True,
+                           include_noise=include_noise,
+                           t_start=t_start,
+                           t_stop=t_stop,
+                           filter_mean=filter_mean)
 
-    if 'filter' in components.keys():
-        components['filter']['artifact_components'] = components[
-            'artifact_components']
-    else:
-        components['filter'] = {
-            'artifact_components': components['artifact_components']
-        }
-
-    if filterpath is not None:
-        if 'filtered' not in g.keys():
-            g.save({
-                'filtered': filtered.astype('float32'),
-                'filter': components['filter']
-            })
-        if 'expmeta' in components.keys():
-            g.save({'expmeta': components['expmeta']})
-        if 'roimask' in components.keys():
-            g.save({'roimask': components['roimask']})
     filtered = scale_video(filtered, downsample)
     filtered = rotate(filtered, n_rotations)
 
@@ -637,13 +697,9 @@ def filter_comparison(components,
     print('overlay', overlay.shape)
     print('movies', movies.shape)
 
-    if videopath is not None:
-        save(videopath,
-             movies,
-             resize_factor=1 / 2,
-             rescale=True,
-             save_cbar=True,
-             overlay=overlay)
-    else:
-        movies = rescale(movies)
-        play(movies, rescale=False)
+    save(savepath,
+         movies,
+         resize_factor=1 / 2,
+         rescale=True,
+         save_cbar=True,
+         overlay=overlay)
