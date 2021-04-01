@@ -45,6 +45,10 @@ def insert_masked_region(A, M, mask, maskval=1):
     Accepts masked array in (t,xy) or (xy,c) format.
     Accepts (t,x,y) arrays or (x,y,c) arrays, returns them in the 
     same format.
+
+    dfjnfdjsbf
+
+    
     '''
     maskind = np.where(mask == maskval)
 
