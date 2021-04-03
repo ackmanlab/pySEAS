@@ -207,12 +207,12 @@ def draw_bounding_box(image, required=True):
 
     def click_and_crop(event, x, y, flags, param):
 
-    	'''
-		
-		This seems to be a function for the GUI or something
-		I don't know if this is a function useful for the user 
+        '''
+        
+        This seems to be a function for the GUI or something
+        I don't know if this is a function useful for the user 
 
-    	'''
+        '''
         global refPt, cropping
         # if the left mouse button was clicked, record the starting
         # (x, y) coordinates and indicate that cropping is being

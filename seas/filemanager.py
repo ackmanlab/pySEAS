@@ -31,6 +31,13 @@ def find_files(folder_path,
     Finds files in folder_path that match a match_string, either at the end of the 
     path if suffix=True, or anywhere if suffix=False.
     Searches subdirectories if subdirectories = True
+
+    Arguments:
+    	folder_path: directory path to a folder
+        match_string: finds files in folder_path that match the match_string
+
+    Returns:
+        results: list of all files found that match the match_string
     '''
     assert os.path.isdir(folder_path), 'Folder input was not a valid directory'
     files = []
@@ -80,6 +87,12 @@ def movie_sorter(pathlist, verbose=True):
     '''
     Takes list of paths, sorts into experiments, and orders files by 
     extension number.  Returns dict of experiments with associated files.
+
+    Arguments:
+        pathlist: list of paths
+
+    Returns:
+        experiments: dictionary of experiments with associated files
     '''
 
     n_files = len(pathlist)
@@ -130,6 +143,12 @@ def experiment_sorter(folder_path, experimentstr=None, verbose=True):
     '''
     Finds all files associated with an experiment in a particular folder, 
     organizes them by filetype: movie files, processed files, metadata files.
+
+    Arguments:
+        folder_path: path to the an inputted folder
+
+    Returns:
+        exp: dictionary with keys such as - movies, meta, ica, processed, roi, dfof, body, oflow, videodata
     '''
     assert os.path.isdir(folder_path), 'Folder input was not a valid directory'
 
@@ -230,6 +249,13 @@ def experiment_sorter(folder_path, experimentstr=None, verbose=True):
 
 
 def sort_experiments(files, experimentstr=None, verbose=True):
+    '''
+    Arguments:
+        files: list of paths to experiment files
+
+    Returns:
+        exps: dictionary that organizes the experiments in the files input
+    '''
 
     if verbose:
         print('\nSorting Keys\n-----------------------')
@@ -262,7 +288,15 @@ def sort_experiments(files, experimentstr=None, verbose=True):
 
 
 def get_exp_span_string(experiments):
-    # accepts list or keys object, creates string identifier to represent experiments
+    '''
+    accepts list or keys object, creates string identifier to represent experiments
+
+    Arguments:
+        experiments: list or keys object with dates of experiments in format of xxxxxx_xx
+    
+    Returns:
+        expspanstring: string format of dates from inputted experiments paramter
+    '''
 
     if len(experiments) == 1:
         expspanstring = [get_basename(experiment) for experiment in experiments]
@@ -291,6 +325,13 @@ def get_exp_span_string(experiments):
 
 
 def get_basename(path):
+    '''
+    Arguments:
+        path: string with path to an experiment
+
+    Returns:
+        name: removed extension and @0001 from the path
+    '''
 
     name = os.path.basename(path)
     name = re.sub(r'(\.)(\w){3,4}$', '', name)  # remove extension
