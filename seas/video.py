@@ -26,6 +26,12 @@ def load(pathlist,
     Files in list must be the same xy dimensions.
     if downsample is an integer greater than one, movie will be downsampled 
     # by that factor.
+
+    Arguments:
+        pathlist: a list of tiff file paths
+
+    Raises:
+        Exception: the size aware tiff loading failed 
     '''
     print('\nLoading Files\n-----------------------')
 
@@ -296,6 +302,10 @@ def save(array,
     http://www.fourcc.org/codecs.php.
 
     We may need to investigate which codec gives us the best output. 
+
+    Arguments:
+        array: numpy array [I am not completely sure what array is used for]
+        path: directory path to input file (.tif, .png, .avi)
     '''
     print('\nSaving File\n-----------------------')
     assert (type(array) == np.ndarray), ('Movie to save was not a '
@@ -433,6 +443,12 @@ def dfof(A, win_size=None, win_type='box'):
     an average projection of the whole video.
     Define window size and window type from (see function from 
     time course analysis) to calculate a rolling average dfof.
+
+    Arguments:
+        A: numpy array in t,xy) or (xy,c) format [is this correct?] 
+
+    Returns:
+        A: numpy array in t,xy) or (xy,c) format [is this correct?]
     '''
 
     assert (type(A) == np.ndarray), 'Input was not a numpy array'
@@ -454,6 +470,7 @@ def dfof(A, win_size=None, win_type='box'):
     print('Array Type:', A.dtype)
 
     t0 = timer()
+    
     if win_size == None:
         print('\nCalculating dF/F\n-----------------------')
         print('Calculating dFoF based on average projection')
@@ -537,10 +554,18 @@ def rescale(array,
             min_max=None,
             return_scale=False):
     '''
-    determine upper and lower limits of colormap for playing movie files. 
+    Determine upper and lower limits of colormap for playing movie files. 
     limits based on standard deviation from mean.  low, high are defined 
     in terms of standard deviation.  Image is updated in-place, 
     and doesn't have to be returned.
+
+    Arguments:
+        array: numpy array in (t,xy) or (xy,c) format [is this correct].
+
+    Returns:
+        array: numpy array in (t,xy) or (xy,c) format [is this correct].
+        dictionary with scale, min, max keys [didn't have var name, so left with just description]
+
     '''
 
     if verbose:
@@ -636,6 +661,12 @@ def play(array,
     Note: if preprocess is set to true, the array normalization is done 
     in place, thus the array will be rescaled outside scope of 
     this function
+
+    Arguments:
+        array = array in (t,xy) or (xy,c) format [is this correct]. 
+
+    Returns:
+        a tuple of low, high values
     '''
 
     if colormap == 'default':
@@ -837,6 +868,15 @@ def play(array,
 
 
 def scale_video(array, s_factor=1, t_factor=1, verbose=True, remainder=False):
+    '''
+    Arguments:
+        array: a (t,x,y) numpy array or an (x,y,c) numpy array [is format correct]
+
+    Returns:
+        dsarray: downsampled array in (t,xy) or (xy,c) format. [is format correct]
+        rmarry: remainder array in (t,xy) or (xy,c) format. [is format correct]
+    '''
+
     if verbose:
         print('\nRescaling Video\n-----------------------')
     assert array.ndim == 3, 'Input was not a video'
@@ -893,9 +933,18 @@ def scale_video(array, s_factor=1, t_factor=1, verbose=True, remainder=False):
 
 
 def downsample(array, new_shape, keepdims=False):
-    # reshape m by n matrix by factor f by reshaping matrix into
-    # m f n f matricies, then applying sum across mxf, nxf matrices
-    # if keepdims, video is downsampled, but number of pixels remains the same.
+    ''' 
+    reshape m by n matrix by factor f by reshaping matrix into
+    m f n f matricies, then applying sum across mxf, nxf matrices
+    if keepdims, video is downsampled, but number of pixels remains the same.
+
+    Arguments:
+        array: an m by n matrix [not sure about format]
+        new_shape: reshape inputted array by factor of new_shape [kind of unsure about this]
+
+    Returns:
+        array: reshaped array [not sure about format]
+    '''
 
     if array.ndim != len(new_shape):
         raise ValueError("Shape mismatch: {} -> {}".format(
@@ -925,6 +974,14 @@ def downsample(array, new_shape, keepdims=False):
 
 
 def rotate(array, n):
+    '''
+    Arguments:
+        array: a (t,x,y) numpy array or an (x,y,c) numpy array        
+        n: how many times to rotate array by 90 degrees
+
+    Returns:
+        array: rotated (t,x,y) numpy array or an (x,y,c) nunmpy array 
+    '''
 
     assert type(array) == np.ndarray
 
