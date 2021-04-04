@@ -116,6 +116,11 @@ class hdf5manager:
         del self.f
 
     def load(self, target=None, ignore=None):
+
+        '''
+        Returns:
+            data: dictionary with data 
+        '''
         path = self.path
         verbose = self.verbose
 

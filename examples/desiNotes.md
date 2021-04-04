@@ -31,16 +31,17 @@ Going to just try to run the example functions without completely installing all
 ### Running the example functions 
 
 
-play_dfof_movie.py 
+/play_dfof_movie.py/ 
 
-Worked well with both tiff files, if I was new new to this I would want to see from the downsample option what the expected input type is (integer) and then also what the range is, x-y numbers 
+I ran with the -m argument and I got a rotation error, so I am under the impression that that argument is required. I rotated it but then got an error about the colormap being referenced before assignment. NOTE : the error I am getting is from the video.py line 672 and I think colormap should be cmap instead. 
 
-project_ica.py 
+
+/project_ica.py/ 
 
 It was intuitive how to use the set up the -f and -e flags, for the folder and experiment respectively. I  first tried to run it without using the -rt flag but it did not work, I saw there was a rotation comparison errror going on and assumed if I rotated it by 1 x 90-degrees it might work and it did. 
 
 
-hdf5manager.py 
+/hdf5manager.py/ 
 
 input argument to the file path is without a flag, just noticed that this is different than what the previous functions. Previous functions ask for a flag for the inputted hdf5 file
 
