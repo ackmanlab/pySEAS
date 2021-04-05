@@ -7,8 +7,7 @@ import cv2
 
 def get_masked_region(A, mask, maskval=None):
     '''
-    Extract a spatially masked array where the mask == 1 or 
-    mask == maskval. Reinsert masked region using insert_masked_region function.
+    Extract a spatially masked array where the mask == 1 or mask == maskval. Reinsert masked region using insert_masked_region function.
     
     Arguments:
         A: a (t,x,y) numpy array or an (x,y,c) numpy array
@@ -75,6 +74,19 @@ def insert_masked_region(A, M, mask, maskval=1):
 
 
 def roi_loader(path, verbose=True):
+    '''
+    Takes roi zip file and converts the contents into a dictionary 
+
+    Arguments:
+        path: file path to an roi zip file
+
+    Returns: 
+        rois: dictionary with the rois from inputted zip file
+    
+    Raises:
+        Exception: if the inputted path parameter is not of a zip file
+
+    '''
     print('\nLoading Rois\n-----------------------')
 
     def load_roi_file(fileobj):
@@ -152,11 +164,7 @@ def roi_loader(path, verbose=True):
 
 def make_mask(polylist, shape, bounding_box=None):
     '''
-    Makes mask from coordinates of polygon(s).  
-    
-    Polylist is a list of numpy arrays, each representing a 
-    closed polygon to draw.
-
+    Makes mask from coordinates of polygon(s). Polylist is a list of numpy arrays, each representing a closed polygon to draw.
 
     Arguments:
         polylist: a list of numpy arrays, each representing a closed polygon to draw.
@@ -207,12 +215,6 @@ def draw_bounding_box(image, required=True):
 
     def click_and_crop(event, x, y, flags, param):
 
-        '''
-        
-        This seems to be a function for the GUI or something
-        I don't know if this is a function useful for the user 
-
-        '''
         global refPt, cropping
         # if the left mouse button was clicked, record the starting
         # (x, y) coordinates and indicate that cropping is being
