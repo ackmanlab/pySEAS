@@ -48,6 +48,9 @@ class hdf5manager:
             self.print()
 
     def print(self):
+        '''
+        prints more detailed information about the hdf5 file 
+        '''
         path = self.path
         print()
 
@@ -79,6 +82,13 @@ class hdf5manager:
         print()
 
     def keys(self):
+        '''
+        Function takes the hdf5 file and returns a list of its keys
+
+        Returns:
+            keys: list of keys of the hdf5 file
+        '''
+
         # If not saving or loading, open the file to read it
         if not hasattr(self, 'f'):
             f = h5py.File(self.path, 'r')
@@ -94,6 +104,9 @@ class hdf5manager:
         return keys
 
     def open(self):
+        '''
+        Function opens the hdf5 file for manual accessing
+        '''
         path = self.path
         verbose = self.verbose
 
@@ -112,12 +125,17 @@ class hdf5manager:
                 '\t handle[0,:,1:6] = np.zeros(x,y,z)\n')
 
     def close(self):
+        '''
+        Function closes the hdf5 file 
+        '''
         self.f.close()
         del self.f
 
     def load(self, target=None, ignore=None):
 
         '''
+        Loads a dictionary from the keys of the hdf5 file [not too sure]
+
         Returns:
             data: dictionary with data 
         '''
@@ -258,6 +276,12 @@ class hdf5manager:
         return data
 
     def delete(self, target):
+        '''
+        Takes a target and deletes the target key 
+
+        Arguments: 
+            target: a list or single target key that will be deleted from the hdf5 file
+        '''
         if type(target) is not list:
             target = [target]
 
@@ -282,14 +306,18 @@ class hdf5manager:
         f.close()
 
     def save(self, data):
-        # data is a class file or dict of keys/data
-        path = self.path
-        verbose = self.verbose
+
         '''
         Saves a class or dict to hdf5 file.
         Note that lists of numbers are not supported, only np arrays or 
         lists of strings.
+
+        Arguments: 
+            data: a class file or dict of keys/data 
         '''
+
+        path = self.path
+        verbose = self.verbose
 
         # Functions to save each type of data:
         # --------------------------------------------------------------
