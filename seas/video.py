@@ -23,9 +23,7 @@ def load(pathlist,
     Implemented size-aware loading for tiff arrays with pre-allocation
     Expects a list of pathnames: 
     ex: ['./testvideo1.mat', '/home/sydney/testfile2.tif']
-    Files in list must be the same xy dimensions.
-    if downsample is an integer greater than one, movie will be downsampled 
-    # by that factor.
+    Files in list must be the same xy dimensions. If downsample is an integer greater than one, movie will be downsampled by that factor.
 
     Arguments:
         pathlist: a list of tiff file paths
@@ -290,22 +288,19 @@ def save(array,
          overlay_color=(0, 0, 0),
          save_cbar=False):
     '''
-    Check what the extension of path is, and use the appropriate function
-    for saving the array.  Functionality can be added for more 
-    file/data types.
+    Check what the extension of path is, and use the appropriate function for saving the array.  Functionality can be added for more file/data types.
 
     For AVIs:
     Parameters (args 3+) are used for creating an avi output.  
-    MJPG and XVID codecs seem to work well for linux systems, 
-    so they are set as the default.
-    A full list of codecs could be found at:
-    http://www.fourcc.org/codecs.php.
+    MJPG and XVID codecs seem to work well for linux systems, so they are set as the default. A full list of codecs could be found at: http://www.fourcc.org/codecs.php.
 
     We may need to investigate which codec gives us the best output. 
 
     Arguments:
         array: numpy array [I am not completely sure what array is used for]
         path: directory path to input file (.tif, .png, .avi)
+    Raises:
+        Excpetion: if the file extension is not supported (.tif, .png, and.avi are supported file extensions)
     '''
     print('\nSaving File\n-----------------------')
     assert (type(array) == np.ndarray), ('Movie to save was not a '
@@ -437,12 +432,7 @@ def save(array,
 
 def dfof(A, win_size=None, win_type='box'):
     '''
-    Calculates the change in fluorescence over mean 
-    fluorescense for a video.
-    If no win_size is given, it will calculate the dfof using
-    an average projection of the whole video.
-    Define window size and window type from (see function from 
-    time course analysis) to calculate a rolling average dfof.
+    Calculates the change in fluorescence over mean fluorescense for a video. If no win_size is given, it will calculate the dfof using an average projection of the whole video. Define window size and window type from (see function from time course analysis) to calculate a rolling average dfof.
 
     Arguments:
         A: numpy array in t,xy) or (xy,c) format [is this correct?] 
@@ -554,10 +544,7 @@ def rescale(array,
             min_max=None,
             return_scale=False):
     '''
-    Determine upper and lower limits of colormap for playing movie files. 
-    limits based on standard deviation from mean.  low, high are defined 
-    in terms of standard deviation.  Image is updated in-place, 
-    and doesn't have to be returned.
+    Determine upper and lower limits of colormap for playing movie files. Limits based on standard deviation from mean. Low, high are defined in terms of standard deviation. Image is updated in-place, and doesn't have to be returned.
 
     Arguments:
         array: numpy array in (t,xy) or (xy,c) format [is this correct].
@@ -654,13 +641,9 @@ def play(array,
          cmap='default',
          loop=True):
     '''
-    play movie in opencv after normalizing display range
-    array is a numpy 3-dimensional movie
-    newMinMax is an optional tuple of length 2, the new display range
+    Play movie in opencv after normalizing display range array is a numpy 3-dimensional movie newMinMax is an optional tuple of length 2, the new display range.
 
-    Note: if preprocess is set to true, the array normalization is done 
-    in place, thus the array will be rescaled outside scope of 
-    this function
+    Note: If preprocess is set to true, the array normalization is done in place, thus the array will be rescaled outside scope of this function. 
 
     Arguments:
         array = array in (t,xy) or (xy,c) format [is this correct]. 
@@ -869,6 +852,8 @@ def play(array,
 
 def scale_video(array, s_factor=1, t_factor=1, verbose=True, remainder=False):
     '''
+    Rescales inputted video array into a downsampled array and/or a remainder array. 
+
     Arguments:
         array: a (t,x,y) numpy array or an (x,y,c) numpy array [is format correct]
 
@@ -934,9 +919,7 @@ def scale_video(array, s_factor=1, t_factor=1, verbose=True, remainder=False):
 
 def downsample(array, new_shape, keepdims=False):
     ''' 
-    reshape m by n matrix by factor f by reshaping matrix into
-    m f n f matricies, then applying sum across mxf, nxf matrices
-    if keepdims, video is downsampled, but number of pixels remains the same.
+    Reshape m by n matrix by factor f by reshaping matrix into m f n f matricies, then applying sum across mxf, nxf matrices if keepdims, video is downsampled, but number of pixels remains the same.
 
     Arguments:
         array: an m by n matrix [not sure about format]
@@ -975,6 +958,8 @@ def downsample(array, new_shape, keepdims=False):
 
 def rotate(array, n):
     '''
+    Rotates the inputted video array by a factor of x number of 90 degrees. 
+    
     Arguments:
         array: a (t,x,y) numpy array or an (x,y,c) numpy array        
         n: how many times to rotate array by 90 degrees
