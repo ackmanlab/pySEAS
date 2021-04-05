@@ -40,6 +40,13 @@ I ran with the -m argument and I got a rotation error, so I am under the impress
 
 It was intuitive how to use the set up the -f and -e flags, for the folder and experiment respectively. I  first tried to run it without using the -rt flag but it did not work, I saw there was a rotation comparison errror going on and assumed if I rotated it by 1 x 90-degrees it might work and it did. 
 
+Successfully worked with python3.5 and python3.8
+
+
+/view_components/ 
+
+I tried to run this file but I am getting an error saying that from gui.py file, it can not import defaults from seas.defaults
+
 
 /hdf5manager.py/ 
 
