@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="seas",
-    version="0.0.0-alpha",
+    version="0.0.2",
     author="Sydney Weiser",
     author_email="scweiser@ucsc.edu",
     description="python Signal Extraction and Segmentation",
