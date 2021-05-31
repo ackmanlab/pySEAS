@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="seas",
-    version="0.0.1",
+    version="0.1",
     author="Sydney Weiser",
     author_email="scweiser@ucsc.edu",
     description="python Signal Extraction and Segmentation",
@@ -14,6 +14,7 @@ setuptools.setup(
     url="https://github.com/ackmanlab/pySEAS",
     packages=setuptools.find_packages(),
     classifiers=[
+        "Development Status :: 5 - Production/Stable"
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
@@ -30,5 +31,5 @@ setuptools.setup(
         'tifffile',
         'tk'
     ],
-    python_requires='>=3.6',
+    python_requires='>=3.5',
 )
