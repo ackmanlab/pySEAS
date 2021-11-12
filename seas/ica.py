@@ -314,7 +314,7 @@ def rebuild(components,
     print('\nRebuilding Data from Selected ICs\n-----------------------')
 
     if type(components) is str:
-        f = h5(components)
+        f = hdf5manager(components)
         components = f.load()
 
     assert type(components) is dict, 'Components were not in format expected'
@@ -610,6 +610,7 @@ def rebuild_eigenbrain(eig_vec,
 def filter_comparison(components,
                       downsample=4,
                       savepath=None,
+                      filtered_path=None,
                       include_noise=True,
                       t_start=None,
                       t_stop=None,
@@ -625,7 +626,9 @@ def filter_comparison(components,
         downsample:
             The factor to downsample by before writing the video
         savepath:
-            The path to save the video at
+            The path to save the video at (mp4)
+        filtered_path:
+            The hdf5 path to save the filtered movie to. 
         include_noise:
             Whether noise components should be included in the filtered video
         t_start: 
@@ -649,6 +652,11 @@ def filter_comparison(components,
                            t_start=t_start,
                            t_stop=t_stop,
                            apply_mean_filter=apply_mean_filter)
+
+    if filtered_path is not None:
+        print('Saving filtered movie to:', filtered_path)
+        f = hdf5manager(filtered_path)
+        f.save({'filtered_movie':filtered})
 
     filtered = scale_video(filtered, downsample)
     filtered = rotate(filtered, n_rotations)

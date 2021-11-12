@@ -291,26 +291,13 @@ if __name__ == '__main__':
             exp.name + '_ica'
 
         if args['save']:
-            # filtered_path = basename + '_filtered.hdf5'
+            filtered_path = basename + '_filtered.hdf5'
             savepath = basename + '_filtercomparison'
 
             if save_avi:
                 savepath = savepath + '.avi'
             else:
                 savepath = savepath + '.mp4'
-
-            # filtered = seas.ica.rebuild(components)
-
-            # g = hdf5manager(filtered_path)
-            # g.save({'filtered': filtered})
-
-            # if 'expmeta' in components.keys():
-            #     g.save(components['expmeta'])
-            # else:
-            #     print('no expmeta found.')
-            #     print('keys', components.keys())
-            # if 'filter' in components.keys():
-            #     g.save({'filter': components['filter']})
 
             if 'expmeta' in components.keys():
                 print('Found expmeta, looking for downsample')
@@ -327,9 +314,9 @@ if __name__ == '__main__':
                 print('No downsample information found')
 
             seas.ica.filter_comparison(components,
-                              # filtered_path=filtered,
+                              # filtered_path=filtered_path, 
+                              # uncomment to save filtered movie in an hdf5 file
                               savepath=savepath,
                               downsample=downsample,
-                              # filterpath=filtered_path,
                               apply_mean_filter=apply_mean_filter,
                               include_noise=not args['filternoise'])
