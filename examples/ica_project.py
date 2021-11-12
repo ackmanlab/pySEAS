@@ -7,6 +7,8 @@ import seas
 
 from seas.filemanager import experiment_sorter
 from seas.experiment import Experiment
+from seas.hdf5manager import hdf5manager
+import seas.ica
 
 # testing section:
 if __name__ == '__main__':
@@ -186,9 +188,9 @@ if __name__ == '__main__':
         save_avi = False
 
     if args['nomeanfilter']:
-        filter_mean = False
+        apply_mean_filter = False
     else:
-        filter_mean = True
+        apply_mean_filter = True
 
     if args['output_folder'] is not None:
         output_folder = args['output_folder'][0]
@@ -289,26 +291,26 @@ if __name__ == '__main__':
             exp.name + '_ica'
 
         if args['save']:
-            filterpath = basename + '_filtered.hdf5'
-            savepath = basename + '_ica_filtercomparison'
+            # filtered_path = basename + '_filtered.hdf5'
+            savepath = basename + '_filtercomparison'
 
             if save_avi:
                 savepath = savepath + '.avi'
             else:
                 savepath = savepath + '.mp4'
 
-            filtered = exp.filtered
+            # filtered = seas.ica.rebuild(components)
 
-            g = h5(filtered_path)
-            g.save({'filtered': filtered})
+            # g = hdf5manager(filtered_path)
+            # g.save({'filtered': filtered})
 
-            if 'expmeta' in components.keys():
-                g.save(components['expmeta'])
-            else:
-                print('no expmeta found.')
-                print('keys', components.keys())
-            if 'filter' in components.keys():
-                g.save({'filter': components['filter']})
+            # if 'expmeta' in components.keys():
+            #     g.save(components['expmeta'])
+            # else:
+            #     print('no expmeta found.')
+            #     print('keys', components.keys())
+            # if 'filter' in components.keys():
+            #     g.save({'filter': components['filter']})
 
             if 'expmeta' in components.keys():
                 print('Found expmeta, looking for downsample')
@@ -318,14 +320,16 @@ if __name__ == '__main__':
                     print
                 else:
                     downsample = 4
+
+                if downsample == 0:
+                    downsample = 1
             else:
                 print('No downsample information found')
 
-            filter_comparison(components,
-                              filtered=filtered,
-                              videopath=savepath,
+            seas.ica.filter_comparison(components,
+                              # filtered_path=filtered,
+                              savepath=savepath,
                               downsample=downsample,
-                              filterpath=filterpath,
-                              filter_mean=filter_mean,
-                              include_noise=not args['filternoise'],
-                              flip=flip)
+                              # filterpath=filtered_path,
+                              apply_mean_filter=apply_mean_filter,
+                              include_noise=not args['filternoise'])

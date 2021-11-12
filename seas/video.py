@@ -419,7 +419,7 @@ def save(array,
 
     print('File saved to:' + path)
 
-    if save_cbar:
+    if save_cbar and rescale_range:
         cbarpath = os.path.splitext(path)[0] + '_colorbar.pdf'
         print('Saving Colorbar to:' + cbarpath)
         save_colorbar(scale, cbarpath, colormap=colormap)
@@ -848,6 +848,13 @@ def scale_video(array, s_factor=1, t_factor=1, verbose=True, remainder=False):
     if s_factor == None:
         s_factor = 1
     if t_factor == None:
+        t_factor = 1
+
+    if s_factor == 0:
+        print('WARNING: Spatial scaling factor was 0.  Reverting to 1.')
+        s_factor = 1
+    if t_factor == 0:
+        print('WARNING: Temporaldef  scaling factor was 0.  Reverting to 1.')
         t_factor = 1
 
     if (s_factor == 1) and (t_factor == 1):

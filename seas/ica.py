@@ -9,7 +9,7 @@ from timeit import default_timer as timer
 from seas.waveletAnalysis import waveletAnalysis
 from seas.signalanalysis import butterworth, sort_noise, lag_n_autocorr
 from seas.hdf5manager import hdf5manager
-from seas.video import rotate, save, rescale, play
+from seas.video import rotate, save, rescale, play, scale_video
 
 
 def project(vector,
@@ -281,6 +281,8 @@ def rebuild(components,
             artifact_components=None,
             t_start=None,
             t_stop=None,
+            apply_mean_filter=True,
+            filter_method='wavelet',
             include_noise=True):
     '''
     Rebuild original vector space based on a subset of principal 
@@ -299,6 +301,10 @@ def rebuild(components,
             The frame to start rebuilding the movie at.  If none is provided, the rebuilt movie starts at the first frame
         t_stop: 
             The frame to stop rebuilding the movie at.  If none is provided, the rebuilt movie ends at the last frame
+        apply_mean_filter:
+            Whether to apply a filter to the mean signal.
+        filter_method:;
+            The filter method to apply (see filter_mean function).
         include_noise:
             Whether to include noise components when rebuilding.  If noise_components should not be included in the rebuilt movie, set this to False
 
@@ -379,8 +385,8 @@ def rebuild(components,
     data_r = np.dot(eig_vec[:, reconstruct_indices],
                     eig_mix[t_start:t_stop, reconstruct_indices].T).T
 
-    if filter_mean:
-        mean_filtered = filter_mean(mean, filter_method, low_cutoff)
+    if apply_mean_filter:
+        mean_filtered = filter_mean(mean, filter_method)
         data_r += mean_filtered[t_start:t_stop, None]
 
     else:
@@ -607,7 +613,7 @@ def filter_comparison(components,
                       include_noise=True,
                       t_start=None,
                       t_stop=None,
-                      filter_mean=True,
+                      apply_mean_filter=True,
                       n_rotations=0):
     '''
     Create a filter comparison movie, displaying the original movie, artifacts removed, and the filtered movie side by side.
@@ -637,18 +643,12 @@ def filter_comparison(components,
     print('\n-----------------------', '\nBuilding Filter Comparison Movies',
           '\n-----------------------')
 
-    if filterpath is not None:
-        g = h5(filterpath)
-    else:
-        g = None
-
     print('\nFiltered Movie\n-----------------------')
-    filtered = PCA_rebuild(components,
-                           returnmeta=True,
+    filtered = rebuild(components,
                            include_noise=include_noise,
                            t_start=t_start,
                            t_stop=t_stop,
-                           filter_mean=filter_mean)
+                           apply_mean_filter=apply_mean_filter)
 
     filtered = scale_video(filtered, downsample)
     filtered = rotate(filtered, n_rotations)
@@ -662,7 +662,6 @@ def filter_comparison(components,
         components['artifact_components'][np.where(
             components['noise_components'] == 1)] = 0
     artifact_movie = rebuild(components,
-                             returnmeta=False,
                              t_start=t_start,
                              t_stop=t_stop)
     print('rescaling video...')
@@ -673,10 +672,9 @@ def filter_comparison(components,
     components['artifact_components'] = np.zeros(
         components['artifact_components'].shape)
     raw_movie = rebuild(components,
-                        returnmeta=False,
                         t_start=t_start,
                         t_stop=t_stop,
-                        filter_mean=False)
+                        apply_mean_filter=apply_mean_filter)
     print('rescaling video...')
     raw_movie = scale_video(raw_movie, downsample)
     raw_movie = rotate(raw_movie, n_rotations)
@@ -697,9 +695,9 @@ def filter_comparison(components,
     print('overlay', overlay.shape)
     print('movies', movies.shape)
 
-    save(savepath,
-         movies,
+    save(movies,
+         savepath,
+         rescale_range=True,
          resize_factor=1 / 2,
-         rescale=True,
          save_cbar=True,
          overlay=overlay)
