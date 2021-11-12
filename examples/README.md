@@ -19,11 +19,9 @@ newer:
 
 ## ica_project
 
-ica projects an experiment listed with -e at directory -f. 
+ica projects an experiment listed with -e at directory -f. -d sets an integer downsample value.  Rois can be included with argument -r.  Rois are created and saved from FIJI/ImageJ.
 
--d sets downsample flag.
-
-folder needs to have video in format DATE_EXPNO.tif and rois in format DATE_EXPNO_RoiSet.zip.  If there are metadata files in format DATE_EXPNO_meta.yaml, they will be loaded and stored in ica.hdf5 file.
+The folder needs to have videos in format DATE_EXPNO.tif and rois in format DATE_EXPNO_RoiSet.zip.  If there are metadata files in format DATE_EXPNO_meta.yaml, they will be loaded and stored in ica.hdf5 file.
 
     python ica_project.py -f [DIRECTORY] -e TEST_VID -d 10
 
