@@ -9,6 +9,7 @@ from seas.filemanager import experiment_sorter
 from seas.experiment import Experiment
 from seas.hdf5manager import hdf5manager
 import seas.ica
+import seas.video
 
 # testing section:
 if __name__ == '__main__':
@@ -133,6 +134,11 @@ if __name__ == '__main__':
                     '--filteringresiduals',
                     action='store_true',
                     help='calculate spatial and temporal artifact residuals')
+    ap.add_argument('-ft',
+                    '--filteredtiff',
+                    action='store_true',
+                    help='save the tiff output of the filtered movie')
+
     args = vars(ap.parse_args())
 
     # Find all movie and roi paths, load them
@@ -279,16 +285,23 @@ if __name__ == '__main__':
 
         suffix = '_'.join(suffixes)
         components = exp.ica_project(n_components=n_components,
-                                    calc_dfof=calc_dfof,
-                                    suffix=suffix,
-                                    svd_multiplier=svd_multiplier,
-                                    output_folder=output_folder)
+                                     calc_dfof=calc_dfof,
+                                     suffix=suffix,
+                                     svd_multiplier=svd_multiplier,
+                                     output_folder=output_folder)
 
         if output_folder is None:
             output_folder = os.path.dirname(exp.path[0])
 
         basename = output_folder + os.path.sep + \
             exp.name + '_ica'
+
+        if args['filteredtiff']:
+            filtered_tiff_path = basename + '_filtered.tiff'
+
+            filtered = seas.ica.rebuild(components,
+                                        apply_mean_filter=apply_mean_filter)
+            seas.video.save(filtered, filtered_tiff_path)
 
         if args['save']:
             filtered_path = basename + '_filtered.hdf5'
@@ -313,10 +326,11 @@ if __name__ == '__main__':
             else:
                 print('No downsample information found')
 
-            seas.ica.filter_comparison(components,
-                              # filtered_path=filtered_path, 
-                              # uncomment to save filtered movie in an hdf5 file
-                              savepath=savepath,
-                              downsample=downsample,
-                              apply_mean_filter=apply_mean_filter,
-                              include_noise=not args['filternoise'])
+            seas.ica.filter_comparison(
+                components,
+                # filtered_path=filtered_path,
+                # uncomment to save filtered movie in an hdf5 file
+                savepath=savepath,
+                downsample=downsample,
+                apply_mean_filter=apply_mean_filter,
+                include_noise=not args['filternoise'])

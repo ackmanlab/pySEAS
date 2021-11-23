@@ -218,10 +218,10 @@ if __name__ == '__main__':
             calc_dfof = False
 
         components = exp.ica_project(n_components=n_components,
-                                    calc_dfof=calc_dfof,
-                                    suffix=suffix,
-                                    svd_multiplier=svd_multiplier,
-                                    output_folder=output_folder)
+                                     calc_dfof=calc_dfof,
+                                     suffix=suffix,
+                                     svd_multiplier=svd_multiplier,
+                                     output_folder=output_folder)
 
         if output_folder is None:
             output_folder = os.path.dirname(exp.path[0])
