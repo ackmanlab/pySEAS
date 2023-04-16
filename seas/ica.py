@@ -12,30 +12,34 @@ from seas.hdf5manager import hdf5manager
 from seas.video import rotate, save, rescale, play, scale_video
 
 
-def project(vector,
-            shape,
-            roimask=None,
-            n_components=None,
-            svd_multiplier=5,
-            calc_residuals=True):
+def project(vector: np.ndarray,
+            shape: Tuple[int, int, int],
+            roimask: np.ndarray = None,
+            n_components: int = None,
+            svd_multiplier: float = 5,
+            calc_residuals: bool = True):
     '''
-    Apply an ica decomposition to the first axis of the input vector.  If a roimask is provided, the flattened roimask will be used to crop the vector before decomposition.
+    Apply an ica decomposition to the first axis of the input vector.  
+    If a roimask is provided, the flattened roimask will be used to crop the vector before decomposition.
 
-    If n_components is not set, an adaptive svd threshold is used (see approximate_svd_linearity_transition), with the hyperparameter svd_mutliplier.  
+    If n_components is not set, an adaptive svd threshold is used 
+    (see approximate_svd_linearity_transition), 
+    with the hyperparameter svd_mutliplier.  
 
-    Residuals lost in the ICA projection are captured if calc_residuals == True.  This represents the signal lost by ICA compression.
+    Residuals lost in the ICA projection are captured if calc_residuals == True.  
+    This represents the signal lost by ICA compression.
 
     Arguments:
         vector: 
-            The (x*y, t) vector to be spatially ICA projected
+            The (x*y, t) vector to be spatially ICA projected.
         shape:
-            The shape of the original movie (t,x,y)
+            The shape of the original movie (t,x,y).
         roimask:
-            The roimask to crop the vectorized movie (x,y)
+            The roimask to crop the vectorized movie (x,y).
         n_components:
-            Manually request a set number of ICA components
+            Manually request a set number of ICA components.
         svd_multiplier:
-            The hyperparameter for svd adaptive thresholding
+            The hyperparameter for svd adaptive thresholding.
         calc_residuals:
             Whether to calculate spatial and temporal residuals of projection compression.
 
@@ -119,7 +123,8 @@ def project(vector,
 
         components['svd_eigval'] = ev
 
-        # get starting point for decomposition based on svd mutliplier * the approximate point of transition to linearity in tail of ev components
+        #Get starting point for decomposition based on svd mutliplier * the approximate
+        # point of transition to linearity in tail of ev components.
         cross_1 = approximate_svd_linearity_transition(ev)
         n_components = cross_1 * svd_multiplier
 
@@ -140,7 +145,7 @@ def project(vector,
 
             p_signal = (1 - noise.sum() / noise.size) * 100
 
-            if noise.size == shape[0]:  # all components are being used
+            if noise.size == shape[0]:  # All components are being used.
                 break
             elif p_signal < 75:
                 print('ICA components were under 75% signal ({0}% signal).'\
@@ -207,15 +212,15 @@ def project(vector,
         except ValueError:
             print('Calculation exceeded float32 maximum.')
             print('Trying again with float64 vector...')
-            #value error if any value exceeds float32 maximum.
-            #overcome this by converting to float64
+            # Value error if any value exceeds float32 maximum.
+            # Overcome this by converting to float64.
             eig_vec = ica.fit_transform(vector.astype('float64'))
 
         t = timer() - t0
         print('Independent Component Analysis took: {0} sec'.format(t))
         eig_mix = ica.mixing_
 
-        # sort components by their eig val influence (approximated by timecourse standard deviation)
+        # Sort components by their eig val influence (approximated by timecourse standard deviation).
         ev_sort = np.argsort(eig_mix.std(axis=0))
         eig_vec = eig_vec[:, ev_sort][:, ::-1]
         eig_mix = eig_mix[:, ev_sort][:, ::-1]
@@ -262,7 +267,7 @@ def project(vector,
             print('Residual Calculation Failed!!')
             print('\t', e)
 
-    # Save filter metadata information about how and when movie was filtered in dictionary
+    # Save filter metadata information about how and when movie was filtered in dictionary.
     project_meta = {}
     project_meta['time_elapsed'] = t
     project_meta['date'] = \
@@ -277,13 +282,13 @@ def project(vector,
     return components
 
 
-def rebuild(components,
-            artifact_components=None,
-            t_start=None,
-            t_stop=None,
-            apply_mean_filter=True,
-            filter_method='wavelet',
-            include_noise=True):
+def rebuild(components: dict,
+            artifact_components: np.ndarray = None,
+            t_start: int = None,
+            t_stop: int = None,
+            apply_mean_filter: bool = True,
+            filter_method: str = 'wavelet',
+            include_noise: bool = True):
     '''
     Rebuild original vector space based on a subset of principal 
     components of the data.  Eigenvectors to use are specified where 
@@ -353,7 +358,7 @@ def rebuild(components,
 
     n_components = reconstruct_indices.size
 
-    # make sure vector extracted properly matches the roimask given
+    # Make sure vector extracted properly matches the roimask given.
     if roimask is None:
         assert eig_vec[:, 0].size == x * y, (
             "Eigenvector size isn't compatible with the shape of the output "
@@ -407,19 +412,24 @@ def rebuild(components,
     return data_r
 
 
-def approximate_svd_linearity_transition(eig_val):
+def approximate_svd_linearity_transition(eig_val: np.ndarray):
     '''
-    Approximates the transition between the svd signal distribution and the noise floor.
+    Approximates the transition between the svd signal distribution and 
+    the noise floor.
 
-    Calculates the integral of the eigenvalue 'influence' per component, fits a 2 degree polynomial to the curve, and looks for the point at which the integrated eigenvalues first overshoot the polynomial fit.  This transition point (multiplied by a hyperparameter) is used to inform the ICA n_components parameter.
+    Calculates the integral of the eigenvalue 'influence' per component, 
+    fits a 2 degree polynomial to the curve, and looks for the point at 
+    which the integrated eigenvalues first overshoot the polynomial fit.
+    This transition point (multiplied by a hyperparameter) is used to inform 
+    the ICA n_components parameter.
 
     Arguments:
         eig_val: 
-            The eigenvalues of the SVD decomposition
+            The eigenvalues of the SVD decomposition.
 
     Returns:
         transition: 
-            The estimate of the SVD noise floor cutoff
+            The estimate of the SVD noise floor cutoff.
     '''
     eig_val -= eig_val.min()
     eig_val = eig_val / eig_val.sum()
@@ -434,21 +444,23 @@ def approximate_svd_linearity_transition(eig_val):
     return transition
 
 
-def filter_mean(mean, filter_method='wavelet', low_cutoff=0.5):
+def filter_mean(mean: np.ndarray,
+                filter_method: str = 'wavelet',
+                low_cutoff: float = 0.5):
     '''
     Applies a high pass filtration to the ica mean signal.
 
     Arguments:
         mean: 
-            The mean timecourse signal
+            The mean timecourse signal.
         filter_method:
-            Which filtration method to apply.  Default is 'wavelet', but 'butterworth' is also accepted
+            Which filtration method to apply.  
+            Default is 'wavelet', but 'butterworth' is also accepted.
         low_cutoff:
-            The frequency cutoff to apply the high pass filter at 
+            The frequency cutoff to apply the high pass filter at.
 
     Returns:
-        mean_filtered:
-            The filtered mean
+        mean_filtered: The filtered mean.
     '''
     print('Highpass filter signal timecourse: ' + str(low_cutoff) + 'Hz')
     print('Filter method:', filter_method)
@@ -470,24 +482,28 @@ def filter_mean(mean, filter_method='wavelet', low_cutoff=0.5):
     return mean_filtered
 
 
-def rebuild_mean_roi_timecourse(components,
-                                mask,
-                                include_zero=True,
-                                filter=True,
-                                invert_artifact=False,
-                                include_noise=True):
+def rebuild_mean_roi_timecourse(components: np.ndaray,
+                                mask: np.ndaray,
+                                include_zero: bool = True,
+                                filter: bool = True,
+                                invert_artifact: bool = False,
+                                include_noise: bool = True):
     '''
-    Rebuild a mean timecourse under a specific region of interest (ROI), or set of ROIs.
+    Rebuild a mean timecourse under a specific region of interest (ROI), 
+    or set of ROIs.
 
     Arguments:
         components: 
             The components result dictionary from ica.project
         mask:
-            The (x,y) mask to apply to the video for rebuilding.  If the mask has multiple unique indices (n_components), rather than just a single domain, they are all returned in an array
+            The (x,y) mask to apply to the video for rebuilding.  
+            If the mask has multiple unique indices (n_components), 
+            rather than just a single domain, they are all returned in an 
+            array.
 
     Returns:
         timecourses:
-            The set of rebuilt time courses (n_components,t)
+            The set of rebuilt time courses (n_components,t).
     '''
     eig_vec = components['eig_vec']
     roimask = components['roimask']
@@ -541,27 +557,30 @@ def rebuild_mean_roi_timecourse(components,
     return timecourses
 
 
-def rebuild_eigenbrain(eig_vec,
-                       index=None,
-                       roimask=None,
-                       eigb_shape=None,
-                       bulk=False):
+def rebuild_eigenbrain(eig_vec: np.ndarray,
+                       index: int = None,
+                       roimask: np.ndarray = None,
+                       eigb_shape: Tuple[int, int] = None,
+                       bulk: bool = False):
     '''
-    Reshape components from (n_components, xy) shape into (n_components, x, y), either through reassigning pixels where the roimask indicates, or by reshaping it into the original dimensions.
+    Reshape components from (n_components, xy) shape into (n_components, x, y), 
+    either through reassigning pixels where the roimask indicates, or by reshaping 
+    it into the original dimensions.
 
-    If one component is requested with index, just that components is returned.  If the bulk flag is used instead, all are rebuilt and returned.
+    If one component is requested with index, just that components is returned.
+    If the bulk flag is used instead, all are rebuilt and returned.
 
     Arguments:
         eig_vec: 
-            The component eigenvectors (from components dictionary)
+            The component eigenvectors (from components dictionary).
         index:
-            Which index to rebuild
+            Which index to rebuild.
         roimask:
-            The roimask used to extract the xy coordinates (if applicable)
+            The roimask used to extract the xy coordinates (if applicable).
         eigb_shape:
-            The xy shape of the original movie (if roimask was not used)
+            The xy shape of the original movie (if roimask was not used).
         bulk:
-            Whether to rebuild all components, or just the one indicated by index
+            Whether to rebuild all components, or just the one indicated by index.
 
     Returns:
         eigenbrain:
@@ -607,38 +626,41 @@ def rebuild_eigenbrain(eig_vec,
         return eigenbrain
 
 
-def filter_comparison(components,
-                      downsample=4,
-                      savepath=None,
-                      filtered_path=None,
-                      include_noise=True,
-                      t_start=None,
-                      t_stop=None,
-                      apply_mean_filter=True,
-                      n_rotations=0):
+def filter_comparison(components: dict,
+                      downsample: int = 4,
+                      savepath: str = None,
+                      filtered_path: str = None,
+                      include_noise: bool = True,
+                      t_start: int = None,
+                      t_stop: int = None,
+                      apply_mean_filter: bool = True,
+                      n_rotations: int = 0):
     '''
-    Create a filter comparison movie, displaying the original movie, artifacts removed, and the filtered movie side by side.
+    Create a filter comparison movie, displaying the original movie, 
+    artifacts removed, and the filtered movie side by side.
 
 
     Arguments:
         components: 
-            The ICA components returned by ica.project
+            The ICA components returned by ica.project.
         downsample:
-            The factor to downsample by before writing the video
+            The factor to downsample by before writing the video.
         savepath:
-            The path to save the video at (mp4)
+            The path to save the video at (mp4).
         filtered_path:
             The hdf5 path to save the filtered movie to. 
         include_noise:
-            Whether noise components should be included in the filtered video
+            Whether noise components should be included in the filtered video.
         t_start: 
-            The frame to start rebuilding the movie at.  If none is provided, the rebuilt movie starts at the first frame
+            The frame to start rebuilding the movie at.  If none is provided, 
+            the rebuilt movie starts at the first frame.
         t_stop: 
-            The frame to stop rebuilding the movie at.  If none is provided, the rebuilt movie ends at the last frame
+            The frame to stop rebuilding the movie at.  If none is provided, 
+            the rebuilt movie ends at the last frame.
         filter_mean:
-            Whether to filter the mean before readding
+            Whether to filter the mean before readding.
         n_rotations:
-            The number of CCW rotations to apply before saving the video
+            The number of CCW rotations to apply before saving the video.
 
     Returns:
         Nothing.
@@ -648,15 +670,15 @@ def filter_comparison(components,
 
     print('\nFiltered Movie\n-----------------------')
     filtered = rebuild(components,
-                           include_noise=include_noise,
-                           t_start=t_start,
-                           t_stop=t_stop,
-                           apply_mean_filter=apply_mean_filter)
+                       include_noise=include_noise,
+                       t_start=t_start,
+                       t_stop=t_stop,
+                       apply_mean_filter=apply_mean_filter)
 
     if filtered_path is not None:
         print('Saving filtered movie to:', filtered_path)
         f = hdf5manager(filtered_path)
-        f.save({'filtered_movie':filtered})
+        f.save({'filtered_movie': filtered})
 
     filtered = scale_video(filtered, downsample)
     filtered = rotate(filtered, n_rotations)
@@ -669,9 +691,7 @@ def filter_comparison(components,
     if not include_noise:
         components['artifact_components'][np.where(
             components['noise_components'] == 1)] = 0
-    artifact_movie = rebuild(components,
-                             t_start=t_start,
-                             t_stop=t_stop)
+    artifact_movie = rebuild(components, t_start=t_start, t_stop=t_stop)
     print('rescaling video...')
     artifact_movie = scale_video(artifact_movie, downsample)
     artifact_movie = rotate(artifact_movie, n_rotations)
