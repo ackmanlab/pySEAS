@@ -26,17 +26,42 @@ import h5py
 import numpy as np
 import os
 import pickle
+from typing import List
 
 
 class hdf5manager:
+    '''
+    A class for managing saved artifacts in the hdf5 format.
+    Only temporarily opens file for read/write operations, to avoid corruption.
+    Abstracts away different data types and attributes, to simplify user experience.
 
-    def __init__(self, path, verbose=False, create=True):
+    Functions:
+        print: Prints all objects in hdf5 file.
+        keys: Lists all keys currently in hdf5 file.
+        open: Opens file for manual operation.
+        close: Closes file after manual operation.
+        load: Load a specific object, or all objects, from file.
+        delete: Delete a specific object from hdf5 file.
+        save: Save data to hdf5 file.
+    '''
+
+    def __init__(self, path: str, verbose: bool = False, create: bool = True):
+        '''
+        Initializes the hdf5 object.
+        Set the hdf5 path, and whether the file session should be verbose.
+        If create=False, the file will not be created if it doesn't already exist.
+
+        Args:
+            path: Where the file should be created at, or opened from.
+            verbose: Whether the function should produce verbose output.
+            create: Whether the file should be created, if it doesn't already exist.
+        '''
 
         assert (path.endswith('.hdf5') | path.endswith('.mat'))
         path = os.path.abspath(path)
 
         if not os.path.isfile(path) and create:
-            # Create the file
+            # Create the file.
             print('Creating file at:', path)
             f = h5py.File(path, 'w')
             f.close()
@@ -49,7 +74,16 @@ class hdf5manager:
         if verbose:
             self.print()
 
-    def print(self):
+    def print(self) -> None:
+        '''
+        Prints the contents of the file.
+
+        Arguments:
+            None
+
+        Returns:
+            None
+        '''
         path = self.path
         print()
 
@@ -80,8 +114,17 @@ class hdf5manager:
             f.close()
         print()
 
-    def keys(self):
-        # If not saving or loading, open the file to read it
+    def keys(self) -> List[str]:
+        '''
+        List all keys within the file.
+
+        Arguments:
+            None
+
+        Returns:
+            keys: All keys present with in the file.
+        '''
+        # If not saving or loading, open the file to read it.
         if not hasattr(self, 'f'):
             f = h5py.File(self.path, 'r')
         else:
@@ -95,7 +138,20 @@ class hdf5manager:
 
         return keys
 
-    def open(self):
+    def open(self) -> None:
+        '''
+        Open the object for manual access.  
+        This takes away safety / anti-corruption features, 
+        and should be avoided if possible.
+
+        The raw file can be now accessed using h5py functionsd at self.f.
+
+        Arguments:
+            None
+
+        Returns:
+            None
+        '''
         path = self.path
         verbose = self.verbose
 
@@ -114,10 +170,29 @@ class hdf5manager:
                 '\t handle[0,:,1:6] = np.zeros(x,y,z)\n')
 
     def close(self):
+        '''
+        Close the file after manual access.
+
+        Arguments:
+            None
+
+        Returns:
+            None
+        '''
         self.f.close()
         del self.f
 
-    def load(self, target=None, ignore=None):
+    def load(self, target: List[str] = None, ignore: List[str] = None) -> dict:
+        '''
+        Load a specific target, or all object from the hdf5 file.
+
+        Arguments:
+            target: Which object(s) to load from the file.
+            ignore: The object(s) to ignore when loading.
+
+        Returns:
+            data: The data loaded from the file.
+        '''
         path = self.path
         verbose = self.verbose
 
@@ -254,7 +329,16 @@ class hdf5manager:
 
         return data
 
-    def delete(self, target):
+    def delete(self, target: List[str]) -> None:
+        '''
+        Deletes a specific objects from the hdf5 file.
+
+        Arguments:
+            target: Which object(s) to delete from the file.
+
+        Returns:
+            None
+        '''
         if type(target) is not list:
             target = [target]
 
@@ -278,25 +362,36 @@ class hdf5manager:
         del self.f
         f.close()
 
-    def save(self, data):
-        # data is a class file or dict of keys/data
+    def save(self, data: dict) -> None:
+        '''
+        Saves any data to the hdf5 file.
+        Uses various underlying save mechanisms, 
+        depending on the appropriate storage for the data type.
+        If an appropriate data type is not supported, the object will be pickle dumped to file.
+        In this case, be careful when loading that you have the same python libraries 
+        inported as you did when the object was initially created.
+        Nested dictionaries are supported, and save within hdf5 as a nested object.
+
+        Arguments:
+            data: The dictionary of data to be saved to the file.
+
+        Returns:
+            None
+        '''
+
+        # Data is a class file or dict of keys/data.
         path = self.path
         verbose = self.verbose
-        '''
-        Saves a class or dict to hdf5 file.
-        Note that lists of numbers are not supported, only np arrays or 
-        lists of strings.
-        '''
 
-        # Functions to save each type of data:
-        # --------------------------------------------------------------
+        # Define functions to save each type of data:
+        # -------------------------------------------
 
-        def saveDict(f, fdict, key):
+        def save_dict(f, fdict, key):
             # Write dict to key as its own folder
             if verbose:
                 print('\t\t-', 'writing', key, 'to file...')
 
-            # Delete if it exists
+            # Delete if it exists.
             if key in f:
                 if verbose:
                     print('\t\t-', 'Removing', key, 'from file')
@@ -308,11 +403,11 @@ class hdf5manager:
             for dkey in fdict:
 
                 if (type(fdict[dkey]) is str):
-                    saveString(g, fdict[dkey], dkey)
+                    save_string(g, fdict[dkey], dkey)
                 elif type(fdict[dkey]) is np.ndarray:
-                    saveArray(g, fdict[dkey], dkey)
+                    save_array(g, fdict[dkey], dkey)
                 elif type(fdict[dkey]) is dict:
-                    saveDict(g, fdict[dkey], dkey)
+                    save_dict(g, fdict[dkey], dkey)
                 else:
                     if verbose:
                         print('\t\t- attribute was unsupported type:',
@@ -320,7 +415,7 @@ class hdf5manager:
                     if verbose:
                         print('\t\tAttempting to save pickle dump of object')
                     try:
-                        saveOther(g, fdict[dkey], dkey)
+                        save_other(g, fdict[dkey], dkey)
                         if verbose:
                             print('\t\tSaved succesfully!')
                     except:
@@ -337,14 +432,14 @@ class hdf5manager:
             if verbose:
                 print('\t\t  ', ', '.join([dkey for dkey in g.attrs]))
 
-        def saveString(f, string, key):
-            # Write all strings as attributes of the dataset
+        def save_string(f, string, key):
+            # Write all strings as attributes of the dataset.
             if verbose:
                 print('\t\t-', 'writing', key, 'to file...')
             f.attrs[key] = string
 
-        def saveArray(f, array, key):
-            # Check if key exists, and if entry is the same as existing value
+        def save_array(f, array, key):
+            # Check if key exists, and if entry is the same as existing value.
             if key in f.keys():
                 if (not np.array_equal(array, f[key])):
                     if verbose:
@@ -367,9 +462,9 @@ class hdf5manager:
                     print('\t\t-', 'writing', key, 'to file...')
                 f.create_dataset(key, data=array, chunks=None)
 
-        def saveOther(f, obj, key):
+        def save_other(f, obj, key):
             # Compress to bytestring using pickle, save similar to string
-            # Write all strings as attributes of the dataset
+            # Write all strings as attributes of the dataset.
             if verbose:
                 print('\t\t-', 'writing', key, 'to file...')
 
@@ -387,12 +482,9 @@ class hdf5manager:
                     del f[key]
                 f[key] = bstring
 
-        # Check input data type, open file:
-        # --------------------------------------------------------------
-
-        # If data is not a dictionary, assume
+        # Check input data type and open file.
         if type(data) is not dict:
-            # Get dictionary of all keys in class type
+            # Get dictionary of all keys in class type.
             data = data.__dict__
 
         if verbose:
@@ -406,19 +498,18 @@ class hdf5manager:
         if verbose:
             self.print()
 
-        # Loop through keys and save them in hdf5 file:
-        # --------------------------------------------------------------
+        # Loop through keys and save them in hdf5 file.
         if verbose:
             print('\nSaving class attributes:')
         for key in data.keys():
             if verbose:
                 print('\t', key + ';', type(data[key]).__name__)
             if (type(data[key]) is str):
-                saveString(f, data[key], key)
+                save_string(f, data[key], key)
             elif type(data[key]) is np.ndarray:
-                saveArray(f, data[key], key)
+                save_array(f, data[key], key)
             elif type(data[key]) is dict:
-                saveDict(f, data[key], key)
+                save_dict(f, data[key], key)
             else:
                 if verbose:
                     print('\t\t- attribute was unsupported type:',
@@ -426,7 +517,7 @@ class hdf5manager:
                 if verbose:
                     print('\t\tAttempting to save pickle dump of object')
                 try:
-                    saveOther(f, data[key], key)
+                    save_other(f, data[key], key)
                     if verbose:
                         print('\t\tSaved succesfully!')
                 except:
