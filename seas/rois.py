@@ -5,63 +5,80 @@ from io import BytesIO
 import cv2
 
 
-def get_masked_region(A, mask, maskval=None):
+def get_masked_region(array: np.ndarray,
+                      mask: np.ndarray,
+                      maskval: float = None):
     '''
     Extract a spatially masked array where the mask == 1 or 
     mask == maskval. Reinsert masked region using insert_masked_region function.
     
     Arguments:
-        A: a (t,x,y) numpy array or an (x,y,c) numpy array
+        array: a (t,x,y) numpy array or an (x,y,c) numpy array
 
     Returns:
-        M: the masked array in (t,xy) or (xy,c) format.
+        masked_array: the masked array in (t,xy) or (xy,c) format.
 
     Raises:
         Exception: if (x,y) mask indices did not match the shape of the input array.
     '''
-
     if maskval == None:
         maskind = np.where(mask == 1)
     else:
         maskind = np.where(mask == maskval)
 
-    if A.shape[0:2] == mask.shape:  #check if dimensions align for masking
-        M = A[maskind]
-    elif (A.shape[1], A.shape[2]) == mask.shape:
-        M = A.swapaxes(0, 1).swapaxes(1, 2)[maskind]
-        M = M.swapaxes(0, 1)
+    if array.shape[0:2] == mask.shape:  #check if dimensions align for masking
+        masked_array = array[maskind]
+    elif (array.shape[1], array.shape[2]) == mask.shape:
+        masked_array = array.swapaxes(0, 1).swapaxes(1, 2)[maskind]
+        masked_array = masked_array.swapaxes(0, 1)
     else:
         raise Exception(
             'Unknown mask indices with the following '
-            'dimensions:\n', 'Array: {0} Mask: {1}'.format(A.shape, mask.shape))
+            'dimensions:\n',
+            'Array: {0} Mask: {1}'.format(array.shape, mask.shape))
 
-    return M
+    return masked_array
 
 
-def insert_masked_region(A, M, mask, maskval=1):
+def insert_masked_region(array: np.ndarray,
+                         masked_array: np.ndarray,
+                         mask: np.ndarray,
+                         maskval: float = 1):
     '''
     Insert a spatially masked array from get_masked_region.  
     Masked array is inserted where the mask == 1 or mask == maskval. 
     Accepts masked array in (t,xy) or (xy,c) format.
     Accepts (t,x,y) arrays or (x,y,c) arrays, returns them in the 
     same format.
+
+    Arguments:
+        array: A (t,x,y) numpy array or an (x,y,c) numpy array
+        masked_array: The masked array in (t,xy) or (xy,c) format.
+            Usually extracted using get_masked_region.
+        mask: The mask used to extract the masked array originally, 
+            will be used for reinsertion.
+        maskval: The value used to extracted the region, if not the default of 1.
+
+    Returns:
+        array: The array with the masked values reinserted.
+
     '''
     maskind = np.where(mask == maskval)
 
-    if A.shape[0:2] == mask.shape:  #check if dimensions align for masking
-        A[maskind] = M
-    elif (A.shape[1], A.shape[2]) == mask.shape:
-        M = M.swapaxes(0, 1)
-        A = A.swapaxes(0, 1).swapaxes(1, 2)
-        A[maskind] = M
-        A = A.swapaxes(1, 2).swapaxes(0, 1)
+    if array.shape[0:2] == mask.shape:  #check if dimensions align for masking
+        array[maskind] = masked_array
+    elif (array.shape[1], array.shape[2]) == mask.shape:
+        masked_array = masked_array.swapaxes(0, 1)
+        array = array.swapaxes(0, 1).swapaxes(1, 2)
+        array[maskind] = masked_array
+        array = array.swapaxes(1, 2).swapaxes(0, 1)
         # A.swapaxes(0,1).swapaxes(1,2)[maskind] = M
     else:
         raise Exception('Unknown mask indices with the following '
                         'dimensions:\n'
                         'Array: {0}, Mask: {1}'.format(A.shape, mask.shape))
 
-    return A
+    return array
 
 
 def roi_loader(path, verbose=True):
