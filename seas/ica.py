@@ -5,6 +5,7 @@ from datetime import datetime
 from sklearn.decomposition import FastICA
 from scipy import linalg
 from timeit import default_timer as timer
+from typing import Tuple
 
 from seas.waveletAnalysis import waveletAnalysis
 from seas.signalanalysis import butterworth, sort_noise, lag_n_autocorr
@@ -482,8 +483,8 @@ def filter_mean(mean: np.ndarray,
     return mean_filtered
 
 
-def rebuild_mean_roi_timecourse(components: np.ndaray,
-                                mask: np.ndaray,
+def rebuild_mean_roi_timecourse(components: np.ndarray,
+                                mask: np.ndarray,
                                 include_zero: bool = True,
                                 filter: bool = True,
                                 invert_artifact: bool = False,
