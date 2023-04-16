@@ -67,7 +67,7 @@ DEFAULT_CONFIG = {
 }
 
 
-def write_config(path, parameters='default'):
+def write_config(path: str, parameters: dict = None):
     '''
     Writes a config file to path.  The default location is the seas module directory.
 
@@ -119,7 +119,7 @@ def write_config(path, parameters='default'):
     '''
     config = configparser.ConfigParser()
 
-    if parameters == 'default':
+    if parameters is None:
         parameters = DEFAULT_CONFIG
 
     for key in parameters:
@@ -131,7 +131,7 @@ def write_config(path, parameters='default'):
     return config
 
 
-def load_config(path=None):
+def load_config(path: str = None):
     '''
     Load the configuration file.  The default location is the seas module directory.
 

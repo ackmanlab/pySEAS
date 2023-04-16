@@ -15,7 +15,7 @@ import warnings
 from seas.defaults import config
 
 
-def get_mpl_colormap(colormap_name):
+def get_mpl_colormap(colormap_name: str):
     '''
     Convert a matplotlib colormap to a cv2-compatible colormap.
 
@@ -45,7 +45,7 @@ def get_mpl_colormap(colormap_name):
 #------------------------------------
 
 
-def rescaled_to_dfof(rescaled_value, slope, array_min):
+def rescaled_to_dfof(rescaled_value: float, slope: float, array_min: float):
     '''
     Convert a value in 8-bit rescaled units (0-255) to a dfof value.
 
@@ -64,7 +64,7 @@ def rescaled_to_dfof(rescaled_value, slope, array_min):
     return slope * (rescaled_value - array_min)
 
 
-def dfof_to_rescaled(dfof_value, slope, array_min):
+def dfof_to_rescaled(dfof_value: float, slope: float, array_min: float):
     '''
     Convert a dfof value to 8-bit rescaled units (0-255).
 
@@ -83,7 +83,7 @@ def dfof_to_rescaled(dfof_value, slope, array_min):
     return dfof_value / slope + array_min
 
 
-def save_colorbar(scale, path, colormap='default'):
+def save_colorbar(scale: dict, path: str, colormap='default'):
     '''
     Save a plt colorbar with a given scale to a specified path.  Accepts plt or cv2 colormap objects.
 
@@ -129,7 +129,7 @@ def save_colorbar(scale, path, colormap='default'):
     plt.close()
 
 
-def apply_colormap(video, colormap='default'):
+def apply_colormap(video: np.ndarray, colormap: np.ndarray = None):
     '''
     Save a plt colorbar with a given scale to a specified path.  Accepts plt or cv2 colormap objects.
 
@@ -148,7 +148,7 @@ def apply_colormap(video, colormap='default'):
     '''
     print('\nApplying Color Map to Movie\n-----------------------')
 
-    if colormap == 'default':
+    if colormap is None:
         colormap = DEFAULT_COLORMAP
 
     assert type(colormap) is np.ndarray, 'Colormap was not cv2 compatible'
@@ -166,6 +166,7 @@ def apply_colormap(video, colormap='default'):
 
 # Get or set default parameters.
 #------------------------------------
+
 DEFAULT_COLORMAP = get_mpl_colormap(config['colormap']['videos'])
 COMPONENT_COLORMAP = get_mpl_colormap(config['colormap']['components'])
 

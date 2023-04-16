@@ -1,10 +1,9 @@
 import numpy as np
 import os
 
-import seas.video 
+import seas.video
 
 from seas.video import load, dfof, rotate, rescale
-
 
 from seas.filemanager import sort_experiments, get_exp_span_string, read_yaml
 from seas.rois import roi_loader, make_mask, get_masked_region, insert_masked_region, draw_bounding_box
@@ -12,6 +11,8 @@ from seas.hdf5manager import hdf5manager
 from seas.ica import project, filter_mean
 from seas.signalanalysis import sort_noise, lag_n_autocorr
 from seas.waveletAnalysis import waveletAnalysis
+
+from typing import List
 
 
 class Experiment:
@@ -21,53 +22,53 @@ class Experiment:
 
     Attributes:
         downsample: 
-            The spatial downsampling factor
+            The spatial downsampling factor.
         downsample_t:
-            The temporal downsampling factor
+            The temporal downsampling factor.
         movie:
-            The loaded raw movie file 
+            The loaded raw movie file .
         path:
-            The pathlist of loaded videos
+            The pathlist of loaded videos.
         n_rotations:
-            The number of times the video was rotated
+            The number of times the video was rotated.
         rotate_rois_with_video:
-            Whether rois are rotated with the video or not
+            Whether rois are rotated with the video or not.
         bounding_box:
-            The bounding coordinates selected for the content of interest from the video file
+            The bounding coordinates selected for the content of interest from the video file.
         shape:
-            The video shape
+            The video shape.
         name:
-            The detected name of the experiment from the input files
+            The detected name of the experiment from the input files.
         dir:
-            The directory the video files reside in
+            The directory the video files reside in.
 
     The following attributes are also available if rois are loaded:        
         n_roi_rotations:
-            The number of times the rois were rotated
+            The number of times the rois were rotated.
         rois:
-            The roi dictionary loaded from FIJI RoiSet.zip file
+            The roi dictionary loaded from FIJI RoiSet.zip file.
         roimask:
-            A binary masked array denoting where the movie should be masked
+            A binary masked array denoting where the movie should be masked.
         meta:
-            The experiment metadata loaded from a yaml file
+            The experiment metadata loaded from a yaml file.
 
     Functions:
         load_rois: 
-            Load rois from a FIJI RoiSet.zip file
+            Load rois from a FIJI RoiSet.zip file.
         load_meta:
-            Load metadata from a yaml file
+            Load metadata from a yaml file.
         rotate: 
-            Rotate the video CCW, adjust mask and bounding box accordingly
+            Rotate the video CCW, adjust mask and bounding box accordingly.
         define_mask_boundaries:
-            Auto detect the mask boundaries from the loaded roimask
+            Auto detect the mask boundaries from the loaded roimask.
         draw_bounding_box: 
-            Launch a GUI to draw a bounding box to crop the movie
+            Launch a GUI to draw a bounding box to crop the movie.
         bound_mask:
-            Returns the mask bound to the bounding box
+            Returns the mask bound to the bounding box.
         bound_movie:
-            Returns the movie bound to the bounding box
+            Returns the movie bound to the bounding box.
         ica_project:
-            Perform an ICA projection to the movie
+            Perform an ICA projection to the movie.
 
     Initialization Arguments:
         pathlist: 
@@ -84,11 +85,11 @@ class Experiment:
     '''
 
     def __init__(self,
-                 pathlist,
-                 downsample=False,
-                 downsample_t=False,
-                 n_rotations=0,
-                 rotate_rois_with_video=False):
+                 pathlist: List[str],
+                 downsample: int = False,
+                 downsample_t: int = False,
+                 n_rotations: int = 0,
+                 rotate_rois_with_video: bool = False):
         '''
         Arguments:
             pathlist: 
@@ -110,7 +111,7 @@ class Experiment:
         assert (len(movie.shape) == 3), 'File was not a 3 dimensional video.\n'
 
         if np.any(np.isnan(movie)):
-            # if the video was already masked
+            # If the video was already masked
             roimask = np.zeros(movie[0].shape, dtype='uisnt8')
             roimask[np.where(~np.isnan(movie[0]))] = 1
             self.roimask = roimask
@@ -122,12 +123,12 @@ class Experiment:
         self.n_rotations = n_rotations
         self.rotate_rois_with_video = rotate_rois_with_video
 
-        # define default bounding box as full size video
+        # Define default bounding box as full size video.
         self.bounding_box = np.array([[0, self.movie.shape[1]],
                                       [0, self.movie.shape[2]]])
         self.shape = self.bound_movie().shape
 
-        # if multiple experiments included, get a span string
+        # If multiple experiments included, get a span string.
         # (i.e. 01, 02, 03, 04 - > 01-04)
         experiments = sort_experiments(pathlist, verbose=False).keys()
         spanstring = get_exp_span_string(experiments)
@@ -144,10 +145,10 @@ class Experiment:
             self.movie = rotate(self.movie, self.n_rotations)
             self.bounding_box = np.array([[0, self.movie.shape[1]],
                                           [0, self.movie.shape[2]]
-                                         ])  #resets to whole movie
+                                         ])  # Resets to whole movie.
             self.shape = self.bound_movie().shape
 
-    def load_rois(self, path, n_roi_rotations=0):
+    def load_rois(self, path: str, n_roi_rotations: int = 0):
         '''
         Load rois set in an FIJI/ImageJ RoiSet.zip file to the experiment file, and creates a roimask based on the rois.
 
@@ -163,10 +164,10 @@ class Experiment:
         rois = roi_loader(path)
         self.n_roi_rotations = n_roi_rotations
 
-        # Store in class file
+        # Store in class file.
         print(len(rois), 'ROIs found')
 
-        # resize (and flip) if necessary
+        # Resize (and flip) if necessary.
         if self.downsample is not False:
             print('video was downsampled.. downsampling rois.')
             for roi in rois:
@@ -174,10 +175,10 @@ class Experiment:
 
         self.rois = rois
 
-        # Initialize Empty Mask
+        # Initialize Empty Mask.
         roimask = np.zeros(self.shape[1:3], dtype='uint8')
 
-        # Add mask region from all rois
+        # Add mask region from all rois.
         for i, roi in enumerate(rois):
             roimask += make_mask(rois[roi], self.shape[1:3])
 
@@ -190,7 +191,7 @@ class Experiment:
         self.roimask = rotate(roimask, n_roi_rotations)
         print('')
 
-    def load_meta(self, meta_path):
+    def load_meta(self, meta_path: str):
         '''
         Load metadata to the experiment file.  This is not used in any decomposition, but provides a convenient way to save metadata along with the processed file.
 
@@ -231,7 +232,9 @@ class Experiment:
 
         self.bounding_box = ROI
 
-    def bound_movie(self, movie=None, bounding_box=None):
+    def bound_movie(self,
+                    movie: np.ndarray = None,
+                    bounding_box: List[List[int]] = None) -> np.ndarray:
         '''
         Returns the movie cropped by the bounding box.
         '''
@@ -244,7 +247,7 @@ class Experiment:
         ROI = bounding_box
         return movie[:, ROI[0][0]:ROI[0][1], ROI[1][0]:ROI[1][1]]
 
-    def bound_mask(self, bounding_box=None):
+    def bound_mask(self, bounding_box: List[List[int]] = None) -> np.ndarray:
         '''
         Returns the roimask cropped by the bounding box.
         '''
@@ -258,16 +261,16 @@ class Experiment:
             return None
 
     def ica_project(self,
-                    movie=None,
-                    savedata=True,
-                    calc_dfof=True,
-                    del_movie=True,
-                    n_components=None,
-                    svd_multiplier=None,
-                    suffix='',
-                    output_folder=None,
-                    mean_filter_method='wavelet',
-                    low_cutoff=0.5):
+                    movie: np.ndarray = None,
+                    savedata: bool = True,
+                    calc_dfof: bool = True,
+                    del_movie: bool = True,
+                    n_components: int = None,
+                    svd_multiplier: float = None,
+                    suffix: str = '',
+                    output_folder: str = None,
+                    mean_filter_method: str = 'wavelet',
+                    low_cutoff: float = 0.5) -> dict:
         '''
         Apply an ica decomposition to the experiment.  If rois and/or a bounding box have been defined, these will be used to crop the movie before filtration.
 
@@ -299,42 +302,42 @@ class Experiment:
             components: A dictionary containing all the results, metadata, and information regarding the filter applied.
 
                 mean: 
-                    the original video mean
+                    The original video mean.
                 roimask: 
-                    the mask applied to the video before decomposing
+                    The mask applied to the video before decomposing.
                 shape: 
-                    the original shape of the movie array
+                    The original shape of the movie array.
                 eig_mix: 
-                    the ICA mixing matrix
+                    The ICA mixing matrix.
                 timecourses: 
-                    the ICA component time series
+                    The ICA component time series.
                 eig_vec: 
-                    the eigenvectors
+                    The eigenvectors.
                 n_components:
-                    the number of components in eig_vec (reduced to only have 25% of total components as noise)
+                    The number of components in eig_vec (reduced to only have 25% of total components as noise).
                 project_meta:
                     The metadata for the ica projection
                 expmeta:
-                    All metadata created for this class
+                    All metadata created for this class.
                 lag1: 
-                    the lag-1 autocorrelation
+                    The lag-1 autocorrelation.
                 noise_components: 
-                    a vector (n components long) to store binary representation of which components were detected as noise 
+                    A vector (n components long) to store binary representation of which components were detected as noise.
                 cutoff: 
-                    the signal-noise cutoff value
+                    The signal-noise cutoff value.
                 mean_filtered: 
-                    the filtered mean
+                    The filtered mean.
                 mean_filter_meta: 
-                    metadata on how the mean filter was applied
+                    Metadata on how the mean filter was applied.
 
             if the n_components was automatically set, the following additional keys are also returned in components
 
                 svd_cutoff: 
-                    the number of components originally decomposed
+                    The number of components originally decomposed.
                 lag1_full: 
-                    the lag-1 autocorrelation of the full set of components decomposed before cropping to only 25% noise components
+                    The lag-1 autocorrelation of the full set of components decomposed before cropping to only 25% noise components.
                 svd_multiplier: 
-                    the svd multiplier value used to determine cutoff
+                    The svd multiplier value used to determine cutoff.
         '''
         print('\nICA Projecting\n-----------------------')
 
@@ -389,9 +392,9 @@ class Experiment:
         if savedata:
             f.save(components)
 
-        # calculate decomposition:
+        # Calculate decomposition:
         if 'eig_vec' and 'eig_mix' in components:
-            # if data was already in the save path, use it
+            # If data was already in the save path, use it
             print('Found ICA decomposition in components')
         else:
 
@@ -410,15 +413,15 @@ class Experiment:
                 print('Deleting original movie to save memory..')
                 del self.movie
 
-            #drop dimension and flip to prepare timecourse for ICA
+            # Drop dimension and flip to prepare timecourse for ICA.
             shape = movie.shape
             t, x, y = shape
             vector = movie.reshape(t, x * y)
-            vector = vector.T  # now vector is (x*y, t) for ICA along x*y dimension
+            vector = vector.T  # Now vector is (x*y, t) for ICA along x*y dimension.
             print('M has been reshaped from {0} to {1}\n'.format(
                 movie.shape, vector.shape))
 
-            # run ICA projection
+            # Run ICA projection.
             ica_project_kwargs = {'vector': vector, 'shape': shape}
 
             if svd_multiplier is not None:
@@ -436,7 +439,7 @@ class Experiment:
             if savedata:
                 f.save(components)
 
-        # Calculate other relevant parameters
+        # Calculate other relevant parameters.
         components['mean_filtered'] = filter_mean(
             components['mean'],
             filter_method=mean_filter_method,

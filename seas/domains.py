@@ -17,13 +17,13 @@ from seas.rois import make_mask
 from seas.colormaps import save_colorbar, REGION_COLORMAP, DEFAULT_COLORMAP
 
 
-def get_domain_map(components,
-                   blur=21,
-                   min_size_ratio=0.1,
-                   map_only=True,
-                   apply_filter_mean=True,
-                   max_loops=2,
-                   ignore_small=True):
+def get_domain_map(components: dict,
+                   blur: int = 21,
+                   min_size_ratio: float = 0.1,
+                   map_only: bool = True,
+                   apply_filter_mean: bool = True,
+                   max_loops: int = 2,
+                   ignore_small: bool = True):
     '''
     Creates a domain map from extracted independent components.  A pixelwise maximum projection of the blurred signal components is taken through the n_components axis, to create a flattened representation of where a domain was maximally significant across the cortical surface.  Components with multiple noncontiguous significant regions are counted as two distinct domains.
 
@@ -230,7 +230,10 @@ def get_domain_map(components,
     return output
 
 
-def save_domain_map(domain_ROIs, basepath, blur_level, n_rotations=0):
+def save_domain_map(domain_ROIs: np.ndarray,
+                    basepath: str,
+                    blur_level: int,
+                    n_rotations: int = 0):
     '''
     Saves domain maps to pngs for visualization.  Two files are saved to basepath_xb.png and basepath_xb_edges.png. One is the visualization of the domain indices, saved in black and white, the other is just the edge visualization.
 
@@ -265,9 +268,9 @@ def save_domain_map(domain_ROIs, basepath, blur_level, n_rotations=0):
          rescale_range=True)
 
 
-def get_domain_rebuilt_timecourses(domain_ROIs,
-                                   components,
-                                   apply_filter_mean=True):
+def get_domain_rebuilt_timecourses(domain_ROIs: np.ndarray,
+                                   components: dict,
+                                   apply_filter_mean: bool = True):
     '''
     Get time courses for each domain ROI.  The filtered movie is rebuilt under each ROI (one at a time).  The mean is taken under each domain ROI.  The ROI_timecourses and mean_filtered are returned in output.
 
@@ -297,7 +300,9 @@ def get_domain_rebuilt_timecourses(domain_ROIs,
     return output
 
 
-def get_domain_edges(domain_ROIs, clear_bg=False, linepad=None):
+def get_domain_edges(domain_ROIs: np.ndarray,
+                     clear_bg: bool = False,
+                     linepad: int = None):
     '''
     Get the edges of the domain map using canny edge detection.
 
@@ -333,11 +338,11 @@ def get_domain_edges(domain_ROIs, clear_bg=False, linepad=None):
     return edges
 
 
-def get_padded_borders(domain_ROIs,
-                       blur,
-                       rois,
-                       n_roi_rotations=0,
-                       bounding_box=None):
+def get_padded_borders(domain_ROIs: np.ndarray,
+                       blur: int,
+                       rois: dict,
+                       n_roi_rotations: int = 0,
+                       bounding_box: bool = None):
     '''
     Since a gaussian blur between a value with a number and a nan border will result in an increasingly large nan border, get this new border roi boundary.  Rois are used to separate hemispheres rather than blur together.
 
@@ -381,7 +386,7 @@ def get_padded_borders(domain_ROIs,
     return padmask
 
 
-def domain_map(domain_ROIs, values=None):
+def domain_map(domain_ROIs: np.ndarray, values: np.ndarray = None):
     '''
     Used to generate a domain map with a specific coloration scheme.  If values are a calculated metric, such as pearson correlation, each domain i in the domain map will be colored by its value values[i] in the input vector.
 
@@ -410,17 +415,17 @@ def domain_map(domain_ROIs, values=None):
     return domainmap
 
 
-def mosaic_movie(domain_ROIs,
-                 ROI_timecourses,
-                 savepath=None,
-                 t_start=None,
-                 t_stop=None,
-                 n_rotations=0,
-                 colormap='default',
-                 resize_factor=1,
-                 codec=None,
-                 speed=1,
-                 fps=10):
+def mosaic_movie(domain_ROIs: np.ndarray,
+                 ROI_timecourses: np.ndarray,
+                 savepath: str = None,
+                 t_start: int = None,
+                 t_stop: int = None,
+                 n_rotations: int = 0,
+                 colormap: np.ndarray = None,
+                 resize_factor: int = 1,
+                 codec: str = None,
+                 speed: int = 1,
+                 fps: int = 10):
     '''
     Creates a mosaic movie, where the original movie is played back as a series of domain timecourses, each displayed over its original domain.
 
@@ -447,7 +452,7 @@ def mosaic_movie(domain_ROIs,
     '''
     print('\nRebuilding Mosiac Movie\n-----------------------')
 
-    if colormap == 'default':
+    if colormap is None:
         colormap = DEFAULT_COLORMAP
 
     t, x, y = (ROI_timecourses.shape[1], domain_ROIs.shape[0],
@@ -488,17 +493,17 @@ def mosaic_movie(domain_ROIs,
              fps=10)
 
 
-def rolling_mosaic_movie(domain_ROIs,
-                         ROI_timecourses,
-                         savepath,
-                         t_start=None,
-                         t_stop=None,
-                         n_rotations=0,
-                         colormap='default',
-                         resize_factor=1,
-                         codec=None,
-                         speed=1,
-                         fps=10):
+def rolling_mosaic_movie(domain_ROIs: np.ndarray,
+                         ROI_timecourses: np.ndarray,
+                         savepath: str,
+                         t_start: int = None,
+                         t_stop: int = None,
+                         n_rotations: int = 0,
+                         colormap: np.ndarray = None,
+                         resize_factor: int = 1,
+                         codec: str = None,
+                         speed: int = 1,
+                         fps: int = 10):
     '''
     A low memory version of mosaic_movie.  The functionality is the same, except each frame is written one at at a time.  Movie scale values may be slightly different, since they are calculated from the first frame instead of on the entire movie.
 
@@ -526,21 +531,21 @@ def rolling_mosaic_movie(domain_ROIs,
 
     print('\nWriting Rolling Mosiac Movie\n-----------------------')
 
-    if colormap == 'default':
+    if colormap is None:
         colormap = DEFAULT_COLORMAP
 
-    # Initialize Parameters
+    # Initialize Parameters.
     resize_factor = 1 / resize_factor
     x, y = domain_ROIs.shape
     n_domains = ROI_timecourses.shape[0]
     t = np.arange(ROI_timecourses.shape[1])
     t = t[t_start:t_stop]
 
-    # Set up resizing factors
+    # Set up resizing factors.
     w = int(x // resize_factor)
     h = int(y // resize_factor)
 
-    # find codec to use if not specified
+    # Find codec to use, if not specified.
     if codec is None:
         if savepath.endswith('.mp4'):
             if os.name == 'posix':
@@ -555,13 +560,13 @@ def rolling_mosaic_movie(domain_ROIs,
             else:
                 raise TypeError('Unknown os type: {0}'.format(os.name))
 
-    # initialize movie writer
+    # Initialize movie writer.
     display_speed = fps * speed
     fourcc = cv2.VideoWriter_fourcc(*codec)
     out = cv2.VideoWriter(savepath, fourcc, display_speed, (h, w), isColor=True)
 
     def write_frame(frame):
-        # rescale and convert to uint8
+        # rescale and convert to uint8.
         frame = rescale(frame,
                         min_max=(scale['min'], scale['max']),
                         cap=False,
@@ -569,7 +574,7 @@ def rolling_mosaic_movie(domain_ROIs,
         frame = cv2.resize(frame, (h, w), interpolation=cv2.INTER_AREA)
         frame = rotate(frame, n_rotations)
 
-        # apply colormap, write frame to .avi
+        # Apply colormap, write frame to .avi.
         if colormap is not None:
             frame = cv2.applyColorMap(frame, colormap)
         else:
@@ -589,7 +594,7 @@ def rolling_mosaic_movie(domain_ROIs,
         for i in range(n_domains):
             frame[np.where(domain_ROIs == i)] = ROI_timecourses[i, f]
 
-        # if first frame, calculate scaling parameters
+        # If first frame, calculate scaling parameters.
         if (f == 0):
             mean = np.nanmean(frame)
             std = np.nanstd(frame)
