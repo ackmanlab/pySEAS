@@ -11,18 +11,31 @@ import sys
 import time
 from subprocess import call
 import yaml
+from typing import List
 
 
-def find_files(folder_path,
-               match_string,
-               subdirectories=False,
-               suffix=False,
-               regex=False,
-               verbose=True):
+def find_files(folder_path: str,
+               match_string: str,
+               subdirectories: bool = False,
+               suffix: bool = False,
+               regex: bool = False,
+               verbose: bool = True) -> List[str]:
     '''
     Finds files in folder_path that match a match_string, either at the end of the 
     path if suffix=True, or anywhere if suffix=False.
     Searches subdirectories if subdirectories = True
+
+    Arguments:
+        folder_path: The folder to search for files in.
+        match_string: The match string to search for.
+        subdirectories: Whether to search subdirectories.
+        suffix: The suffix to search for.
+        regex: Whether to use regex to search for the match string.
+        verbose: Whether to produce verbose output.
+
+    Returns:
+        results: 
+            A list of file paths.
     '''
     assert os.path.isdir(folder_path), 'Folder input was not a valid directory'
     files = []
@@ -68,18 +81,28 @@ def find_files(folder_path,
     return results
 
 
-def movie_sorter(pathlist, verbose=True):
+def movie_sorter(pathlist: List[str],
+                 matchstr: str = None,
+                 verbose: bool = True) -> dict:
     '''
     Takes list of paths, sorts into experiments, and orders files by 
     extension number.  Returns dict of experiments with associated files.
+
+    Arguments:
+        pathlist: A list of paths, generally produced by find_files.
+
+    Returns:
+        experiments: A dict, containing top level entries representing unique results of the matchstring search, 
+        each containing a list of tif files which matched that experiment.
     '''
 
     n_files = len(pathlist)
     exp_list = []
     fnum_list = []
 
-    # only match movie files that have a specific file format
-    matchstr = r'(\d{6}_\d{2})(?:[@-](\d{4}))?\.tif'
+    # Only match movie files that have a specific file format.
+    if matchstr is None:
+        matchstr = r'(\d{6}_\d{2})(?:[@-](\d{4}))?\.tif'
 
     for i, file in enumerate(pathlist):
         name = os.path.basename(file)
@@ -99,7 +122,7 @@ def movie_sorter(pathlist, verbose=True):
         else:
             fnum_set = [fnum_list[i] for i in indices]
 
-            # sort file number extensions by order, get new indices
+            # Sort file number extensions by order, get new indices.
             for n, fnum in enumerate(fnum_set):
                 if fnum is None:
                     fnum_set[n] = 0
@@ -118,15 +141,25 @@ def movie_sorter(pathlist, verbose=True):
     return experiments
 
 
-def experiment_sorter(folder_path, experimentstr=None, verbose=True):
+def experiment_sorter(folder_path: str,
+                      experimentstr: str = None,
+                      verbose: bool = True) -> dict:
     '''
     Finds all files associated with an experiment in a particular folder, 
     organizes them by filetype: movie files, processed files, metadata files.
+
+    Arguments:
+        folder_path: A path specifying which folder to search for experiment files within.
+        experimentstr: The matchstring to search for relevant paths with.
+        verbose: Whether to produce verbose output.
+
+    Returns:
+        experiment_files: A dictionary containing all the types of relevant files found for the given experiment specified by experimentstr.
+
     '''
     assert os.path.isdir(folder_path), 'Folder input was not a valid directory'
 
-    # experimentstr must have a specific file format
-
+    # Determine whether experimentstr matches the expected format.
     if experimentstr is not None:
         if re.match(r'^\d{6}_\d{2}-\d{2}$', experimentstr) is not None:
             print('matching multiple experiments')
@@ -199,7 +232,7 @@ def experiment_sorter(folder_path, experimentstr=None, verbose=True):
         movies.extend(
             movie_sorter(movies_unsorted, verbose=False)[experimentstr])
 
-    exp = {
+    experiment_files = {
         'movies': movies,
         'meta': meta,
         'processed': processed,
@@ -213,52 +246,80 @@ def experiment_sorter(folder_path, experimentstr=None, verbose=True):
 
     if verbose:
         print('Matches:')
-        for key in exp:
-            if len(exp[key]) > 0:
+        for key in experiment_files:
+            if len(experiment_files[key]) > 0:
                 print('\t' + key + ':')
-                [print('\t\t' + os.path.basename(item)) for item in exp[key]]
+                [
+                    print('\t\t' + os.path.basename(item))
+                    for item in experiment_files[key]
+                ]
 
-    return exp
+    return experiment_files
 
 
-def sort_experiments(files, experimentstr=None, verbose=True):
+def sort_experiments(files: List[str],
+                     experiment_format_string: str = None,
+                     verbose: bool = True) -> dict:
+    '''
+    Given a list of files, sort them into relevant experiments.
+
+    Arguments:
+        files: A list of files to search for a given experiment format string.
+        experiment_format_string: the experiment match string.
+
+    Returns:
+        experiments_found: A dictionary containing the unique experiments found by the format string.
+    '''
 
     if verbose:
         print('\nSorting Keys\n-----------------------')
 
-    if experimentstr is not None:
-        assert re.match(r'\d{6}_\d{2}', experimentstr) is not None, \
-            'experimentstr input was not a valid YYMMDD_EE experiment name'
+    if experiment_format_string is not None:
+        assert re.match(r'\d{6}_\d{2}', experiment_format_string) is not None, \
+            'experiment_format_string input was not a valid YYMMDD_EE experiment name'
     else:
-        experimentstr = r'(\d{6}_\d{2})'
+        experiment_format_string = r'(\d{6}_\d{2})'
 
-    exps = {}
+    experiments_found = {}
 
     for i, file in enumerate(files):
-        match = re.match(experimentstr, os.path.basename(file))
+        match = re.match(experiment_format_string, os.path.basename(file))
 
         if match is not None:
             exp = match.groups()[0]
 
-            if exp not in exps.keys():
-                exps[exp] = [file]
+            if exp not in experiments_found.keys():
+                experiments_found[exp] = [file]
             else:
-                exps[exp].append(file)
+                experiments_found[exp].append(file)
 
     if verbose:
-        for expname in exps:
+        for expname in experiments_found:
             print(expname)
-            [print('\t', key) for key in exps[expname]]
+            [print('\t', key) for key in experiments_found[expname]]
 
-    return exps
+    return experiments_found
 
 
-def get_exp_span_string(experiments):
-    # accepts list or keys object, creates string identifier to represent experiments
+def get_exp_span_string(experiments: List[str]) -> str:
+    '''
+    Creates a formatted string based on the experiments found in the experiments list.
+
+    Args:
+        experiments: A list of experiments found.
+            e.g. 120244_12, 120244_13, 120244_12.
+
+
+    Returns:
+        experiment_span_string: A string representing the experiment name and experiment span.
+            e.g. 120244_12-14.
+    '''
 
     if len(experiments) == 1:
-        expspanstring = [get_basename(experiment) for experiment in experiments]
-        return expspanstring[0]
+        experiment_span_string = [
+            get_basename(experiment) for experiment in experiments
+        ]
+        return experiment_span_string[0]
     else:
         experimentstr = r'(\d{6})_(\d{2})'
 
@@ -272,17 +333,29 @@ def get_exp_span_string(experiments):
                 explist[date] = []
             explist[date].append(match.groups()[1])
 
-    [explist[date].sort() for date in explist
-    ]  # in-place sort experiment numbers
+    # In-place sort experiment numbers.
+    [explist[date].sort() for date in explist]
 
-    explisted = [date + '_' + '-'.join(explist[date]) for date in explist
-                ]  # create spans
-    expspanstring = '_'.join(explisted)
+    experiment_span_list = [
+        date + '_' + '-'.join(explist[date]) for date in explist
+    ]
+    experiment_span_string = '_'.join(experiment_span_list)
 
-    return expspanstring
+    return experiment_span_string
 
 
-def get_basename(path):
+def get_basename(path: str):
+    '''
+    Get the experiment basename, stripping any extensions or tiff file fount extensions.
+
+    Arguments:
+        path: The unformatted filepath.
+            e.g.: ./example/directory/filename@0001.tif
+
+    Returns: 
+        name: The formatted name. 
+            e.g.: filename, from the example above.
+    '''
 
     name = os.path.basename(path)
     name = re.sub(r'(\.)(\w){3,4}$', '', name)  # remove extension
@@ -291,15 +364,21 @@ def get_basename(path):
     return name
 
 
-def read_yaml(path):
+def read_yaml(path: str) -> dict:
     '''
-    loads nested dictionaries from .yaml formated files
+    Loads nested dictionaries from .yaml formated files.
+
+    Arguments: 
+        path: the path to read yaml data from.
+
+    Returns:
+        yaml_contents: The contents of the yaml file.
     '''
-    meta = dict()
+    yaml_contents = dict()
     with open(path, 'r') as data:
         try:
-            meta = yaml.load(data)
+            yaml_contents = yaml.load(data)
         except yaml.YAMLError as exc:
             print(exc)
 
-    return meta
+    return yaml_contents
