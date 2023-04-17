@@ -72,7 +72,6 @@ def insert_masked_region(array: np.ndarray,
         array = array.swapaxes(0, 1).swapaxes(1, 2)
         array[maskind] = masked_array
         array = array.swapaxes(1, 2).swapaxes(0, 1)
-        # A.swapaxes(0,1).swapaxes(1,2)[maskind] = M
     else:
         raise Exception('Unknown mask indices with the following '
                         'dimensions:\n'
@@ -81,12 +80,27 @@ def insert_masked_region(array: np.ndarray,
     return array
 
 
-def roi_loader(path, verbose=True):
+def roi_loader(path: str, verbose: bool = True) -> dict:
     print('\nLoading Rois\n-----------------------')
+    '''
+    Load ROIs from a path.  
+    Rois must be in a zip file containing multiple polygon roi files, 
+    created by FIJI/ImageJ.
+
+    Arguments:
+        path: The path to the zip file of FIJI ROIs.
+        verbose: Whether to produce verbose output.
+
+    Returns:
+        rois: A dictionary containing lists of coordinates, 
+            which should be bounded polygons.
+    '''
 
     def load_roi_file(fileobj):
         '''
-        points = roiLoader(ROIfile)
+        This is based on a gist from Luis Pedro:
+        https://gist.github.com/luispedro/3437255
+
         ROIfile is a .roi file view.  
         It must first be opened as a bitstring through BytesIO to allow 
         for seeking through the bitstring.
@@ -94,9 +108,6 @@ def roi_loader(path, verbose=True):
         is in (x,y) order.
         This function may not work for float32 formats, or with images that 
         have subpixel resolution.
-
-        This is based on a gist from luis pedro:
-        https://gist.github.com/luispedro/3437255
         '''
 
         def get8():
@@ -133,7 +144,7 @@ def roi_loader(path, verbose=True):
 
     rois = dict()
 
-    # Load a .zip file of .roi files
+    # Load a .zip file of .roi files.
     if path.endswith('.zip'):
         f = zipfile.ZipFile(path)
         roifilelist = f.namelist()
@@ -148,7 +159,7 @@ def roi_loader(path, verbose=True):
             rois[roiname] = points
             roidata.close()
 
-    # Not a valid file extension
+    # Not a valid file extension.
     else:
         raise Exception('{0} does not have a valid roi '
                         'file extension.  Accepted file format is '
@@ -157,12 +168,21 @@ def roi_loader(path, verbose=True):
     return rois
 
 
-def make_mask(polylist, shape, bounding_box=None):
+def make_mask(polylist: np.ndarray, shape: Tuple[int, int], bounding_box=None):
     '''
     Makes mask from coordinates of polygon(s).  
     
-    Polylist is a list of numpy arrays, each representing a 
-    closed polygon to draw.
+    Polylist is a list of (x,y) numpy arrays, 
+
+    Arguments:
+        polylist: A list of (x,y) numpy arrays returned under a roi key by roi_loader, 
+            each representing a closed polygon to draw..
+        shape: (x,y) coordinate of shape to draw the polygons onto.
+        bounding_box: If provided, offset the polygons by this amount to take into account 
+            a previous cropping of the input image/video.
+
+    Returns:
+
     '''
     assert (len(shape) == 2), 'Shape was not 2D'
 
@@ -175,11 +195,19 @@ def make_mask(polylist, shape, bounding_box=None):
     return roimask
 
 
-def draw_bounding_box(image, required=True):
+def draw_bounding_box(image: np.ndarray,
+                      required: bool = True) -> List[List[int]]:
     '''
     Draw a bounding box on a two dimensional image.  
     Image should already be scaled to 0-255 in uint8.
-    Returns a ROI bounding box with shape [[x0,x1],[y0,y1]]
+
+    Arguments:
+        image: A numpy array to draw the bounding box on.
+        required: Whether to raise an error if the process is 
+            exited without a valid bounding box.
+
+    Returns:
+        ref_coord: An ROI bounding box with shape [[x0,x1],[y0,y1]].
     '''
     print('\nDrawing Bounding Box\n-----------------------')
 
@@ -187,8 +215,8 @@ def draw_bounding_box(image, required=True):
         Shape: '''.format(image.shape)
 
     global refPt, cropping
-    # initialize the list of reference points
-    # and boolean indicating whether cropping is being performed
+    # Initialize the list of reference points
+    # and boolean indicating whether cropping is being performed.
     window_name = "Draw bounding box on image.  \
     'r' = reset, 'a' = all, s' = save, +/- = zoom"
 
@@ -199,17 +227,17 @@ def draw_bounding_box(image, required=True):
 
     def click_and_crop(event, x, y, flags, param):
         global refPt, cropping
-        # if the left mouse button was clicked, record the starting
+        # If the left mouse button was clicked, record the starting
         # (x, y) coordinates and indicate that cropping is being
-        # performed
+        # performed.
         if event == cv2.EVENT_LBUTTONDOWN:
             refPt = [(x, y)]
             cropping = True
 
-        #Check to see if left mouse button was released
+        # Check to see if left mouse button was released.
         elif event == cv2.EVENT_LBUTTONUP:
-            # record the ending (x,y) coordinates and indicate that
-            # the cropping operation is finished
+            # Record the ending (x,y) coordinates and indicate that
+            # the cropping operation is finished.
             refPt.append((x, y))
             cropping = False
 
@@ -221,21 +249,19 @@ def draw_bounding_box(image, required=True):
     for i in range(1, 5):
         cv2.waitKey(1)
 
-    # load the image, clone it to draw, and setup the mouse
-    # callback function
-
+    # Load the image, clone it to draw, and setup the mouse.
     image = image.astype('uint8')
     draw = image.copy()
     cv2.namedWindow(window_name)
     cv2.setMouseCallback(window_name, click_and_crop)
 
-    # keep looping until the 'q' key is pressed
+    # Keep looping until the 'q' key is pressed.
     while True:
-        # display the image and wait for a keypress
+        # Display the image and wait for a keypress.
         cv2.imshow(window_name, draw)
         key = cv2.waitKey(1) & 0xFF
 
-        # if the '=' key is pressed, zoom in
+        # If the '=' key is pressed, zoom in.
         if key == ord("="):
             draw = cv2.resize(draw,
                               None,
@@ -244,7 +270,7 @@ def draw_bounding_box(image, required=True):
                               interpolation=cv2.INTER_CUBIC)
             zoom = zoom * zfactor
 
-        # if the '-' key is pressed, zoom out
+        # If the '-' key is pressed, zoom out.
         if key == ord("-"):
             draw = cv2.resize(draw,
                               None,
@@ -253,7 +279,7 @@ def draw_bounding_box(image, required=True):
                               interpolation=cv2.INTER_CUBIC)
             zoom = zoom * 1 / zfactor
 
-        # if the 'r' key is pressed, reset the cropping region
+        # If the 'r' key is pressed, reset the cropping region.
         if key == ord("r"):
             draw = image.copy()
             zoom = 1
@@ -263,11 +289,11 @@ def draw_bounding_box(image, required=True):
             refPt = [(0, 0), (image.shape[0], image.shape[1])]
             break
 
-        # if the 's' key is pressed, break from the loop and save ROI
+        # If the 's' key is pressed, break from the loop and save ROI.
         elif key == ord("s"):
             break
 
-    # if there are two reference points, then crop the region of interestdd
+    # If there are two reference points, then crop the region of interestd.
 
     if len(refPt) == 2:
         ref_coord = np.array([
@@ -275,7 +301,7 @@ def draw_bounding_box(image, required=True):
             sorted([refPt[0][0], refPt[1][0]])
         ])
 
-        # unzoom reference coordinates
+        # Unzoom reference coordinates.
         for i in range(2):
             ref_coord[i] = [round(y / zoom) for y in ref_coord[i]]
 
