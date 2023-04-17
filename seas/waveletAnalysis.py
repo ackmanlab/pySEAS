@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 
 import sys
-#sys.path.insert(0, '/home/mike/Dropbox/0_firebird_research/fit_peaks/single_fits/')
 import numpy as np
 from seas.waveletFunctions import *
 import matplotlib.pylab as plt
@@ -11,12 +10,11 @@ from mpl_toolkits.axes_grid1 import make_axes_locatable
 from matplotlib.gridspec import GridSpec
 from datetime import datetime
 from seas.signalanalysis import local_max, linear_regression, abline, gaussian_smooth_2d, lag_n_autocorr
-#sys.path.insert(0, '/home/mike/Dropbox/0_firebird_research/microburst_characterization/')
-#from src import remove_dropouts
+
 import operator
 
 #Adapted from __author__ = 'Mykhaylo Shumko' : __init__, waveletTransform, plotPower, lagNAutoCorr
-#All other functions written by Brian Mullen
+#All other functions written by Brian Mullen.
 '''
 To find the global wavelet spectrum run these two scripts:
     waveletAnalysis.globalWaveletSpectrum()
@@ -31,7 +29,6 @@ To find signal change:
 
 '''
 
-
 def waveletCoherence(tc1, tc2, fps=10, siglvl=0.95, sigtest=0):
 
     tc1 = np.asarray(np.squeeze(tc1))
@@ -40,19 +37,19 @@ def waveletCoherence(tc1, tc2, fps=10, siglvl=0.95, sigtest=0):
     assert tc1.ndim == 1 and tc2.ndim == 1, 'Timecouses should only be one dimension'
     assert tc1.shape[0] == tc2.shape[0], 'Timecourses are not the same shape'
 
-    #run wavelet transform
+    # Run wavelet transform.
     w1 = waveletAnalysis(tc1, fps=fps)
     w2 = waveletAnalysis(tc2, fps=fps)
 
-    # cross wavelet transform
+    # Cross wavelet transform.
     w1w2 = w1.wave * np.conj(
         w2.wave)  #/ (np.ones([1, tc1.size]) * w1.scale[:, None])
     xwt = np.sqrt(w1w2.real**2 + w1w2.imag**2)
 
-    # calculate phase
+    # Calculate phase.
     phase = np.angle(w1w2)
 
-    # #set up smoothing window
+    # #et up smoothing window.
     # win_s = np.floor(w1.wave.shape[1]/w1.dj)+1
     # win_t = 2*np.floor(w1.wave.shape[0]/w1.cadence)+1
 
@@ -61,18 +58,18 @@ def waveletCoherence(tc1, tc2, fps=10, siglvl=0.95, sigtest=0):
 
     # window2D = np.dot(windowFunc(win_t, win_type = 'ham')[:,np.newaxis] , windowFunc(win_s, win_type = 'ham')[:,np.newaxis].T)
 
-    #smooth
+    # Smooth.
     s1 = gaussian_smooth_2d(w1.power, w1.dj, w1.cadence)
     s2 = gaussian_smooth_2d(w2.power, w2.dj, w2.cadence)
     s1s2 = gaussian_smooth_2d(w1w2, w1.dj, w1.cadence)
 
-    #calculate coherency
+    # Calculate coherency.
     coherency = s1s2 / np.sqrt(s1 * s2)
 
-    #calculate coherence
+    # Calculate coherence.
     coherence = (s1s2.real**2 + s1s2.imag**2) / (s1 * s2)
 
-    # significance?
+    # Significance?
     acor1 = 0.5 * (lag_n_autocorr(tc1, 1) + lag_n_autocorr(tc1, 2))
     acor2 = 0.5 * (lag_n_autocorr(tc2, 1) + lag_n_autocorr(tc2, 2))
 
@@ -132,7 +129,7 @@ def wave_cohere_signif(X,
     if mother == -1:
         mother = 'MORLET'
 
-    # get the appropriate parameters [see Table(2)]
+    # Get the appropriate parameters [see Table(2)]
     if mother == 'MORLET':  #----------------------------------  Morlet
         empir = ([2, -1, -1, -1])
         if param == -1 or param == 6:
@@ -163,19 +160,19 @@ def wave_cohere_signif(X,
         print('Mother must be one of MORLET, PAUL, DOG')
 
     period = scale * fourier_factor
-    dofmin = empir[0]  # Degrees of freedom with no smoothing
-    Cdelta = empir[1]  # reconstruction factor
-    gamma_fac = empir[2]  # time-decorrelation factor
-    dj0 = empir[3]  # scale-decorrelation factor
-    freq = dt / period  # normalized frequency
+    dofmin = empir[0]  # Degrees of freedom with no smoothing.
+    Cdelta = empir[1]  # Reconstruction factor.
+    gamma_fac = empir[2]  # Time-decorrelation factor.
+    dj0 = empir[3]  # Scale-decorrelation factor.
+    freq = dt / period  # Normalized frequency.
 
     y_fft_theor = (1 - y_lag1**2) / (
         1 - 2 * y_lag1 * np.cos(freq * 2 * np.pi) + y_lag1**2)  # [Eqn(16)]
-    y_fft_theor = y_variance * y_fft_theor  # include time-series variance
+    y_fft_theor = y_variance * y_fft_theor  # Include time-series variance.
 
     x_fft_theor = (1 - x_lag1**2) / (
         1 - 2 * x_lag1 * np.cos(freq * 2 * np.pi) + x_lag1**2)  # [Eqn(16)]
-    x_fft_theor = x_variance * x_fft_theor  # include time-series variance
+    x_fft_theor = x_variance * x_fft_theor  # Include time-series variance.
 
     fft_theor = np.sqrt(y_fft_theor * x_fft_theor)
     signif = fft_theor
@@ -183,22 +180,21 @@ def wave_cohere_signif(X,
     if len(np.atleast_1d(dof)) == 1:
         if dof == -1:
             dof = dofmin
-    if sigtest == 0:  # no smoothing, DOF=dofmin [Sec.4]
+    if sigtest == 0:  # No smoothing, DOF=dofmin [Sec.4].
         dof = dofmin
         chisquare = chisquare_inv(siglvl, dof) / dof
         signif = fft_theor * chisquare  # [Eqn(18)]
-    elif sigtest == 1:  # time-averaged significance
+    elif sigtest == 1:  # Time-averaged significance.
         if len(np.atleast_1d(dof)) == 1:
             dof = np.zeros(J1) + dof
         dof[dof < 1] = 1
         dof = dofmin * np.sqrt(1 +
                                (dof * dt / gamma_fac / scale)**2)  # [Eqn(23)]
-        dof[dof < dofmin] = dofmin  # minimum DOF is dofmin
+        dof[dof < dofmin] = dofmin  # Minimum DOF is dofmin.
         for a1 in range(0, J1 + 1):
             chisquare = chisquare_inv(siglvl, dof[a1]) / dof[a1]
             signif[a1] = fft_theor[a1] * chisquare
-        # print("Chi squared: %e " % chisquare)
-    elif sigtest == 2:  # time-averaged significance
+    elif sigtest == 2:  # Time-averaged significance.
         if len(dof) != 2:
             print(
                 'ERROR: DOF must be set to [S1,S2], the range of scale-averages'
@@ -209,14 +205,14 @@ def wave_cohere_signif(X,
 
         s1 = dof[0]
         s2 = dof[1]
-        avg = np.logical_and(scale >= s1, scale < s2)  # scales between S1 & S2
+        avg = np.logical_and(scale >= s1, scale < s2)  # Scales between S1 & S2.
         navg = np.sum(
             np.array(np.logical_and(scale >= s1, scale < s2), dtype=int))
         if navg == 0:
             print('ERROR: No valid scales between ' + str(s1) + ' and ' +
                   str(s2))
         Savg = 1. / np.sum(1. / scale[avg])  # [Eqn(25)]
-        Smid = np.exp((np.log(s1) + np.log(s2)) / 2.)  # power-of-two midpoint
+        Smid = np.exp((np.log(s1) + np.log(s2)) / 2.)  # Power-of-two midpoint.
         dof = (dofmin * navg * Savg / Smid) * np.sqrt(
             1 + (navg * dj / dj0)**2)  # [Eqn(28)]
         fft_theor = Savg * np.sum(fft_theor[avg] / scale[avg])  # [Eqn(27)]
@@ -231,10 +227,10 @@ def wave_cohere_signif(X,
 def lagWaveletCoherency(tc1, tc2, fps=10, lag=5):
     for i in np.arange(0, lag + 1):
         if i == 0:
-            #initialize for proper shape
+            # Initialize for proper shape.
             cor, coh, xwt, phase, xwt_sig = waveletCoherence(tc1, tc2)
 
-            # create ouputs
+            # Create ouputs.
             lag_cor = np.zeros(
                 (2 * lag + 1, cor.shape[0], cor.shape[1])) * np.nan
             lag_coh = np.zeros(
@@ -246,18 +242,18 @@ def lagWaveletCoherency(tc1, tc2, fps=10, lag=5):
             lag_xwt_sig = np.zeros(
                 (2 * lag + 1, cor.shape[0], cor.shape[1])) * np.nan
 
-            #store in the proper index
+            # Store in the proper index.
             lag_cor[lag] = cor
             lag_coh[lag] = coh
             lag_xwt[lag] = xwt
             lag_phase[lag] = phase
             lag_xwt_sig[lag] = xwt_sig
         else:
-            #finish up the remaining lags (right shifted)
+            # Finish up the remaining lags (right shifted).
             lag_cor[lag + i, : , i:], lag_coh[lag + i, : , i:], lag_xwt[lag + i, : , i:],\
             lag_phase[lag + i, : , i:], lag_xwt_sig[lag + i, : , i:] = waveletCoherence(tc1[i:],tc2[:-i], fps = fps)
 
-            #(left shifted)
+            # (Left shifted).
             lag_cor[lag - i, : , :-i],lag_coh[lag - i, : , :-i],lag_xwt[lag - i, : , :-i],\
             lag_phase[lag - i, : , :-i],lag_xwt_sig[lag - i, : , :-i] = waveletCoherence(tc1[:-i],tc2[i:], fps = fps)
 
@@ -268,7 +264,7 @@ class waveletAnalysis:
 
     def __init__(self, data, fps, **kwargs):
         """
-        Initialize the wavelet parameters
+        Initialize the wavelet parameters.
         """
 
         assert data.ndim == 1, 'Time series is the wrong shape. It should be a 1-dim vector'
@@ -279,12 +275,12 @@ class waveletAnalysis:
         self.cadence = 1 / fps
         self.time = np.arange(self.n) * self.cadence
 
-        #default parameters
-        #print/ plot statements
+        # Default parameters.
+        # Print/ plot statements.
         self.verbose = kwargs.get('verbose', False)
         self.plot = kwargs.get('plot', False)
 
-        #wavelet parameters
+        # Wavelet parameters.
         self.mother = kwargs.get('mother', 'MORLET')
         self.param = kwargs.get('param', 4)
         self.j1 = kwargs.get('j1', 80)
@@ -292,7 +288,7 @@ class waveletAnalysis:
         self.dj = kwargs.get('dj', 0.125)
         self.s0 = kwargs.get('s0', 2 * self.cadence)
 
-        #noies modeling parameter
+        # Noise modeling parameter.
         self.siglvl = kwargs.get('siglvl', 0.95)
         self.lag1 = 0.5 * (lag_n_autocorr(data, 1) + lag_n_autocorr(data, 2))
         # self.lag1 = self.lagNAutoCorr(data, 1)
@@ -307,14 +303,14 @@ class waveletAnalysis:
         if len(self.time) != len(self.coi):
             self.coi = self.coi[1:]
 
-        self.power = (np.abs(self.wave))**2  # compute wavelet power spectrum
+        self.power = (np.abs(self.wave))**2  # Compute wavelet power spectrum.
 
-        # Significance levels: (variance=1 for the normalized data)
+        # Significance levels: (variance=1 for the normalized data).
         self.signif = wave_signif(([1.0]), dt=self.cadence, sigtest=0, scale=self.scale, \
             lag1=self.lag1, mother=self.mother, siglvl = self.siglvl)
         self.sig95 = self.signif[:, np.newaxis].dot(
-            np.ones(self.n)[np.newaxis, :])  # expand signif --> (J+1)x(N) array
-        self.sig95 = self.power / self.sig95  # where ratio > 1, power is significant
+            np.ones(self.n)[np.newaxis, :])  # Expand signif --> (J+1)x(N) array.
+        self.sig95 = self.power / self.sig95  # Where ratio > 1, power is significant.
         return
 
     def inverseWaveletTransform(self,
@@ -353,7 +349,7 @@ class waveletAnalysis:
         else:
             ax = np.ravel(ax)[0]
 
-        # Max period is fourier_factor*S0*2^(j1*dj), fourier_factor = 3.97383530632
+        # Max period is fourier_factor*S0*2^(j1*dj), fourier_factor = 3.97383530632.
         CS = ax.contourf(self.time,
                          self.period,
                          np.log2(self.power),
@@ -363,9 +359,9 @@ class waveletAnalysis:
         ax.set_xlabel('Time (s)')
         ax.set_ylabel('Period (s)')
         ax.set_title('Wavelet Power Spectrum')
-        # 95 significance contour, levels at -99 (fake) and 1 (95# signif)
+        # 95 significance contour, levels at -99 (fake) and 1 (95# signif).
         ax.contour(self.time, self.period, self.sig95, [-99, 1], colors='k')
-        # # cone-of-influence, anything "below" is dubious
+        # Cone-of-influence, anything "below" is dubious.
         ax.fill_between(self.time,
                         np.max(self.period),
                         self.coi,
@@ -373,9 +369,9 @@ class waveletAnalysis:
                         facecolor='white',
                         zorder=3)
         ax.plot(self.time, self.coi, 'k')
-        # # format y-scale
+        # Format y-scale.
 
-        # different matplotlib versions available for python < 3.8.
+        # Different matplotlib versions available for python < 3.8.
         try:
             ax.set_yscale('log', base=2, subs=None)
         except ValueError:
@@ -387,7 +383,7 @@ class waveletAnalysis:
         ax.ticklabel_format(
             axis='y', style='plain')  ## causes issues with tkinter mpl canvas
         ax.invert_yaxis()
-        # set up the size and location of the colorbar
+        # Set up the size and location of the colorbar.
         divider = make_axes_locatable(ax)
         cax = divider.append_axes("bottom", size="5%", pad=0.5)
         plt.colorbar(im, cax=cax, orientation='horizontal')
@@ -409,9 +405,9 @@ class waveletAnalysis:
         """
         self.waveFlt = self.wave.copy()
 
-        # Band pass filter
-        # Proporionally decreases power in specific wavelengths with respect to a 'motion vector'
-        # More motion, more severe the filtration of power in the given frequencies
+        # Band pass filter:
+        # Proporionally decreases power in specific wavelengths with respect to a 'motion vector'.
+        # More motion, more severe the filtration of power in the given frequencies.
         if movement_vector is not None:
             movement_vector -= movement_vector.min()
             movement_vector /= movement_vector.max()
@@ -430,7 +426,7 @@ class waveletAnalysis:
                     self.waveFlt[upper_ind:, :] = self.waveFlt[
                         upper_ind:, :] * movement_vector
 
-        # Band pass filter
+        # Band pass filter:
         # Zero out parts of the wavlet space that we don't want to reconstruct.
         else:
             if lowerPeriod != None:
@@ -444,7 +440,7 @@ class waveletAnalysis:
                     #print('Upper Period: ', self.period[upper_ind], 'Upper Freq: ', 1/self.period[upper_ind])
                     self.waveFlt[upper_ind:, :] = 0
 
-        # Significance filter
+        # Significance filter:
         notSigInd = np.where(
             self.sig95 < sigLevel
         )  # Only pass data that has power of (100% - sigThreshold). Usually sigThreshold is 95%. Was 0.25.
@@ -453,7 +449,7 @@ class waveletAnalysis:
     ############################################
 
     def nanCOI(self):
-        # get rid of all values outside the cone of influence
+        # Get rid of all values outside the cone of influence.
         #   wave = np.log2(wave)
         self.nanCOImat = self.power.copy()
         for i in range(self.power.shape[1]):
@@ -461,7 +457,7 @@ class waveletAnalysis:
             self.nanCOImat[cutoff, i] = np.nan
 
     def nanSig(self):
-        # get rid of all values that are not significant
+        # Get rid of all values that are not significant.
         self.nanSigmat = self.wave
         self.nanSigmat[np.where(wavelet.sig95 < 1)] = np.nan
 
@@ -473,7 +469,7 @@ class waveletAnalysis:
 
         return loss
 
-    def binSignal(self, binsz=30):  # binsz in seconds
+    def binSignal(self, binsz=30):  # Bins in seconds.
         binnum = (self.n * self.cadence) // binsz
         padsz = math.ceil(float(self.n) / binnum) * binnum - self.n
         binsignal = np.append(self.signal, np.zeros(int(padsz)) * np.nan)
@@ -483,7 +479,7 @@ class waveletAnalysis:
         return bintime, binsignal
 
     def familySig(self, sigList=[0.9, 0.95, 0.99, 0.999], dof=-1, sigtest=0):
-        # plot a family of significance curves for visualization and analysis
+        # Plot a family of significance curves for visualization and analysis.
 
         if isinstance(sigList, float):
             if sigtest < 2:
@@ -521,7 +517,7 @@ class waveletAnalysis:
         return np.squeeze(fam_signif), np.squeeze(sigList)
 
     def sumAcrossPeriod(self, perLim=[0, 100]):
-        #sum wavelet power across select periods
+        # Sum wavelet power across select periods.
 
         if self.verbose:
             print('Summing across {0} to {1} periods on wavelet run with mother {2} at paramter {3}'.\
@@ -557,9 +553,9 @@ class waveletAnalysis:
             print('Assessing wavelet mother {0} at paramter {1}'.format(
                 self.mother, self.param))
 
-        # calulate the global self spectrum
+        # Calulate the global self spectrum.
         self.nanCOI()
-        # if np.sum(~np.isnan(self.nanCOImat))!=0:
+        # If np.sum(~np.isnan(self.nanCOImat))!=0:.
         self.period_size = np.sum(~np.isnan(self.nanCOImat), axis=1)
         nan_ind = np.where(self.period_size == 0)[0]
         self.gws = np.zeros_like(self.period) * np.nan
@@ -578,14 +574,14 @@ class waveletAnalysis:
             else:
                 self.period_size = self.period_size[:self.period.shape[0]]
 
-        # calculate the average significance
+        # Calculate the average significance.
         self.gws_sig, self.gws_sigList = self.familySig(sigList=[0.95],
                                                         dof=self.period_size,
                                                         sigtest=1)
 
         if self.verbose:
             print('Auto-correlation value: {0:.4g}'.format(self.lag1))
-        # determine fourier wavelength
+        # Determine fourier wavelength.
         if self.mother == 'DOG':
             self.flambda = (2 * np.pi * 1 / self.period) / np.sqrt(self.param +
                                                                    .5)
@@ -609,7 +605,7 @@ class waveletAnalysis:
         self.gws_localmax_power = lgws
         self.gws_localmax_freq = lfl
 
-        #find the lowest and highest frequencies that are still significant
+        # Find the lowest and highest frequencies that are still significant.
         hiwav = np.nan
         hival = np.nan
         lowav = np.nan
@@ -638,7 +634,7 @@ class waveletAnalysis:
             fam_signif, sigList = self.familySig(dof=self.period_size,
                                                  sigtest=1)
 
-            #self period graph
+            # Self period graph.
             ax1.plot(self.period, self.gws)
             ax1.plot(lwav, lgws, 'ro')
 
@@ -692,7 +688,7 @@ class waveletAnalysis:
             #         plt.legend()
             #         plt.show()
 
-            #Fourier space lambda
+            # Fourier space lambda.
             ax2.plot(self.flambda, self.gws)
             for i in range(len(sigList)):
                 if i >= len(linetype) - 1:
@@ -753,10 +749,10 @@ class waveletAnalysis:
                                                 dof=periodLim,
                                                 sigtest=2)
 
-        #find coordinates of local max values
+        # Find coordinates of local max values.
         mx_wav, mx_gws = local_max(self.time, self.period_sum)
 
-        #Return only those above significance threshold
+        # Return only those above significance threshold.
         ltime = []
         lgws = []
         for i in range(len(mx_wav)):
@@ -782,12 +778,12 @@ class waveletAnalysis:
     def tsSignal(self, binSig=False, periodLim=[0.5, 4]):
         '''
         Using wavelet transforms to assess how the power of signal changes 
-        over time
+        over time.
         '''
         self.binSig = binSig
         assert len(periodLim) == 2, 'Period limits are wrong size'
 
-        #determine the time and power across neural signal periods
+        # Determine the time and power across neural signal periods.
         self.signal = self.sumAcrossPeriod(perLim=periodLim)
         self.signal_sig, _ = self.familySig(sigList=[0.95],
                                             dof=periodLim,
@@ -831,7 +827,7 @@ class waveletAnalysis:
                     sigLevel=0.25):
 
         if lowerPeriod is None:
-            lowerPeriod = 2 * self.cadence  #nyquist sampling rate
+            lowerPeriod = 2 * self.cadence  # Nyquist sampling rate.
 
         if movement_vector is not None:
             movement_vector = np.array(np.squeeze(movement_vector),
