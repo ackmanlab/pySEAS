@@ -19,16 +19,6 @@ def get_mpl_colormap(colormap_name: str):
     '''
     Convert a matplotlib colormap to a cv2-compatible colormap.
 
-    Arguments:
-        colormap_name: 
-            The name of the matplotlib colormap
-
-    Returns:
-        color_range: 
-            a 256x1x3 dimensional array holding the 8-bit color map representation compatible with opencv
-
-    Raises:
-        ValueError: if colormap_name was invalid
     '''
     # Initialize the matplotlib color map, convert to scalar mappable colormap
     matplotlib_colormap = plt.get_cmap(colormap_name)
@@ -83,7 +73,7 @@ def dfof_to_rescaled(dfof_value: float, slope: float, array_min: float):
     return dfof_value / slope + array_min
 
 
-def save_colorbar(scale: dict, path: str, colormap='default'):
+def save_colorbar(scale: dict, path: str, colormap=None):
     '''
     Save a plt colorbar with a given scale to a specified path.  Accepts plt or cv2 colormap objects.
 
@@ -93,7 +83,7 @@ def save_colorbar(scale: dict, path: str, colormap='default'):
         path: 
             Where to save the file to. (supported formats: eps, jpeg, jpg, pdf, pgf, png, ps, raw, rgba, svg, svgz, tif, tiff)
         colormap: 
-            Which colormap to save.  Should be a cv2 colormap object or name of a plt colormap.  If left as 'default', the default colormap will be loaded.  
+            Which colormap to save.  Should be a cv2 colormap object or name of a plt colormap.  If left as None, the default colormap will be loaded.  
 
     Returns:
         Nothing
@@ -104,9 +94,8 @@ def save_colorbar(scale: dict, path: str, colormap='default'):
         ValueError: 
             The path provided was not supported by plt figure outputs.
     '''
-    if type(colormap) is str:
-        if colormap == 'default':
-            colormap = DEFAULT_COLORMAP
+    if colormap is None:
+        colormap = DEFAULT_COLORMAP
 
     if type(colormap) is np.ndarray:
         colormap = ListedColormap(colormap.squeeze() / 256)
@@ -137,7 +126,7 @@ def apply_colormap(video: np.ndarray, colormap: np.ndarray = None):
         video: 
             The video to apply the colormap to.  Should be in format (t,x,y)
         colormap: 
-            Which colormap to apply  Should be a cv2 colormap object.  If left as 'default', the default colormap will be loaded.  
+            Which colormap to apply  Should be a cv2 colormap object.  If left as None, the default colormap will be loaded.  
 
     Returns:
         video_color: 

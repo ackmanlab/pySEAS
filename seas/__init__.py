@@ -23,7 +23,6 @@ from . import domains
 # from .hdf5manager import hdf5manager
 # from .gui import run_gui as run_gui
 
-
 # from . import rois
 # from . import colormap
 # from . import filemanager
