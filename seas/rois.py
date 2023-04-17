@@ -3,6 +3,7 @@ import re
 import numpy as np
 from io import BytesIO
 import cv2
+from typing import Tuple, List
 
 
 def get_masked_region(array: np.ndarray,
