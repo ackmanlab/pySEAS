@@ -18,15 +18,29 @@ from seas.ica import rebuild_eigenbrain
 from seas.domains import get_domain_map, domain_map, get_domain_edges
 
 
-def run_gui(components, rotate=0, savepath=None, default_assignment=None):
+def run_gui(components: dict,
+            rotate: int = 0,
+            savepath: str = None,
+            default_assignment: np.ndarray = None) -> dict:
     '''
     Create a tkinter GUI to select noise components from ica-decomposition components file.
+    If hdf5 information is given using a string input to components, or a savepath which is a valid hdf5 file,
+    component artifact assignment will be saved to the file.
 
     Returns toggle, a boolean array 
     of either True or False.  Components that have been determined to be 
     noise are 'True', components to keep are 'False'.
     Optional toggle input is a boolean of starting values 
     for noise_components.
+
+    Arguments:
+        components: A dictionary containing the experiment and decomposition information.
+        rotate: An integer number of clockwise rotations.
+        savepath: Where to save or load component information from.
+        default_assignment: The default assignment of which components are signal or artifact.
+
+    Returns:
+        components: The components dict, updated with any new region assignment, or artifact assignment, if applicable. 
     '''
 
     print('\nStarting ICA Component Selection GUI\n-----------------------')
