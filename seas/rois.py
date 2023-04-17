@@ -27,7 +27,7 @@ def get_masked_region(array: np.ndarray,
     else:
         maskind = np.where(mask == maskval)
 
-    if array.shape[0:2] == mask.shape:  #check if dimensions align for masking
+    if array.shape[0:2] == mask.shape:  # Check if dimensions align for masking.
         masked_array = array[maskind]
     elif (array.shape[1], array.shape[2]) == mask.shape:
         masked_array = array.swapaxes(0, 1).swapaxes(1, 2)[maskind]

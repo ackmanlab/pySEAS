@@ -35,7 +35,7 @@ def run_gui(components: dict,
 
     Arguments:
         components: A dictionary containing the experiment and decomposition information.
-        rotate: An integer number of clockwise rotations.
+        rotate: An integer number of counterclockwise rotations.
         savepath: Where to save or load component information from.
         default_assignment: The default assignment of which components are signal or artifact.
 

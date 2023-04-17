@@ -10,39 +10,53 @@ import os
 from seas.rois import get_masked_region, insert_masked_region
 from seas.colormaps import DEFAULT_COLORMAP, save_colorbar
 
+from typing import Tuple, List
 
-def load(pathlist,
-         downsample=False,
-         t_downsample=False,
-         dtype=None,
-         verbose=True,
-         tiffloading=True,
-         greyscale=True):
+
+def load(pathlist: List[str],
+         downsample: int = False,
+         t_downsample: int = False,
+         dtype: str = None,
+         verbose: bool = True,
+         tiffloading: bool = True,
+         greyscale: bool = True) -> np.ndarray:
     '''
     Loads a list of tiff paths, returns concatenated arrays.
     Implemented size-aware loading for tiff arrays with pre-allocation
     Expects a list of pathnames: 
-    ex: ['./testvideo1.mat', '/home/sydney/testfile2.tif']
+
+    Arguments:
+        pathlist: List of paths to load.  Can be mixes formats, as long as dimensions match.
+            ex: ['./testvideo1.mat', '/home/sydney/testfile2.tif']
+        downsample: The spatial factor to downsample by.
+        t_downsample: The temporal factor to downsample by.
+        dtype: The data type to load into.  Must be a numpy data type string.
+        verbose: Whether to print verbose output.
+        tiffloading: Whether to preallocate array in memory based on file size expected from each tiff file.
+        greyscale: Whether the files are in color or greyscale.
+
+    Returns:
+
     Files in list must be the same xy dimensions.
     if downsample is an integer greater than one, movie will be downsampled 
     # by that factor.
     '''
     print('\nLoading Files\n-----------------------')
 
-    if type(pathlist) is str:  # if just one path got in
+    if type(pathlist) is str:  # If just one path got in.
         pathlist = [pathlist]
 
-    # make sure pathlist is a list of strings
+    # Make sure pathlist is a list of strings.
     assert type(pathlist) is list
 
-    # use tiff loading if all paths are tiffs.
+    # Use tiff loading if all paths are tiffs.
     for obj in pathlist:
         assert type(obj) is str
         if not (obj.endswith('.tif') | obj.endswith('.tiff')):
             print('Found non-tiff file to load:', obj)
             tiffloading = False
 
-    # if downsampling, explicitly state spatial and temporal factors.
+    # If downsampling, explicitly state spatial and temporal factors.
     if downsample or t_downsample:
 
         if not t_downsample:
@@ -53,24 +67,24 @@ def load(pathlist,
         assert type(downsample) is int
         assert type(t_downsample) is int
 
-    # if no datatype was given, assume it's uint16
+    # If no datatype was given, assume it's uint16.
     if dtype == None:
         dtype = 'uint16'
 
-    # use size-aware tiff loading to preallocate matrix and load one at a time
+    # Use size-aware tiff loading to preallocate matrix and load one at a time.
     if tiffloading:
-        # ignore tiff warning (lots of text, unnecessary info)
+        # Ignore tiff warning (lots of text, unnecessary info).
         warnings.simplefilter('ignore', UserWarning)
         try:
 
             print('Using size-aware tiff loading.')
             nframes = 0
 
-            # loop through tiff files to determine matrix size
+            # Loop through tiff files to determine matrix size.
             for f, path in enumerate(pathlist):
                 with tifffile.TiffFile(path) as tif:
                     if (len(tif.pages) == 1) and (len(tif.pages[0].shape) == 3):
-                        # sometimes movies save as a single page
+                        # Sometimes movies save as a single page.
                         pageshape = tif.pages[0].shape[1:]
                         nframes += tif.pages[0].shape[0]
 
@@ -87,18 +101,18 @@ def load(pathlist,
             shape = (nframes, shape[0], shape[1])
             print('shape:', shape)
 
-            # resize preallocated matrix if downsampling
+            # Resize preallocated matrix if downsampling.
             if downsample:
                 shape = (shape[0] // t_downsample, shape[1] // downsample,
                          shape[2] // downsample)
                 print('downsample size:', shape, '\n')
 
-                # initialize remainder for temporal downsampling
+                # Initialize remainder for temporal downsampling.
                 rmarray = np.zeros(shape=(0, shape[1], shape[2]), dtype='uint8')
 
-            A = np.empty(shape, dtype=dtype)
+            array = np.empty(shape, dtype=dtype)
 
-            # load video one at a time and assign to preallocated matrix
+            # Load video one at a time and assign to preallocated matrix.
             i = 0
             for f, path in enumerate(pathlist):
                 t0 = timer()
@@ -112,64 +126,65 @@ def load(pathlist,
                             print('\t temporally downsampling by {0}..'.format(
                                 t_downsample))
 
-                        array = tif.asarray()
+                        tiff_array = tif.asarray()
                         if rmarray.shape[0] > 0:
                             if verbose:
                                 print('concatenating remainder..')
-                            array = np.concatenate((rmarray, array), axis=0)
+                            tiff_array = np.concatenate((rmarray, tiff_array),
+                                                        axis=0)
 
-                        dsarray, rmarray = scale_video(array,
-                                                       downsample,
-                                                       t_downsample,
-                                                       verbose=False,
-                                                       remainder=True)
-                        npages = dsarray.shape[0]
-                        A[i:i + npages] = dsarray
+                        downsampled_array, rmarray = scale_video(tiff_array,
+                                                                 downsample,
+                                                                 t_downsample,
+                                                                 verbose=False,
+                                                                 remainder=True)
+                        npages = downsampled_array.shape[0]
+                        array[i:i + npages] = downsampled_array
 
                     else:
-                        array = tif.asarray()
-                        if array.ndim == 3:
-                            npages = array.shape[0]
-                        else:  # if a movie has only one frame, shape is only 2d
+                        tiff_array = tif.asarray()
+                        if tiff_array.ndim == 3:
+                            npages = tiff_array.shape[0]
+                        else:  # If a movie has only one frame, shape is only 2d.
                             npages = 1
-                        A[i:i + npages] = array
+                        array[i:i + npages] = tiff_array
 
                     i += npages
 
                 print("\t Loading file took: {0} sec".format(timer() - t0))
         except Exception as e:
-            # if something failed,  try again without size aware tiff loading
+            # If something failed,  try again without size aware tiff loading.
             print('Size-aware tiff-loading failed!')
             print('\tException:', e)
             tiffloading = False
 
-    # don't use tiff size-aware loading.  load each file and append to growing matrix
+    # Don't use tiff size-aware loading.  load each file and append to growing matrix.
     if not tiffloading:
         print('Not using size-aware tiff loading.')
         if t_downsample:
             remainder = True
         hdf5_loadkey = None
 
-        # general function for loading a path of any type.
-        # add if/elif statements for more file types
+        # General function for loading a path of any type.
+        # Add if/elif statements for more file types
         def loadFile(path, downsample, t_downsample, remainder=None):
             t0 = timer()
 
             if path.endswith('.tif') | path.endswith('.tiff'):
                 print("Loading tiff file at " + path)
                 with tifffile.TiffFile(path) as tif:
-                    A = tif.asarray()
+                    array = tif.asarray()
                     if type(A) is np.memmap:
-                        A = np.array(A, dtype=dtype)
+                        array = np.array(array, dtype=dtype)
 
             elif path.endswith('.hdf5') | path.endswith('.mat'):
                 print("Loading hdf5 file at", path)
                 f = h5(path)
 
                 if 'movie' in f.keys():
-                    A = f.load('movie')
+                    array = f.load('movie')
                 elif 'tr' in f.keys():
-                    A = f.load('tr')
+                    array = f.load('tr')
                 else:
                     nonlocal hdf5_loadkey
 
@@ -186,7 +201,7 @@ def load(pathlist,
                             else:
                                 print('key:', loadinput, 'was not valid.')
 
-                    A = f.load(hdf5_loadkey)
+                    array = f.load(hdf5_loadkey)
 
             elif path.endswith('.avi') | path.endswith('.mp4'):
                 cap = cv2.VideoCapture(path)
@@ -196,20 +211,20 @@ def load(pathlist,
                 frameHeight = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
 
                 if greyscale:
-                    A = np.empty((frameCount, frameHeight, frameWidth),
-                                 np.dtype('uint8'))
+                    array = np.empty((frameCount, frameHeight, frameWidth),
+                                     np.dtype('uint8'))
                 else:
-                    A = np.empty((frameCount, frameHeight, frameWidth, 3),
-                                 np.dtype('uint8'))
+                    array = np.empty((frameCount, frameHeight, frameWidth, 3),
+                                     np.dtype('uint8'))
 
                 fc = 0
                 ret = True
                 while (fc < frameCount and ret):
                     if greyscale:
                         ret, frame = cap.read()
-                        A[fc] = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+                        array[fc] = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
                     else:
-                        ret, A[fc] = cap.read()
+                        ret, array[fc] = cap.read()
                     fc += 1
                 cap.release()
 
@@ -225,77 +240,101 @@ def load(pathlist,
                 if remainder is not None:
                     if (type(remainder) == np.ndarray) and \
                             (remainder.shape[0] != 0):
-                        A = np.concatenate((remainder, A), axis=0)
+                        array = np.concatenate((remainder, array), axis=0)
                     A, remainder = scale_video(A,
                                                downsample,
                                                t_downsample,
                                                verbose=True,
                                                remainder=True)
                 else:
-                    A = scale_video(A, downsample, t_downsample, verbose=True)
+                    array = scale_video(A,
+                                        downsample,
+                                        t_downsample,
+                                        verbose=True)
 
             print("Loading file took: {0} sec".format(timer() - t0))
 
             if remainder is not None:
-                return remainder, A
+                return remainder, array
             else:
-                return A
+                return array
 
-        # load either one file, or load and concatenate list of files
+        # Load either one file, or load and concatenate list of files.
         if len(pathlist) == 1:
-            A = loadFile(pathlist[0], downsample, t_downsample)
+            array = loadFile(pathlist[0], downsample, t_downsample)
         else:
             remainder = None
             for i, path in enumerate(pathlist):
                 if t_downsample > 1:
-                    remainder, Atemp = loadFile(path,
-                                                downsample,
-                                                t_downsample,
-                                                remainder=remainder)
+                    remainder, temporary_array = loadFile(path,
+                                                          downsample,
+                                                          t_downsample,
+                                                          remainder=remainder)
                 else:
-                    Atemp = loadFile(path, downsample, t_downsample, remainder)
+                    temporary_array = loadFile(path, downsample, t_downsample,
+                                               remainder)
 
                 t0 = timer()
                 if i == 0:
-                    A = Atemp
+                    array = temporary_array
                 else:
                     try:
-                        A = np.concatenate([A, Atemp], axis=0)
+                        array = np.concatenate([A, temporary_array], axis=0)
                     except:
-                        A = np.concatenate([A, Atemp[None, :, :]], axis=0)
+                        array = np.concatenate([A, temporary_array[None, :, :]],
+                                               axis=0)
 
                 print("Concatenating arrays took: {0} sec\n".format(timer() -
                                                                     t0))
 
-    return A
+    return array
 
 
-def save(array,
-         path,
-         resize_factor=1,
-         apply_cmap=True,
-         rescale_range=False,
-         colormap='default',
-         speed=1,
-         fps=10,
-         codec=None,
-         mask=None,
-         overlay=None,
-         overlay_color=(0, 0, 0),
-         save_cbar=False):
+def save(array: np.ndarray,
+         path: str,
+         resize_factor: int = 1,
+         apply_cmap: bool = True,
+         rescale_range: bool = False,
+         colormap: np.ndarray = 'default',
+         speed: int = 1,
+         fps: int = 10,
+         codec: str = None,
+         mask: np.ndarray = None,
+         overlay: np.ndarray = None,
+         overlay_color: Tuple[int, int, int] = (0, 0, 0),
+         save_cbar: bool = False) -> None:
     '''
     Check what the extension of path is, and use the appropriate function
     for saving the array.  Functionality can be added for more 
     file/data types.
 
+
+    Arguments:
+        array: The (x,y,t) or (x,y,c,t) array to save to a video.
+        path: Where to save the file to.
+        resize_factor: A spatial resize factor to apply when saving
+        apply_cmap: Whether to apply a colormap.  Defaults to True.
+        rescale_range: Whether to rescale the dyanmic range of the video when saving.  Defaults to True.
+        colormap: The colormap to apply.  Defaults to the global default colormap.
+        speed: The speed factor to save the video at.  Multiplies the fps of the video.
+        fps: The video fps to save at.
+        codec: The video codec to use.  See the note below for more information.
+        mask: The mask to apply when saving.  If selected, the areas where mask == 0 will be black.
+        overlay: An overlay to draw on top of the video when saving.
+        overlay_color: The color to save the overlay as.
+        save_cbar: Whether to save an additional figure showing the color bar of the colormap applied to the video.
+
+    Returns:
+        None
+
+    
+    A note on codecs:
     For AVIs:
     Parameters (args 3+) are used for creating an avi output.  
     MJPG and XVID codecs seem to work well for linux systems, 
     so they are set as the default.
     A full list of codecs could be found at:
     http://www.fourcc.org/codecs.php.
-
-    We may need to investigate which codec gives us the best output. 
     '''
     print('\nSaving File\n-----------------------')
     assert (type(array) == np.ndarray), ('Movie to save was not a '
@@ -308,7 +347,7 @@ def save(array,
         print('Saving to: ' + path)
         t0 = timer()
         if array.shape[2] == 3:
-            # convert RGB to BGR
+            # Convert RGB to BGR.
             array = cv2.cvtColor(array, cv2.COLOR_BGR2RGB)
             print('Converted RGB image to BGR.')
         with tifffile.TiffWriter(path) as tif:
@@ -347,7 +386,7 @@ def save(array,
 
         array = array.astype('uint8')
 
-        if codec == None:  # no codec specified
+        if codec == None:  # No codec specified.
             if path.endswith('.avi'):
                 codec = 'MJPG'
             elif path.endswith('.mp4'):
@@ -358,7 +397,7 @@ def save(array,
                 else:
                     raise TypeError('Unknown os type: {0}'.format(os.name))
 
-        # check codec and dimensions
+        # Check codec and dimensions.
         if array.ndim == 3:
             if apply_cmap == False:
                 sz = array.shape
@@ -381,11 +420,11 @@ def save(array,
             movietype, codec))
         print('Saving to: ' + path)
 
-        # Set up resize
+        # Set up resize.
         w = int(ceil(sz[1] * resize_factor))
         h = int(ceil(sz[2] * resize_factor))
 
-        # initialize movie writer
+        # Initialize movie writer.
         display_speed = fps * speed
         fourcc = cv2.VideoWriter_fourcc(*codec)
         out = cv2.VideoWriter(path, fourcc, display_speed, (h, w), True)
@@ -425,81 +464,89 @@ def save(array,
         save_colorbar(scale, cbarpath, colormap=colormap)
 
 
-def dfof(A, win_size=None, win_type='box'):
+def dfof(array, win_size: int = None, win_type: str = 'box'):
     '''
     Calculates the change in fluorescence over mean 
-    fluorescense for a video.
-    If no win_size is given, it will calculate the dfof using
-    an average projection of the whole video.
+    fluorescense for a video.  If no win_size is given, 
+    it will calculate the dfof using an average projection of the whole video.
     Define window size and window type from (see function from 
     time course analysis) to calculate a rolling average dfof.
+
+    Arguments:
+        array: The input (x,y,t or xy,t) array to calculate dfof of.
+        win_size: The temporal window size to calculate rolling mean effects, if applicable.
+        win_type: The type of windowing effect applied to the movie. 
+
+    Returns:
+        array: The array after dfof is applied.
     '''
 
-    assert (type(A) == np.ndarray), 'Input was not a numpy array'
-    print(A.shape)
-    if A.ndim == 3:
+    assert (type(array) == np.ndarray), 'Input was not a numpy array'
+    if array.ndim == 3:
         reshape = True
-        sz = A.shape
-        A = np.reshape(A, (sz[0], int(A.size / sz[0])))
-    elif A.ndim == 2:
+        sz = array.shape
+        array = np.reshape(array, (sz[0], int(array.size / sz[0])))
+    elif array.ndim == 2:
         reshape = False
     else:
-        assert A.ndim == 1, ('Input was not 1-3 dimensional: {0} dim'.format(
-            A.ndim))
+        assert array.ndim == 1, (
+            'Input was not 1-3 dimensional: {0} dim'.format(array.ndim))
         reshape = False
-        A = A[:, None]
+        array = array[:, None]
         print('Reshaped to two dimensional.')
 
-    print("Array Shape (t,xy): {0}".format(A.shape))
-    print('Array Type:', A.dtype)
+    print("Array Shape (t,xy): {0}".format(array.shape))
+    print('Array Type:', array.dtype)
 
     t0 = timer()
     if win_size == None:
         print('\nCalculating dF/F\n-----------------------')
         print('Calculating dFoF based on average projection')
-        Amean = np.nanmean(A, axis=0, dtype='float32')
+        array_mean = np.nanmean(array, axis=0, dtype='float32')
         print("z mean: {0} sec".format(timer() - t0))
-        print("Amean shape (xy): {0}".format(Amean.shape))
-        print("Amean type: {0}".format(Amean.dtype))
+        print("Array mean shape (xy): {0}".format(array_mean.shape))
+        print("Array mean type: {0}".format(array_mean.dtype))
     else:
         print('\nCalculating rolling dF/F\n-----------------------')
-        lbound = int(win_size // 2)
-        ubound = int(win_size - lbound)
+        lower_bound = int(win_size // 2)
+        upper_bound = int(win_size - lower_bound)
         window = tca.windowFunc(width=win_size, win_type=win_type)[:, None]
-        window = np.repeat(window, A.shape[1], axis=1)
-        print("Upper bound frame: ", ubound, "Lower bound frame: ", lbound)
+        window = np.repeat(window, array.shape[1], axis=1)
+        print("Upper bound frame: ", upper_bound, "Lower bound frame: ",
+              lower_bound)
         print("Window shape (t,x*y): ", window.shape)
 
     t0 = timer()
-    A = A.astype('float32', copy=False)
+    array = array.astype('float32', copy=False)
     print("float32: {0} sec".format(timer() - t0))
 
     t0 = timer()
     t1 = timer()
     if win_size != None:
-        Amoving = A.copy()
-        for i in np.arange(A.shape[0]):
-            if i < lbound:
+        moving_array = array.copy()
+        for i in np.arange(array.shape[0]):
+            if i < lower_bound:
                 new_window = True
-                window = tca.windowFunc(width=ubound + i,
+                window = tca.windowFunc(width=upper_bound + i,
                                         win_type=win_type)[:, None]
-                window = np.repeat(window, A.shape[1], axis=1)
-                windprod = window * A[:i + ubound, :]
-            elif i > A.shape[0] - ubound:
+                window = np.repeat(window, array.shape[1], axis=1)
+                wind_product = window * array[:i + upper_bound, :]
+            elif i > array.shape[0] - upper_bound:
                 new_window = True
-                window = tca.windowFunc(width=lbound + A.shape[0] - i,
+                window = tca.windowFunc(width=lower_bound + array.shape[0] - i,
                                         win_type=win_type)[:, None]
-                window = np.repeat(window, A.shape[1], axis=1)
-                windprod = window * A[i - lbound:, :]
+                window = np.repeat(window, array.shape[1], axis=1)
+                wind_product = window * array[i - lower_bound:, :]
             else:
                 if new_window:
                     window = tca.windowFunc(width=win_size,
                                             win_type=win_type)[:, None]
-                    window = np.repeat(window, A.shape[1], axis=1)
+                    window = np.repeat(window, array.shape[1], axis=1)
                     new_window = False
-                windprod = np.multiply(window, A[i - lbound:i + ubound, :])
+                wind_product = np.multiply(
+                    window, array[i - lower_bound:i + upper_bound, :])
 
-            Amean = np.nansum(windprod, axis=0, dtype='float32')
+            array_mean = np.nansum(wind_product, axis=0, dtype='float32')
 
             if timer() - t1 > 300:
                 t1 = timer()
@@ -507,46 +554,66 @@ def dfof(A, win_size=None, win_type='box'):
                     '\tWorking on {0} frame, time passed: {1:.1f} secs'.format(
                         i,
                         timer() - t0))
-            Amoving[i, :] /= Amean
-            Amoving[i, :] -= 1.0
+            moving_array[i, :] /= array_mean
+            moving_array[i, :] -= 1.0
     else:
-        for i in np.arange(A.shape[0]):
-            A[i, :] /= Amean
-            A[i, :] -= 1.0
+        for i in np.arange(array.shape[0]):
+            array[i, :] /= array_mean
+            array[i, :] -= 1.0
 
     print("dfof normalization: {0} sec".format(timer() - t0))
     if reshape:
         if win_size != None:
-            A = np.reshape(Amoving, sz)
+            array = np.reshape(moving_array, sz)
         else:
-            A = np.reshape(A, sz)
-    print("A type: {0}".format(A.dtype))
-    print("A shape (t,x,y): {0}\n".format(A.shape))
+            array = np.reshape(array, sz)
+    print("Array type: {0}".format(array.dtype))
+    print("Array shape (t,x,y): {0}\n".format(array.shape))
 
-    return A
+    return array
 
 
-def rescale(array,
-            low=3,
-            high=7,
-            cap=True,
-            mean_std=None,
-            mask=None,
-            maskval=1,
-            verbose=True,
-            min_max=None,
-            return_scale=False):
+def rescale(array: np.ndarray,
+            low: float = 3,
+            high: float = 7,
+            cap: bool = True,
+            mean_std: Tuple[float, float] = None,
+            mask: np.ndarray = None,
+            maskval: float = 1,
+            verbose: bool = True,
+            min_max: bool = None,
+            return_scale: bool = False) -> Tuple[np.ndarray, dict]:
     '''
     determine upper and lower limits of colormap for playing movie files. 
     limits based on standard deviation from mean.  low, high are defined 
     in terms of standard deviation.  Image is updated in-place, 
     and doesn't have to be returned.
+
+    Arguments:
+        array: The array to rescale.
+        low: The number of standard deviations below to scale the range to.
+        high: The number of standard deviations above to scale the range to.
+        cap: If the dynamic range would be reduced, 
+            instead cap range to the minimum/maximum values present within the array.
+        mean_std: Use a given mean and standard deviation to apply the transformation, 
+            rather than gathering from the video.
+        mask: A mask to apply to the video when calculating the min/max range to scale by.
+        maskval: The value of the mask to include as signal.
+        verbose: Whether to print a verbose output.
+        min_max: Apply a specific min/max as the range, rather than calculating dyamically.
+        return_scale: Whether to return the resize scale which was applied.
+
+    Returns:
+        array: The rescaled array.
+            The original array should be updated in place as well.
+        scale: A dictionary containing all the scaling parameters.
+            Only returned if return_scale = True.
     '''
 
     if verbose:
         print('\nRescaling Movie\n-----------------------')
 
-    # Mask the region if mask provided
+    # Mask the region if mask provided.
     if mask is not None:
         copy = array.copy()
         array = get_masked_region(array, mask, maskval)
@@ -554,7 +621,7 @@ def rescale(array,
     if np.isnan(array).any():
         array[np.where(np.isnan(array))] = 0
 
-    # if unmasked color image, add extra temporary first dimension
+    # If unmasked color image, add extra temporary first dimension.
     if array.ndim == 3:
         if array.shape[2] == 3:
             array = array[None, :]
@@ -567,39 +634,39 @@ def rescale(array,
             mean = mean_std[0]
             std = mean_std[1]
 
-        newMin = mean - low * std
-        newMax = mean + high * std
+        new_min = mean - low * std
+        new_max = mean + high * std
         if verbose:
             print('mean:', mean, 'low:', low, 'high:', high, 'std:', std)
     else:
         assert len(min_max) == 2
-        newMin = min_max[0]
-        newMax = min_max[1]
+        new_min = min_max[0]
+        new_max = min_max[1]
 
     if verbose:
-        print('newMin:', newMin)
-        print('newMax', newMax)
+        print('new_min:', new_min)
+        print('new_max', new_max)
 
-    if cap:  # don't reduce dynamic range
+    if cap:  # Don't reduce dynamic range.
         if verbose:
             print('array min', np.nanmin(array))
-        if newMin < array.min():
-            newMin = array.min()
+        if new_min < array.min():
+            new_min = array.min()
             if verbose:
-                print('array min scaled', newMin)
+                print('array min scaled', new_min)
 
         if verbose:
             print('amax', np.nanmax(array))
-        if newMax > array.max():
-            newMax = array.max()
+        if new_max > array.max():
+            new_max = array.max()
             if verbose:
-                print('amax scaled', newMax)
+                print('amax scaled', new_max)
 
-    newSlope = 255.0 / (newMax - newMin)
+    new_slope = 255.0 / (new_max - new_min)
     if verbose:
-        print('newSlope:', newSlope)
-    array = array - newMin
-    array = array * newSlope
+        print('new_slope:', new_slope)
+    array = array - new_min
+    array = array * new_slope
 
     if mask is not None:
         array = insert_masked_region(copy, A, mask, maskval)
@@ -607,7 +674,7 @@ def rescale(array,
     array[np.where(array > 255)] = 255
     array[np.where(array < 0)] = 0
 
-    if array.shape[0] == 1:  #if was converted to one higher dimension
+    if array.shape[0] == 1:  # If was converted to one higher dimension.
         array = array[0, :]
 
     if verbose:
@@ -616,28 +683,39 @@ def rescale(array,
     if not return_scale:
         return array
     else:
-        return array, {'scale': newSlope, 'min': newMin, 'max': newMax}
+        return array, {'scale': new_slope, 'min': new_min, 'max': new_max}
 
 
-def play(array,
-         textsavepath=None,
-         min_max=None,
-         preprocess=True,
-         overlay=None,
-         toolbarsMinMax=False,
-         rescale_movie=True,
-         cmap='default',
-         loop=True):
+def play(array: np.ndarray,
+         textsavepath: str = None,
+         min_max: Tuple[float, float] = None,
+         preprocess: bool = True,
+         overlay: np.ndarray = None,
+         min_max_toolbars: bool = False,
+         rescale_movie: bool = True,
+         cmap: np.ndarray = 'default',
+         loop: bool = True) -> None:
     '''
-    play movie in opencv after normalizing display range
-    array is a numpy 3-dimensional movie
-    newMinMax is an optional tuple of length 2, the new display range
+    Play movie in opencv after normalizing display range.
+
+    Arguments:
+        array: The (x,y,t or x,y,c,t) array to play as a movie.
+        textsavepath: An output to save time points to.
+        min_max: A specific min max value to scale the video to.
+        preprocess: Whether to preprocess the video, or calculate ranges dynamically.
+        overlay: An overlay frame to put on top of the video.
+        min_max_toolbars: Whether to display min/max slider toolbars for adjusting color range.
+        rescale_movie: Whether to rescale the movie.
+        cmap: The color map to apply.
+        loop: Whether to loop the video.
+
+    Returns:
+        None.
 
     Note: if preprocess is set to true, the array normalization is done 
     in place, thus the array will be rescaled outside scope of 
-    this function
+    this function.
     '''
-
     if colormap == 'default':
         colormap = DEFAULT_COLORMAP
 
@@ -657,7 +735,7 @@ def play(array,
         for val in o_values:
             if val not in [0, 1, 255]:
                 raise AssertionError('Overlay must be a 3d binary image.')
-        #create negative image
+        # Create negative image.
         overlay = overlay == 0
         overlay = overlay.astype(np.uint8)
 
@@ -669,7 +747,7 @@ def play(array,
     windowname = "Press Esc to Close"
     cv2.namedWindow(windowname, cv2.WINDOW_NORMAL)
     print('preprocessing data...')
-    #Create a resizable window
+    # Create a resizable window.
 
     sz = array.shape
 
@@ -685,7 +763,7 @@ def play(array,
 
         if rescale_movie == False:
             # if the movie shouldn't be rescaled, don't display rescaling toolbars
-            toolbarsMinMax = False
+            min_max_toolbars = False
         else:
             # mean, std not required if not rescaling
             mean = np.nanmean(A, dtype=np.float64)
@@ -694,7 +772,7 @@ def play(array,
         if preprocess:
             print('Pre-processing movie rescaling...')
             #Normalize movie range and change to uint8 before display
-            if toolbarsMinMax:
+            if min_max_toolbars:
                 imgclone = array.copy()
             t0 = timer()
             array = np.reshape(array, (sz[0], int(array.size / sz[0])))
@@ -707,7 +785,7 @@ def play(array,
             array = array.astype('uint8', copy=False)
             print("Movie range normalization: {0}".format(timer() - t0))
 
-        if toolbarsMinMax:
+        if min_max_toolbars:
 
             def updateColormap(array):
                 lowB[0] = 0.5 * (8 -
@@ -756,28 +834,26 @@ def play(array,
             color = np.zeros((im.shape[0], im.shape[1], 3))
             color = cv2.applyColorMap(im.astype('uint8'), cmap, color)
             if overlay is not None:
-                im *= overlay  # black:
-                # im[overlay==0]=255 # white
+                im *= overlay  # Black:
             cv2.putText(color, str(i), (5, 25), cv2.FONT_HERSHEY_SIMPLEX, 1.0,
-                        (255, 255, 255))  #draw frame text
+                        (255, 255, 255))  # Draw frame text.
             cv2.imshow(windowname, color)
 
         elif A.ndim == 4:
             if overlay is not None:
-                im *= overlay  # black:
-                # im[overlay==0]=255 # white
+                im *= overlay
             cv2.putText(im, str(i), (5, 25), cv2.FONT_HERSHEY_SIMPLEX, 1.0,
-                        (255, 255, 255))  #draw frame text
+                        (255, 255, 255))  #D raw frame text.
             cv2.imshow(windowname, im.astype('uint8'))
 
         k = cv2.waitKey(10)
-        if k == 27:  #if esc is pressed
+        if k == 27:  # If esc is pressed.
             break
         elif (k == ord(' ')) and (toggleNext == True):
             tf = False
         elif (k == ord(' ')) and (toggleNext == False):
             tf = True
-        toggleNext = tf  #toggle the switch
+        toggleNext = tf  # Toggle the switch.
 
         if k == ord("="):
             zoom = zoom * 1 / zfactor
@@ -823,7 +899,7 @@ def play(array,
             i += 1
 
         if (i > (A.shape[0] - 1)) or (i < -1):
-            # reset to 0 if looping, otherwise break the while loop
+            # Reset to 0 if looping, otherwise break the while loop.
             if loop:
                 i = 0
             else:
@@ -835,11 +911,31 @@ def play(array,
 
     print('\n')
 
-    if toolbarsMinMax:
+    if min_max_toolbars:
         return (lowB[0], highB[0])
 
 
-def scale_video(array, s_factor=1, t_factor=1, verbose=True, remainder=False):
+def scale_video(array: np.ndarray,
+                s_factor: int = 1,
+                t_factor: int = 1,
+                verbose: bool = True,
+                remainder: np.ndarray = False) -> Tuple[np.ndarray, np.ndarray]:
+    '''
+    Scale a video according to spatial and temporal resizing factors.
+
+    Arguments:
+        array: The array to rescale.
+        s_factor: The spatial factor to downsize by.
+        t_factor: The temporal factor to downsize by.
+        verbose: Whether to produce verbose print statements.
+        remainder: Whether to return a temporal remainder array.
+
+    Returns:
+        dsarray: The downsampled array.
+        remainder: A tempora remainder, 
+            in the dimensions and scale of the orignal video.
+    '''
+
     if verbose:
         print('\nRescaling Video\n-----------------------')
     assert array.ndim == 3, 'Input was not a video'
@@ -902,10 +998,27 @@ def scale_video(array, s_factor=1, t_factor=1, verbose=True, remainder=False):
         return dsarray
 
 
-def downsample(array, new_shape, keepdims=False):
-    # reshape m by n matrix by factor f by reshaping matrix into
-    # m f n f matricies, then applying sum across mxf, nxf matrices
-    # if keepdims, video is downsampled, but number of pixels remains the same.
+def downsample(array: np.ndarray,
+               new_shape: Tuple[int, int, int],
+               keepdims: bool = False) -> np.ndarray:
+    '''
+    Reshape m by n matrix by factor f by reshaping matrix into
+    m f n f matricies, then applying sum across mxf, nxf matrices
+    if keepdims, video is downsampled, but number of pixels remains the same.
+
+    The scale_video function is an application of this function, 
+    is more user friendly, and should be used in most cases.
+
+    Arguments:
+        array: The array to downsample.
+        new_shape: The new array shape to convert array to.
+        keepdims: Whether to keep the orignal dimensions.  
+            Only useful to differentiating whether downsample 
+            differences are just due to number of samples.
+
+    Returns:
+        array: The downsampled array.
+    '''
 
     if array.ndim != len(new_shape):
         raise ValueError("Shape mismatch: {} -> {}".format(
@@ -931,10 +1044,20 @@ def downsample(array, new_shape, keepdims=False):
 
         array = array.reshape(array_shape)
 
-    return (array)
+    return array
 
 
-def rotate(array, n):
+def rotate(array: np.ndarray, n: int) -> np.ndarray:
+    '''
+    Rotate an image or video n times counterclockwise.
+
+    Arguments:
+        array: The array to rotate.
+        n: The number of counterclockwise rotations.
+
+    Returns:
+        array: The array after rotation.
+    '''
 
     assert type(array) == np.ndarray
 
