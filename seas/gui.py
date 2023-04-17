@@ -69,7 +69,7 @@ def run_gui(components: dict,
 
     assert type(components) is dict, 'Components were not in expected format'
 
-    # load all components from dict
+    # Load all components from dict.
     eig_vec = components['eig_vec']
     if 'thresholds' in components.keys():
         thresholds = components['thresholds']
@@ -78,11 +78,11 @@ def run_gui(components: dict,
     t, x, y = shape
     eigb_shape = (x, y)
 
-    # Find number of components
+    # Find number of components.
     n_components = eig_vec.shape[1]
     print('number of components:', n_components)
 
-    # start timecourses variable for storing rebuilt timecourses of PCs
+    # Start timecourses variable for storing rebuilt timecourses of components.
     if 'timecourses' in components:
         print('timecourses found')
         timecourses = components['timecourses']
@@ -91,7 +91,7 @@ def run_gui(components: dict,
         print('Initializing empty timecourse vector')
         timecourses = components['timecourses']
 
-    # start noise_components variable for listing which components are noise
+    # Start noise_components variable for listing which components are noise.
     if ('noise_components' in components) and ('cutoff' in components):
         noise_components = components['noise_components']
         cutoff = components['cutoff']
@@ -107,8 +107,8 @@ def run_gui(components: dict,
         lag1 = lag_n_autocorr(timecourses, 1, verbose=False)
         _, _, log_pdf = sort_noise(timecourses, return_logpdf=True)
 
-    # start toggle variable for checking which components shouldn't
-    # be included
+    # Start toggle variable for checking which components shouldn't
+    # be included.
     if 'artifact_components' in components:
         toggle = components['artifact_components']
     else:
@@ -145,7 +145,7 @@ def run_gui(components: dict,
         print('domain_ROIs not found')
         domain_ROIs = None
 
-    # Load mask indexing for faster rebuilding of eigenbrains
+    # Load mask indexing for faster rebuilding of eigenbrains.
     if roimask is not None:
         maskind = np.where(roimask.flat == 1)
     else:
@@ -157,12 +157,11 @@ def run_gui(components: dict,
 
     regions = config['regions']
 
-    # convert from defaults dict to sorted list of tuples
+    # Convert from defaults dict to sorted list of tuples.
     keylist = []
     valuelist = []
 
     for key in regions:
-        # print(key, regions[key])
         keylist.append(key)
         valuelist.append(regions[key])
 
@@ -172,24 +171,23 @@ def run_gui(components: dict,
     for i in sortindex:
         regions.append((keylist[i], valuelist[i]))
 
-    # general font settings
     LARGE_FONT = ('Verdana', 12)
 
-    togglesave = [True]  # default on for easy click-to-save figures
-    toggledebug = [False]  # default off -- don't load ICA pixel properties
+    toggle_save = [True]  # Default on for easy click-to-save figures.
+    toggle_debug = [False]  # Default off -- don't load ICA pixel properties.
 
-    def saveFigure(fig_handle):
+    def save_figure(fig_handle):
         print('figure was pressed!')
-        # callback for clicks on image.
-        # Change color and toggle value
+        # Callback for clicks on image.
+        # Change color and toggle value.
 
-        if togglesave[0]:
+        if toggle_save[0]:
             print('trying to save..')
             file_path = tk.filedialog.asksaveasfilename()
             print(file_path)
 
-            if type(file_path) is str:  # If path was provided
-                # If there was no extension, add .png
+            if type(file_path) is str:  # If path was provided.
+                # If there was no extension, add .png.
                 if os.path.splitext(file_path)[1] == '':
                     file_path += '.png'
 
@@ -215,22 +213,23 @@ def run_gui(components: dict,
         else:
             print('Saving functionality is turned off')
 
-    # Create main application as tk.Tk
-    class PCAgui(tk.Tk):  #<- inherits from Tk class
+    # Create main application as tk.Tk.
+    class AnalysisGui(tk.Tk):  # Note: Inherits from Tk class.
 
         def __init__(self, *args, **kwargs):
-            tk.Tk.__init__(self, *args, **kwargs)  # initialize the tk class
+            tk.Tk.__init__(self, *args,
+                           **kwargs)  # Initialize the parent tk class.
             tk.Tk.wm_title(self, 'Component Viewer')
-            # every page initializes a container to hold its content
+            # Every page initializes a container to hold its content.
             container = tk.Frame(self)
             container.pack(side='top', fill='both', expand=True)
 
-            # set page expansion properties
+            # Set page expansion properties.
             container.grid_rowconfigure(0, weight=1)
-            # row/columns expand equally
+            # Row/columns expand equally.
             container.grid_columnconfigure(0, weight=1)
 
-            # Make the menu bar (top banner)
+            # Make the menu bar (top banner).
             menubar = tk.Menu(container)
 
             filemenu = tk.Menu(menubar, tearoff=0)
@@ -240,61 +239,63 @@ def run_gui(components: dict,
                                  command=lambda: self.cancelcallback(toggle))
             menubar.add_cascade(label='file', menu=filemenu)
 
-            def toggleFigSaving():
-                togglesave[0] = not togglesave[0]
+            def toggle_figure_saving():
+                toggle_save[0] = not toggle_save[0]
 
-            def toggleIcaDebug():
-                toggledebug[0] = not toggledebug[0]
+            def toggle_figure_saving():
+                toggle_debug[0] = not toggle_debug[0]
 
             editmenu = tk.Menu(menubar, tearoff=0)
             editmenu.add_separator()
             editmenu.add_command(label='toggle figure saving',
-                                 command=lambda: toggleFigSaving())
+                                 command=lambda: toggle_figure_saving())
             editmenu.add_command(label='toggle ica pixel debug',
-                                 command=lambda: toggleIcaDebug())
+                                 command=lambda: toggle_ica_debug())
             menubar.add_cascade(label='edit', menu=editmenu)
 
             pagemenu = tk.Menu(menubar, tearoff=1)
             pagemenu.add_separator()
             pagemenu.add_command(label='view components',
-                                 command=lambda: self.show_frame(PCpage))
-            pagemenu.add_command(label='PC information',
-                                 command=lambda: self.show_frame(PCinfo))
+                                 command=lambda: self.show_frame(ComponentPage))
+            pagemenu.add_command(label='Component information',
+                                 command=lambda: self.show_frame(ComponentInfo))
             pagemenu.add_command(label='Domain Correlations',
                                  command=lambda: self.show_frame(DomainROIs))
             pagemenu.add_command(label='Domain Region Assignment',
                                  command=lambda: self.show_frame(DomainRegions))
-            pagemenu.add_command(label='Domain Autocorrelations',
-                                 command=lambda: self.show_frame(PCautocorr))
+            pagemenu.add_command(
+                label='Domain Autocorrelations',
+                command=lambda: self.show_frame(DomainAutoCorr))
             menubar.add_cascade(label='view', menu=pagemenu)
 
             tk.Tk.config(self, menu=menubar)
 
-            # Create container to hold for all pages for page switching
+            # Create container to hold for all pages for page switching.
             self.frames = {}
 
             # List all pages here:
-            for F in (PCpage, PCinfo, DomainROIs, DomainRegions, PCautocorr):
+            for F in (ComponentPage, ComponentInfo, DomainROIs, DomainRegions,
+                      DomainAutoCorr):
                 frame = F(container, self)
                 self.frames[F] = frame
                 # set currently active frame to StartPage
                 frame.grid(row=0, column=0, sticky='nsew')
 
-            # Initialize default page
-            default_page = PCpage
+            # Initialize default page.
+            default_page = ComponentPage
             self.show_frame(default_page)
 
-            # Global event binding commands
+            # Global event binding commands.
             self.bind("<Escape>", lambda event: self.cancelcallback(toggle))
             self.bind("s", lambda event: self.quit())
-            self.bind("<F1>", lambda event: self.show_frame(PCpage))
-            self.bind("<F2>", lambda event: self.show_frame(PCinfo))
+            self.bind("<F1>", lambda event: self.show_frame(ComponentPage))
+            self.bind("<F2>", lambda event: self.show_frame(ComponentInfo))
             self.bind("<F3>", lambda event: self.show_frame(DomainROIs))
             self.bind("<F4>", lambda event: self.show_frame(DomainRegions))
-            self.bind("<F5>", lambda event: self.show_frame(PCautocorr))
+            self.bind("<F5>", lambda event: self.show_frame(DomainAutoCorr))
 
             # Use global focus to capture bindings,
-            # send them to local callback manager
+            # send them to local callback manager.
             self.bind("<Right>",
                       lambda event: self.current_page.callback_manager(event))
             self.bind("<Left>",
@@ -310,66 +311,69 @@ def run_gui(components: dict,
 
         # Methods for main app:
         def show_frame(self, cont):
-            # selects frame, raises it
+            # Selects frame, raises it.
             frame = self.frames[cont]
             self.current_page = frame
             frame.tkraise()
 
         def cancelcallback(self, toggle):
-            # quits the app, doesn't rebuild the movie
+            # Quits the app, doesn't rebuild the movie.
             print('Operation was cancelled.')
             toggle[0] = 100
             self.quit()
 
     # Create each frame and components as individual classes:
-    class PCpage(tk.Frame):
-        # Page to view all principal component images, toggle via clicks
+    class ComponentPage(tk.Frame):
+        # Page to view all principal component images, toggle via clicks.
 
         def __init__(self, parent, controller):
-            tk.Frame.__init__(self, parent)  # parent is controller
+            tk.Frame.__init__(self, parent)  # Parent is controller.
 
-            # Create frame for PCs, initialize PC indices
-            self.nimages = 15
-            self.PCpage = 0
+            # Create frame for each component, initialize component indices.
+            self.n_images = 15
+            self.current_page_number = 0
 
-            # initialize the title
+            # Initialize the title.
             label = tk.Label(self,
                              text='Select Components to Remove:',
                              font=LARGE_FONT)
 
-            # initialize navigation buttons
+            # Initialize navigation buttons.
             navbuttons = tk.Frame(self)
-            self.llbutton = tk.Button(
+            self.llbutton = tk.Button(navbuttons,
+                                      text='<<< {0} PCs'.format(4 *
+                                                                self.n_images),
+                                      command=lambda: self.changeComponentPage(
+                                          self.current_page_number - 4))
+            self.lbutton = tk.Button(navbuttons,
+                                     text='<<< {0} PCs'.format(self.n_images),
+                                     command=lambda: self.changeComponentPage(
+                                         self.current_page_number - 1))
+            self.homebutton = tk.Button(
                 navbuttons,
-                text='<<< {0} PCs'.format(4 * self.nimages),
-                command=lambda: self.changePCpage(self.PCpage - 4))
-            self.lbutton = tk.Button(
-                navbuttons,
-                text='<<< {0} PCs'.format(self.nimages),
-                command=lambda: self.changePCpage(self.PCpage - 1))
-            self.homebutton = tk.Button(navbuttons,
-                                        text='Home',
-                                        command=lambda: self.changePCpage(0))
-            self.rbutton = tk.Button(
-                navbuttons,
-                text='{0} PCs >>>'.format(self.nimages),
-                command=lambda: self.changePCpage(self.PCpage + 1))
-            self.rrbutton = tk.Button(
-                navbuttons,
-                text='{0} PCs >>>'.format(4 * self.nimages),
-                command=lambda: self.changePCpage(self.PCpage + 4))
+                text='Home',
+                command=lambda: self.changeComponentPage(0))
+            self.rbutton = tk.Button(navbuttons,
+                                     text='{0} PCs >>>'.format(self.n_images),
+                                     command=lambda: self.changeComponentPage(
+                                         self.current_page_number + 1))
+            self.rrbutton = tk.Button(navbuttons,
+                                      text='{0} PCs >>>'.format(4 *
+                                                                self.n_images),
+                                      command=lambda: self.changeComponentPage(
+                                          self.current_page_number + 4))
 
-            # Make frame for pc max value controller
+            # Make frame for pc max value controller.
             pccontrol = tk.Frame(self)
             upper_limit = tk.StringVar()
             upper_limit.set(str(maxval))
             maxentry = tk.Entry(pccontrol, textvariable=upper_limit, width=5)
             entrylabel = tk.Label(pccontrol, text='Noise Floor:')
 
-            # place the title
+            # Place the title.
             label.grid(column=0, row=0)
 
-            # place the navigation buttons and load panel
+            # Place the navigation buttons and load panel.
             self.llbutton.grid(column=0, row=0)
             self.lbutton.grid(column=1, row=0)
             self.homebutton.grid(column=2, row=0)
@@ -377,34 +381,35 @@ def run_gui(components: dict,
             self.rrbutton.grid(column=4, row=0)
             navbuttons.grid(column=0, row=2)
 
-            # place max pc control panel
+            # Place max pc control panel.
             entrylabel.grid(column=0, row=0)
             maxentry.grid(column=1, row=0)
             pccontrol.grid(column=0, row=3)
 
-            self.loadPCpage()
+            self.loadComponentPage()
 
         def callback_manager(self, event):
             if event.keysym == 'Right':
-                if len(toggle) - self.nimages * (self.PCpage + 1) > 0:
-                    self.changePCpage(self.PCpage + 1)
+                if len(toggle) - self.n_images * (self.current_page_number +
+                                                  1) > 0:
+                    self.changeComponentPage(self.current_page_number + 1)
             elif event.keysym == 'Left':
-                if self.PCpage != 0:
-                    self.changePCpage(self.PCpage - 1)
+                if self.current_page_number != 0:
+                    self.changeComponentPage(self.current_page_number - 1)
             else:
                 print('No callback defined for:', event.keysym)
 
-        class PCframe(tk.Frame):
-            # Create a frame to hold all eigenbrains
+        class ComponentFrame(tk.Frame):
+            # Create a frame to hold each component.
             def __init__(self, parent, indices):
                 tk.Frame.__init__(self, parent)
 
-                # variables to hold image buttons
+                # Variables to hold image buttons.
                 self.ncol = 5
                 self.PCplotframe = tk.Frame(self, borderwidth=2)
                 self.imagebutton = []
 
-                # initialize and grid image buttons
+                # Initialize and grid image buttons.
                 for i, n in enumerate(indices):
                     frame = (tk.Frame(self.PCplotframe))
                     self.imagebutton.append(self.imButton(frame, n))
@@ -415,25 +420,25 @@ def run_gui(components: dict,
                 self.PCplotframe.grid(column=0, row=1)  # grid main frame
 
             def update(self, parent, indices):
-                # update each image button to contain indices given
+                # Update each image button to contain indices given.
 
                 imagebutton = self.imagebutton
 
-                #if there isn't a full set of indices, append None
+                # If there isn't a full set of indices, append None.
                 if len(indices) < len(imagebutton):
                     print('Not enough indices to fill page')
                     lendiff = len(imagebutton) - len(indices)
                     indices.extend([None] * lendiff)
 
-                # update each image with new PC index
+                # Update each image with new PC index.
                 for i, buttonhandle in enumerate(imagebutton):
                     buttonhandle.update(indices[i])
 
             class imButton(tk.Frame):
                 # Image button.  When clicked, toggle[index] is switched.
-                # Colormap is also switched to see status of PC
-                def __init__(self, parent, pc_id):
-                    self.pc_id = pc_id
+                # Colormap is also switched to see status of PC.
+                def __init__(self, parent, component_id):
+                    self.component_id = component_id
                     f = Figure(figsize=(3, 3), dpi=100, frameon=False)
                     self.ax = f.add_subplot(111)
                     f.subplots_adjust(left=0.05,
@@ -449,22 +454,23 @@ def run_gui(components: dict,
                     self.imgplot = self.ax.imshow(np.zeros((x, y)))
                     self.ax.axis('off')
 
-                    self.update(pc_id)
+                    self.update(component_id)
 
-                def update(self, pc_id):
-                    self.pc_id = pc_id
+                def update(self, component_id):
+                    self.component_id = component_id
                     self.ax.cla()
                     self.ax.axis('off')
 
-                    if pc_id is None:  # clear image
+                    if component_id is None:  # Clear image.
                         im = np.empty((x, y))
                         im[:] = np.NAN
                         self.imgplot = self.ax.imshow(im)
                         self.canvas.draw()
                         return ()
 
-                    eigenbrain = rebuild_eigenbrain(eig_vec, pc_id, roimask,
-                                                    eigb_shape, maskind)
+                    eigenbrain = rebuild_eigenbrain(eig_vec, component_id,
+                                                    roimask, eigb_shape,
+                                                    maskind)
                     if rotate > 0:
                         eigenbrain = np.rot90(eigenbrain, rotate)
                     mean = np.nanmean(eigenbrain)
@@ -475,12 +481,12 @@ def run_gui(components: dict,
                                                   vmin=mean - 4 * std,
                                                   vmax=mean + 4 * std)
 
-                    if toggle[pc_id] == 0:
+                    if toggle[component_id] == 0:
                         self.imgplot.set_cmap(component_cmap)
                     else:
                         self.imgplot.set_cmap('Greys')
 
-                    self.ax.annotate('Component {0}'.format(pc_id),
+                    self.ax.annotate('Component {0}'.format(component_id),
                                      color='grey',
                                      fontsize=10,
                                      xy=(1, 1))
@@ -489,51 +495,53 @@ def run_gui(components: dict,
 
                 def on_key_press(self, event):
                     # callback for clicks on image.
-                    # Change color and toggle value
+                    # Change color and toggle value.
                     try:
-                        if toggle[self.pc_id] == 0:
+                        if toggle[self.component_id] == 0:
                             self.imgplot.set_cmap('Greys_r')
-                            toggle[self.pc_id] = 1
-                        elif toggle[self.pc_id] == 1:
+                            toggle[self.component_id] = 1
+                        elif toggle[self.component_id] == 1:
                             self.imgplot.set_cmap(component_cmap)
-                            toggle[self.pc_id] = 0
+                            toggle[self.component_id] = 0
                         self.canvas.draw()
                     except:
                         print('Index was out of range')
 
-        def changePCpage(self, newpage):
-            # callback for buttons to change page
-            self.PCpage = newpage
-            self.loadPCpage()
+        def changeComponentPage(self, newpage):
+            # Callback for buttons to change page.
+            self.current_page_number = newpage
+            self.loadComponentPage()
 
-        def loadPCpage(self):
-            # load a PC page based on self.PCpage
+        def loadComponentPage(self):
+            # Load a PC page based on self.current_page_number.
 
-            # Reenable all buttons, disable any that shouldn't be allowed
+            # Reenable all buttons, disable any that shouldn't be allowed.
             self.llbutton.config(state=['normal'])
             self.lbutton.config(state=['normal'])
             self.homebutton.config(state=['normal'])
             self.rbutton.config(state=['normal'])
             self.rrbutton.config(state=['normal'])
 
-            if self.PCpage == 0:  # if on start page, disable home, -n
+            if self.current_page_number == 0:
+                # If on start page, disable home, -n.
                 self.homebutton.config(state=['disabled'])
                 self.lbutton.config(state=['disabled'])
                 self.llbutton.config(state=['disabled'])
-            elif self.PCpage < 4:
+            elif self.current_page_number < 4:
                 self.llbutton.config(state=['disabled'])
 
-            if len(toggle) - (self.nimages * (self.PCpage + 1)) <= 0:
-                # if total images - next page's max <=0, disable + n
+            if len(toggle) - (self.n_images *
+                              (self.current_page_number + 1)) <= 0:
+                # If total images - next page's max <=0, disable + n.
                 self.rbutton.config(state=['disabled'])
                 self.rrbutton.config(state=['disabled'])
-            elif len(toggle) - self.nimages * self.PCpage \
-                    - 4*self.nimages <= 0:
+            elif len(toggle) - self.n_images * self.current_page_number \
+                    - 4*self.n_images <= 0:
                 self.rrbutton.config(state=['disabled'])
 
-            # Refresh the PC Grid
-            startPC = self.PCpage * self.nimages
-            endPC = startPC + self.nimages
+            # Refresh the PC Grid.
+            startPC = self.current_page_number * self.n_images
+            endPC = startPC + self.n_images
             if endPC > len(toggle):
                 endPC = len(toggle)
             PCindices = list(range(startPC, endPC))
@@ -541,130 +549,131 @@ def run_gui(components: dict,
                 self.PCfigure.update(self, PCindices)
                 self.PCfigure.grid(column=0, row=1)
             else:
-                self.PCfigure = self.PCframe(self, PCindices)
+                self.PCfigure = self.ComponentFrame(self, PCindices)
                 self.PCfigure.grid(column=0, row=1)
-                # grid PCfigure into StartPage
+                # Grid PCfigure into StartPage.
 
-    class PCinfo(tk.Frame):
-        # Page for viewing information about individual PCs
+    class ComponentInfo(tk.Frame):
+        # Page for viewing information about individual Components.
 
         def __init__(self, parent, controller):
-            # Change the PC text box using the +/- keys.
-            # This triggers updatePCvalue to run
+            # Change the component text box using the +/- keys.
+            # This triggers update_component_index to run.
 
-            def updatePCval_button(delta):
-                newval = int(self.selected_pc.get()) + delta
-                self.selected_pc.set(newval)
+            def update_component_index_button(delta):
+                newval = int(self.selected_component.get()) + delta
+                self.selected_component.set(newval)
 
-            # Change the PC index using the text box
-            def updatePCval():
-                newvalue = self.selected_pc.get()
-                print('Changing PC index to: {0}'.format(newvalue))
+            # Change the component index using the text box.
+            def update_component_index():
+                newvalue = self.selected_component.get()
+                print('Changing component index to: {0}'.format(newvalue))
 
-                if newvalue == '':  # empty value
+                if newvalue == '':  # Empty value.
                     print('Text box is blank.  Not updating')
                 else:
-                    try:  # make sure entry is an int, inside range of PCs
+                    try:  # Make sure entry is an int, inside range of PCs.
                         assert int(newvalue) < n_components - 1, (
                             'Index exceeds range')
                         assert int(newvalue) >= 0, 'Index below 0'
-                        self.pc_id[0] = int(newvalue)
-                        self.selected_pc.set(str(self.pc_id[0]))
-                        fig.updateFigures(self.pc_id[0])
+                        self.component_id[0] = int(newvalue)
+                        self.selected_component.set(str(self.component_id[0]))
+                        fig.update_figures(self.component_id[0])
 
                     except:
                         print('Not changing upper PC cutoff.')
-                        self.selected_pc.set(str(self.pc_id[0]))
-                        # reset text box to previous value
+                        self.selected_component.set(str(self.component_id[0]))
+                        # Reset text box to previous value.
 
-            # Initialize PC info page
+            # Initialize PC info page.
             tk.Frame.__init__(self, parent)
             label = tk.Label(self, text='Component Viewer:', font=LARGE_FONT)
             label.pack(pady=10, padx=10)
 
             # Two components to page:
-            pcviewer = tk.Frame(self)
-            # grid of figures about selected PC
-            pc_toolbar = tk.Frame(pcviewer)
-            # toolbar for selecting PC index
+            component_viewer_frame = tk.Frame(self)
+            # Grid of figures about selected PC.
+            current_component_toolbar = tk.Frame(component_viewer_frame)
+            # Toolbar for selecting PC index.
 
-            # Make PC selection toolbar
-            self.pc_id = [0]
-            self.selected_pc = tk.StringVar()
-            self.selected_pc.set(str(self.pc_id[0]))
-            pc_entry = tk.Entry(pc_toolbar,
-                                textvariable=self.selected_pc,
+            # Make PC selection toolbar.
+            self.component_id = [0]
+            self.selected_component = tk.StringVar()
+            self.selected_component.set(str(self.component_id[0]))
+            pc_entry = tk.Entry(current_component_toolbar,
+                                textvariable=self.selected_component,
                                 width=5)
-            self.selected_pc.trace('w',
-                                   lambda nm, idx, mode, var=0: updatePCval())
-            pc_entry_label = tk.Label(pc_toolbar, text='Component:')
+            self.selected_component.trace(
+                'w', lambda nm, idx, mode, var=0: update_component_index())
+            pc_entry_label = tk.Label(current_component_toolbar,
+                                      text='Component:')
 
-            pm_toolbar = tk.Frame(pcviewer)
+            component_adjust_toolbar = tk.Frame(component_viewer_frame)
 
-            inc = tk.Button(pm_toolbar,
+            inc = tk.Button(component_adjust_toolbar,
                             text='+',
-                            command=lambda: updatePCval_button(1))
-            dec = tk.Button(pm_toolbar,
+                            command=lambda: update_component_index_button(1))
+            dec = tk.Button(component_adjust_toolbar,
                             text='-',
-                            command=lambda: updatePCval_button(-1))
+                            command=lambda: update_component_index_button(-1))
 
-            # grid pc selector frame
+            # Grid pc selector frame.
             pc_entry_label.grid(column=0, row=0)
             pc_entry.grid(column=1, row=0)
             inc.grid(column=0, row=0)
             dec.grid(column=1, row=0)
 
-            # grid pcviewer frame
-            pc_toolbar.pack()
-            pm_toolbar.pack()
-            pcviewer.pack()
-            fig = self.PCfigures(self, self.pc_id)
+            # Grid component_viewer_frame frame.
+            current_component_toolbar.pack()
+            component_adjust_toolbar.pack()
+            component_viewer_frame.pack()
+            fig = self.ComponentFigures(self, self.component_id)
             fig.pack()
 
         def callback_manager(self, event):
             if event.keysym == 'Right':
-                newval = int(self.selected_pc.get()) + 1
-                self.selected_pc.set(newval)
+                new_component_value = int(self.selected_component.get()) + 1
+                self.selected_component.set(new_component_value)
             elif event.keysym == 'Left':
-                newval = int(self.selected_pc.get()) - 1
-                self.selected_pc.set(newval)
+                new_component_value = int(self.selected_component.get()) - 1
+                self.selected_component.set(new_component_value)
             else:
                 print('No callback defined for:', event.keysym)
 
-        class PCfigures(tk.Frame):
-            # Create class to hold and update all figures
+        class ComponentFigures(tk.Frame):
+            # Create class to hold and update all figures.
             def __init__(self, parent, controller):
 
-                # Create main frame, child of PCinfo page
+                # Create main frame, child of ComponentInfo page.
                 tk.Frame.__init__(self, parent)
 
-                ncol = 2  # number of columns of figures
+                ncol = 2  # Number of columns of figures.
                 self.figures = {}
 
-                # List desired figures
+                # List desired figures.
                 figlist = [
-                    self.pcImage, self.timeCourse, self.fourierWaveletHistogram,
-                    self.waveletSpectrum
+                    self.pcImage, self.timeCourse, self.FourierWaveletHistogram,
+                    self.WaveletSpectrum
                 ]
 
                 for i, Fig in enumerate(figlist):
-                    # Not being used: self.fourierTimecourse
-                    # self.fourierHistogram
-                    figure = Fig(self)  # initialize each figure
+                    # Not being used: self.fourierTimecourse,
+                    # self.fourierHistogram.
+                    figure = Fig(self)  # Initialize each figure.
                     c = i % ncol
                     r = i // ncol
-                    figure.grid(row=r, column=c)  # grid it
+                    figure.grid(row=r, column=c)  # Grid it.
                     self.figures[Fig] = figure
-                    # store each handle in self.figures
+                    # Store each handle in self.figures.
 
-                # initialize figures for PC #0
-                self.updateFigures(0)
+                # Initialize figures for PC #0.
+                self.update_figures(0)
 
-            def updateFigures(self, pc_id):
-                # Update all figures in self.figures
-                self.timecourse = timecourses[pc_id]
+            def update_figures(self, component_id):
+                # Update all figures in self.figures.
+                self.timecourse = timecourses[component_id]
 
-                eigenbrain = rebuild_eigenbrain(eig_vec, pc_id, roimask,
+                eigenbrain = rebuild_eigenbrain(eig_vec, component_id, roimask,
                                                 eigb_shape, maskind)
                 if rotate > 0:
                     eigenbrain = np.rot90(eigenbrain, rotate)
@@ -674,26 +683,25 @@ def run_gui(components: dict,
                 eigenbrain[np.where(np.isnan(eigenbrain))] = 0
                 self.eigenbrain = eigenbrain
 
-                # Wavelet analysis
+                # Wavelet analysis:
                 wavelet = waveletAnalysis(self.timecourse.astype('float64'),
                                           fps=10,
                                           siglvl=0.95)
 
-                # Dict to store all info for updating figures
-                pc_variables = {
-                    'pc_id': pc_id,
+                # Dict to store all info for updating figures.
+                component_variables = {
+                    'component_id': component_id,
                     'timecourse': self.timecourse,
                     'wavelet': wavelet
                 }
 
-                # Update all figures
-                # COMMENTHERE
+                # Update all figures.
                 for i, Fig in enumerate(self.figures):
                     handle = self.figures[Fig]
-                    handle.update(pc_variables)
+                    handle.update(component_variables)
 
             class pcImage(tk.Frame):
-                # View eigenbrain (same as PCpage figures)
+                # View eigenbrain (same as ComponentPage figures).
                 def __init__(self, parent):
                     tk.Frame.__init__(self, parent)
 
@@ -714,14 +722,15 @@ def run_gui(components: dict,
 
                 def on_key_press(self, event):
                     if event.button == 3:
-                        saveFigure(self.fig)
+                        save_figure(self.fig)
 
-                def update(self, pc_variables):
-                    pc_id = pc_variables['pc_id']
+                def update(self, component_variables):
+                    component_id = component_variables['component_id']
                     self.ax.cla()
 
-                    eigenbrain = rebuild_eigenbrain(eig_vec, pc_id, roimask,
-                                                    eigb_shape, maskind)
+                    eigenbrain = rebuild_eigenbrain(eig_vec, component_id,
+                                                    roimask, eigb_shape,
+                                                    maskind)
                     if rotate > 0:
                         eigenbrain = np.rot90(eigenbrain, rotate)
                     mean = np.nanmean(eigenbrain)
@@ -736,7 +745,7 @@ def run_gui(components: dict,
                     self.canvas.draw()
 
             class timeCourse(tk.Frame):
-                # view timecourse of PC
+                # View component timecourse.
                 def __init__(self, parent):
                     tk.Frame.__init__(self, parent)
 
@@ -762,17 +771,17 @@ def run_gui(components: dict,
 
                 def on_key_press(self, event):
                     if event.button == 3:
-                        saveFigure(self.fig)
+                        save_figure(self.fig)
 
-                def update(self, pc_variables):
-                    timecourse = pc_variables['timecourse']
+                def update(self, component_variables):
+                    timecourse = component_variables['timecourse']
                     self.ax.lines.pop(0)
                     self.ax.plot(
                         np.arange(timecourse.size) / 10, timecourse, 'k')
                     self.canvas.draw()
 
             class timeCoursePCxCorr(tk.Frame):
-                # view correlation between this PC and others
+                # View correlation between this PC and others.
                 def __init__(self, parent):
                     tk.Frame.__init__(self, parent)
 
@@ -798,15 +807,15 @@ def run_gui(components: dict,
 
                 def on_key_press(self, event):
                     if event.button == 3:
-                        saveFigure(self.fig)
+                        save_figure(self.fig)
 
-                def update(self, pc_variables):
-                    pc_id = pc_variables['pc_id']
-                    print('loading correlations for component #', pc_id)
-                    correlation = timecourses[pc_id]
+                def update(self, component_variables):
+                    component_id = component_variables['component_id']
+                    print('loading correlations for component #', component_id)
+                    correlation = timecourses[component_id]
 
                     temp = np.copy(correlation)
-                    temp[pc_id] = 0
+                    temp[component_id] = 0
                     temp[-1] = 0
                     ylim = np.std(temp)
 
@@ -816,8 +825,8 @@ def run_gui(components: dict,
                     self.canvas.draw()
 
             class fourierTimecourse(tk.Frame):
-                # Look at the Windowed Fourier Transform of the
-                # PC timecourse
+                # Look at the windowed fourier transform of the
+                # component timecourse.
                 def __init__(self, parent):
                     tk.Frame.__init__(self, parent)
 
@@ -839,10 +848,10 @@ def run_gui(components: dict,
 
                 def on_key_press(self, event):
                     if event.button == 3:
-                        saveFigure(self.fig)
+                        save_figure(self.fig)
 
-                def update(self, pc_variables):
-                    timecourse = pc_variables['timecourse']
+                def update(self, component_variables):
+                    timecourse = component_variables['timecourse']
                     timecourse = timecourse - timecourse.mean()
                     stft, fps, nyq, maxData = short_time_fourier_transform(
                         timecourse)
@@ -860,8 +869,8 @@ def run_gui(components: dict,
                     self.canvas.draw()
 
             class fourierHistogram(tk.Frame):
-                # Look at the power histogram of the Windowed
-                # Fourier Transform
+                # Look at the power histogram of the windowed
+                # fourier transform.
                 def __init__(self, parent):
                     tk.Frame.__init__(self, parent)
 
@@ -874,7 +883,6 @@ def run_gui(components: dict,
                                       right=0.85,
                                       top=0.85)
                     self.ax.plot([])
-                    # self.ax.set_xlim([0, 5])
                     self.ax.set_xlabel('Frequency (Hz)')
                     self.ax.set_ylabel('Normalized Power')
                     self.ax.set_title('Fourier Histogram')
@@ -888,10 +896,10 @@ def run_gui(components: dict,
 
                 def on_key_press(self, event):
                     if event.button == 3:
-                        saveFigure(self.fig)
+                        save_figure(self.fig)
 
-                def update(self, pc_variables):
-                    timecourse = pc_variables['timecourse']
+                def update(self, component_variables):
+                    timecourse = component_variables['timecourse']
                     timecourse = timecourse - timecourse.mean()
                     stft, fps, nyq, maxData = short_time_fourier_transform(
                         timecourse)
@@ -903,9 +911,9 @@ def run_gui(components: dict,
                     self.ax.set_yscale('log')
                     self.canvas.draw()
 
-            class fourierWaveletHistogram(tk.Frame):
-                # Look at the power histogram of the Windowed
-                # Fourier Transform
+            class FourierWaveletHistogram(tk.Frame):
+                # Look at the power histogram of the windowed
+                # fourier transform.
                 def __init__(self, parent):
                     tk.Frame.__init__(self, parent)
 
@@ -939,17 +947,17 @@ def run_gui(components: dict,
 
                 def on_key_press(self, event):
                     if event.button == 3:
-                        saveFigure(self.fig)
+                        save_figure(self.fig)
 
-                def update(self, pc_variables):
+                def update(self, component_variables):
                     linetype = ['-', '-.', '--', ':']
-                    timecourse = pc_variables['timecourse']
+                    timecourse = component_variables['timecourse']
                     timecourse = timecourse - timecourse.mean()
                     stft, fps, nyq, maxData = short_time_fourier_transform(
                         timecourse)
                     stfthist = stft.sum(1)
 
-                    wavelet = pc_variables['wavelet']
+                    wavelet = component_variables['wavelet']
                     wavelet.globalWaveletSpectrum()
 
                     for i in range(len(self.ax1.lines)):
@@ -975,8 +983,8 @@ def run_gui(components: dict,
 
                     self.canvas.draw()
 
-            class waveletSpectrum(tk.Frame):
-                # View wavelet power spectrum
+            class WaveletSpectrum(tk.Frame):
+                # View wavelet power spectrum.
                 def __init__(self, parent):
                     tk.Frame.__init__(self, parent)
 
@@ -999,129 +1007,129 @@ def run_gui(components: dict,
 
                 def on_key_press(self, event):
                     if event.button == 3:
-                        saveFigure(self.fig)
+                        save_figure(self.fig)
 
-                def update(self, pc_variables):
-                    wavelet = pc_variables['wavelet']
+                def update(self, component_variables):
+                    wavelet = component_variables['wavelet']
                     self.ax.cla()
                     wavelet.plotPower(ax=self.ax)
                     self.canvas.draw()
 
     class DomainROIs(tk.Frame):
-        # Page for viewing information about functional correlation of ICA domains
+        # Page for viewing information about functional correlation of ICA domains.
 
         def __init__(self, parent, controller):
 
             # Change the PC text box using the +/- keys.
-            # This triggers updatePCvalue to run
-            def updatePCval_button(delta):
-                newval = int(self.selected_pc.get()) + delta
-                self.selected_pc.set(newval)
+            # This triggers update_component_index to run.
+            def update_component_index_button(delta):
+                newval = int(self.selected_component.get()) + delta
+                self.selected_component.set(newval)
 
-            # Change the PC index using the text box
-            def updatePCval():
-                newvalue = self.selected_pc.get()
+            # Change the PC index using the text box.
+            def update_component_index():
+                newvalue = self.selected_component.get()
                 print('\nChanging component index to: {0}'.format(newvalue))
 
-                if newvalue == '':  # empty value
+                if newvalue == '':  # Empty value.
                     print('Text box is blank.  Not updating')
                 else:
-                    try:  # make sure entry is an int, inside range of PCs
+                    try:  # Make sure entry is an int, inside range of PCs.
                         assert int(newvalue) < n_components - 1, (
                             'Index exceeds range')
                         assert int(newvalue) >= 0, 'Index below 0'
-                        self.pc_id[0] = int(newvalue)
-                        self.selected_pc.set(str(self.pc_id[0]))
-                        fig.updateFigures(self.pc_id[0])
+                        self.component_id[0] = int(newvalue)
+                        self.selected_component.set(str(self.component_id[0]))
+                        fig.update_figures(self.component_id[0])
 
                     except Exception as e:
                         print('Error!')
                         print('\t', e)
                         print('Not changing upper PC cutoff.')
-                        self.selected_pc.set(str(self.pc_id[0]))
-                        # reset text box to previous value
+                        self.selected_component.set(str(self.component_id[0]))
+                        # Reset text box to previous value.
 
-            # Initialize PC info page
+            # Initialize PC info page.
             tk.Frame.__init__(self, parent)
             label = tk.Label(self, text='Domain ROI Viewer:', font=LARGE_FONT)
             label.pack(pady=10, padx=10)
 
             # Two components to page:
             domain_viewer = tk.Frame(self)
-            # grid of figures about selected PC
-            pc_toolbar = tk.Frame(domain_viewer)
+            # Grid of figures about selected PC.
+            current_component_toolbar = tk.Frame(domain_viewer)
             # toolbar for selecting PC index
 
-            # Make PC selection toolbar
-            self.pc_id = [0]
-            self.selected_pc = tk.StringVar()
-            self.selected_pc.set(str(self.pc_id[0]))
-            pc_entry = tk.Entry(pc_toolbar,
-                                textvariable=self.selected_pc,
+            # Make PC selection toolbar.
+            self.component_id = [0]
+            self.selected_component = tk.StringVar()
+            self.selected_component.set(str(self.component_id[0]))
+            pc_entry = tk.Entry(current_component_toolbar,
+                                textvariable=self.selected_component,
                                 width=5)
-            self.selected_pc.trace('w',
-                                   lambda nm, idx, mode, var=0: updatePCval())
-            pc_entry_label = tk.Label(pc_toolbar, text='Component ROI:')
+            self.selected_component.trace(
+                'w', lambda nm, idx, mode, var=0: update_component_index())
+            pc_entry_label = tk.Label(current_component_toolbar,
+                                      text='Component ROI:')
 
-            pm_toolbar = tk.Frame(domain_viewer)
+            component_adjust_toolbar = tk.Frame(domain_viewer)
 
-            inc = tk.Button(pm_toolbar,
+            inc = tk.Button(component_adjust_toolbar,
                             text='+',
-                            command=lambda: updatePCval_button(1))
-            dec = tk.Button(pm_toolbar,
+                            command=lambda: update_component_index_button(1))
+            dec = tk.Button(component_adjust_toolbar,
                             text='-',
-                            command=lambda: updatePCval_button(-1))
+                            command=lambda: update_component_index_button(-1))
 
-            # grid pc selector frame
+            # Grid pc selector frame.
             pc_entry_label.grid(column=0, row=0)
             pc_entry.grid(column=1, row=0)
             inc.grid(column=0, row=0)
             dec.grid(column=1, row=0)
 
-            # grid domain_viewer frame
-            pc_toolbar.pack()
-            pm_toolbar.pack()
-            # update_noise.pack()
+            # Grid domain_viewer frame.
+            current_component_toolbar.pack()
+            component_adjust_toolbar.pack()
             domain_viewer.pack()
-            fig = self.DomainFigures(self, self.pc_id)
+            fig = self.DomainFigures(self, self.component_id)
             fig.pack()
 
         def callback_manager(self, event):
             if event.keysym == 'Right':
-                newval = int(self.selected_pc.get()) + 1
-                self.selected_pc.set(newval)
+                newval = int(self.selected_component.get()) + 1
+                self.selected_component.set(newval)
             elif event.keysym == 'Left':
-                newval = int(self.selected_pc.get()) - 1
-                self.selected_pc.set(newval)
+                newval = int(self.selected_component.get()) - 1
+                self.selected_component.set(newval)
             else:
                 print('No callback defined for:', event.keysym)
 
         class DomainFigures(tk.Frame):
-            # Create class to hold and update all figures
+            # Create class to hold and update all figures.
             def __init__(self, parent, controller):
 
-                # Create main frame, child of PCinfo page
+                # Create main frame, child of ComponentInfo page.
                 tk.Frame.__init__(self, parent)
 
-                ncol = 2  # number of columns of figures
+                ncol = 2  # Number of columns of figures.
                 self.figures = {}
 
                 figlist = [self.domain_xcorr]
 
                 for i, Fig in enumerate(figlist):
-                    # Not being used: self.fourierTimecourse
+                    # Not being used: self.fourierTimecourse.
 
-                    figure = Fig(self)  # initialize each figure
+                    figure = Fig(self)  # Initialize each figure.
                     c = i % ncol
                     r = i // ncol
-                    figure.grid(row=r, column=c)  # grid it
+                    figure.grid(row=r, column=c)  # Grid it.
                     self.figures[Fig] = figure
-                    # store each handle in self.figures
+                    # Store each handle in self.figures.
 
                 self.loaded = False
 
-            def updateFigures(self, pc_id):
-                # Update all figures in self.figures
+            def update_figures(self, component_id):
+                # Update all figures in self.figures.
                 print('\nUpdating Domain Figures...')
 
                 if not self.loaded:
@@ -1148,27 +1156,27 @@ def run_gui(components: dict,
                         self.domain_ROIs = None
                         self.domain_ROIs = None
                         self.xcorr = None
-                        return  # dont try updating figures.
+                        return  # Dont try updating figures.
 
                 else:
                     print('ROI information already loaded.')
 
-                corr = self.xcorr[pc_id]
+                corr = self.xcorr[component_id]
 
-                # Dict to store all info for updating figures
-                pc_variables = {
+                # Dict to store all info for updating figures.
+                component_variables = {
                     'corr': corr,
-                    'pc_id': pc_id,
+                    'component_id': component_id,
                     'domain_ROIs': self.domain_ROIs
                 }
 
-                # Update all figures
+                # Update all figures.
                 for i, Fig in enumerate(self.figures):
                     handle = self.figures[Fig]
-                    handle.update(pc_variables)
+                    handle.update(component_variables)
 
             class domain_xcorr(tk.Frame):
-                # View eigenbrain (same as PCpage figures)
+                # View eigenbrain (same as ComponentPage figures).
                 def __init__(self, parent):
                     tk.Frame.__init__(self, parent)
                     self.parent = parent
@@ -1203,7 +1211,7 @@ def run_gui(components: dict,
 
                 def on_key_press(self, event):
 
-                    if event.button == 1:  # if left click
+                    if event.button == 1:  # If left click.
                         if self.parent.loaded:
 
                             x = int(event.xdata)
@@ -1212,25 +1220,25 @@ def run_gui(components: dict,
                             if roimask is not None:
                                 rot_roimask = np.rot90(roimask, rotate)
                                 if rot_roimask[y, x] != 1:
-                                    # if click within brain
+                                    # If click within brain.
                                     return
 
-                            pc_id = self.parent.domain_ROIs[y,
-                                                            x].astype('uint16')
+                            component_id = self.parent.domain_ROIs[y, x].astype(
+                                'uint16')
 
-                            print('pc_id:', pc_id)
-                            pc_id = pc_id
-                            self.parent.updateFigures(pc_id)
+                            print('component_id:', component_id)
+                            component_id = component_id
+                            self.parent.update_figures(component_id)
 
                     elif event.button == 3:
                         print('right click: save figure.')
-                        saveFigure(self.fig)
+                        save_figure(self.fig)
 
-                def update(self, pc_variables):
+                def update(self, component_variables):
                     print('updating xcorr...')
-                    pc_id = pc_variables['pc_id']
-                    domain_ROIs = pc_variables['domain_ROIs']
-                    corr = pc_variables['corr']
+                    component_id = component_variables['component_id']
+                    domain_ROIs = component_variables['domain_ROIs']
+                    corr = component_variables['corr']
 
                     if corr is not None:
                         print('getting map...')
@@ -1245,17 +1253,17 @@ def run_gui(components: dict,
                     else:
                         frame = domain_map(domain_ROIs)
                         self.ax.imshow(frame, vmin=-0.5, vmax=1, cmap='gray')
-                    self.ax.set_title('PC' + str(pc_id) +
+                    self.ax.set_title('PC' + str(component_id) +
                                       ': Domain Correlation')
                     self.ax.axis('off')
                     self.canvas.draw()
 
     class DomainRegions(tk.Frame):
-        # Page for assigning regions of ICA domains
+        # Page for assigning regions of ICA domains.
 
         def __init__(self, parent, controller):
 
-            # Initialize PC info page
+            # Initialize page.
             tk.Frame.__init__(self, parent)
             label = tk.Label(self,
                              text='Domain Region Assignment:',
@@ -1305,7 +1313,7 @@ def run_gui(components: dict,
                 print('No callback defined for:', event.keysym)
 
         class region_assignment_page(tk.Frame):
-            # View eigenbrain (same as PCpage figures)
+            # View component (same as ComponentPage figures).
             def __init__(self, parent, entryvar):
                 tk.Frame.__init__(self, parent)
                 self.entryvar = entryvar
@@ -1345,7 +1353,7 @@ def run_gui(components: dict,
 
             def on_key_press(self, event):
 
-                if event.button == 1:  # if left click
+                if event.button == 1:  # If left click.
 
                     region = self.entryvar.get()
                     if (region != '') and self.loaded:
@@ -1356,21 +1364,21 @@ def run_gui(components: dict,
                         if roimask is not None:
                             rot_roimask = np.rot90(roimask, rotate)
                             if rot_roimask[y, x] != 1:
-                                # if click within brain
+                                # If click within brain.
                                 return
 
-                        pc_id = domain_ROIs[y, x].astype('uint16')
+                        component_id = domain_ROIs[y, x].astype('uint16')
 
-                        print('clicked on id:', pc_id)
-                        ind = np.where(domain_ROIs == pc_id)
-                        region_assignment[pc_id] = float(region)
+                        print('clicked on id:', component_id)
+                        ind = np.where(domain_ROIs == component_id)
+                        region_assignment[component_id] = float(region)
                         self.dmap[ind] = float(region)
 
                         self.update()
 
                 elif event.button == 3:
                     print('right click: save figure.')
-                    saveFigure(self.fig)
+                    save_figure(self.fig)
 
             def update(self):
                 if self.loaded:
@@ -1383,24 +1391,24 @@ def run_gui(components: dict,
                 else:
                     print('data not loaded.  not updating.')
 
-    class PCautocorr(tk.Frame):
-        # Page for viewing statistical information about the PC projection
+    class DomainAutoCorr(tk.Frame):
+        # Page for viewing statistical information about the PC projection.
         def __init__(self, parent, controller):
 
-            # Initialize Stats Info page
+            # Initialize Stats Info page.
             tk.Frame.__init__(self, parent)
             label = tk.Label(self,
                              text='Autocorrelation Viewer:',
                              font=LARGE_FONT)
             label.pack(pady=10, padx=10)
 
-            # Make frame for pc max value controller
-            self.xlim_max = [maxval]  # maximum x limit for figures
+            # Make frame for pc max value controller.
+            self.xlim_max = [maxval]  # Maximum x limit for figures.
             self.xlim_min = [0]
             pc_control = tk.Frame(self)
             pc_adjust = tk.Frame(pc_control)
 
-            # initialize min and max controllers
+            # Initialize min and max controllers.
             self.upper_limit = tk.StringVar()
             self.upper_limit.set(str(self.xlim_max[0]))
             self.upper_limit.trace(
@@ -1409,14 +1417,14 @@ def run_gui(components: dict,
 
             self.lower_limit = tk.StringVar()
             self.lower_limit.set(str(self.xlim_min[0]))
-            self.lower_limit.trace(
-                'w',
-                lambda nm, idx, mode, var=self.lower_limit: self.updateminval())
+            self.lower_limit.trace('w',
+                                   lambda nm, idx, mode, var=self.lower_limit:
+                                   self.update_min_val())
 
-            # horizontally pack label, pc_adjust into control vertically
+            # Horizontally pack label, pc_adjust into control vertically.
             tk.Label(pc_control, text='PC axes:').pack()
 
-            # pack elements in pc_adjust horizontally
+            # Pack elements in pc_adjust horizontally.
             tk.Label(pc_adjust, text='from').pack(side=tk.LEFT)
             tk.Entry(pc_adjust, textvariable=self.lower_limit,
                      width=5).pack(side=tk.LEFT)
@@ -1427,7 +1435,7 @@ def run_gui(components: dict,
             pc_adjust.pack()
             pc_control.pack()
 
-            # statistics figures
+            # Statistics figures.
             fig_grid = tk.Frame(self)
             self.statsviewer = self.AutoCorr(fig_grid)
             self.statsviewer.grid(row=0, column=0)
@@ -1436,13 +1444,13 @@ def run_gui(components: dict,
 
         def updatemaxval(self):
             # Update the maximum principal component to be
-            # included from textbox
+            # included from textbox.
             xlim_min = self.xlim_min
             xlim_max = self.xlim_max
             newvalue = self.upper_limit.get()
             print('Changing upper PC cutoff to: {0}'.format(newvalue))
 
-            if newvalue == '':  # if blank, don't reset value
+            if newvalue == '':  # If blank, don't reset value.
                 self.upper_limit.set('')
             else:
                 try:
@@ -1450,43 +1458,41 @@ def run_gui(components: dict,
                         newvalue) <= n_components - 1, 'Index exceeds range'
                     assert int(newvalue) > xlim_min[0], 'Max index below min'
                     self.xlim_max[0] = int(newvalue)
-                    self.updateFigures(xlim_min[0], xlim_max[0])
-                except:  # not a valid number, reset to previous value
+                    self.update_figures(xlim_min[0], xlim_max[0])
+                except:  # Not a valid number, reset to previous value.
                     print('Not changing upper PC cutoff.')
-                    # self.upper_limit.set(xlim_max[0])
                     print('upper limit before', self.upper_limit.get())
                     self.upper_limit.set(str(xlim_max[0]))
                     print('upper limit after', self.upper_limit.get())
-                    # self.upper_limit.set('x')
 
-        def updateminval(self):
-            # Update the minimum principal component to be
-            # included from textbox
+        def update_min_val(self):
+            # Update the minimum component id to be
+            # included from textbox.
             xlim_min = self.xlim_min
             xlim_max = self.xlim_max
             newvalue = self.lower_limit.get()
             print('Changing lower PC cutoff to: {0}'.format(newvalue))
 
-            if newvalue == '':  # if blank, don't reset value
+            if newvalue == '':  # If blank, don't reset value.
                 self.lower_limit.set('x')
             else:
                 try:
                     assert int(newvalue) < xlim_max[0], 'Index exceeds maximum'
                     assert int(newvalue) >= 0, 'Min index below 0'
                     self.xlim_min[0] = int(newvalue)
-                    self.updateFigures(xlim_min[0], xlim_max[0])
-                except:  # not a valid number, reset to previous value
+                    self.update_figures(xlim_min[0], xlim_max[0])
+                except:  # Not a valid number, reset to previous value.
                     print('Not changing lower PC cutoff.')
                     print('lower limit before', self.lower_limit.get())
                     self.lower_limit.set('x')
                     print('lower limit after', self.lower_limit.get())
 
-        def updateFigures(self, xlim_min, xlim_max):
-            # update all figures based on limits set by text update
+        def update_figures(self, xlim_min, xlim_max):
+            # Update all figures based on limits set by text update.
             self.statsviewer.update(xlim_min, xlim_max)
 
             if type(timecourses) is np.ndarray:
-                self.pcviewer.update(xlim_min, xlim_max)
+                self.component_viewer_frame.update(xlim_min, xlim_max)
 
         def callback_manager(self, event):
             if event.keysym == 'Right':
@@ -1505,53 +1511,56 @@ def run_gui(components: dict,
                 print('No callback defined for:', event.keysym)
 
         class AutoCorr(tk.Frame):
-            # View variance explained by each eigenvalue
+            # View variance explained by each 'eigenvalue'.
             def __init__(self, parent):
                 tk.Frame.__init__(self, parent)
 
-                # calculate lag autocorrelations
+                # Calculate lag autocorrelations.
                 x_grid = np.linspace(-0.2, 1.2, 1200)
 
                 frame = tk.Frame(self)
                 self.fig = Figure(figsize=(15, 8), dpi=100, frameon=False)
                 f = self.fig
 
-                self.ax = f.add_subplot(131)
+                self.ax1 = f.add_subplot(131)
                 eig_std = components['timecourses'].std(axis=1)
-                self.ax.plot(eig_std, '.r')
+                self.ax1.plot(eig_std, '.r')
                 print('cutoff:', cutoff)
-                self.ax.plot(
+                self.ax1.plot(
                     np.where(lag1[:n_components] > cutoff)[0],
                     eig_std[np.where(lag1[:n_components] > cutoff)[0]], '.b')
-                self.ax.set_xlabel('Independent Component')
-                self.ax.set_ylabel('Timecourse Standard Deviation')
+                self.ax1.set_xlabel('Independent Component')
+                self.ax1.set_ylabel('Timecourse Standard Deviation')
 
-                self.ax = f.add_subplot(132)
-                self.ax.set_ylim(-0.2, 1.2)
+                self.ax2 = f.add_subplot(132)
+                self.ax2.set_ylim(-0.2, 1.2)
                 f.subplots_adjust(left=0.2, bottom=0.15, right=0.85, top=0.85)
-                self.ax.plot(np.where(lag1 > cutoff)[0],
-                             lag1[lag1 > cutoff],
-                             'b',
-                             label='Lag-1 Signal')
-                self.ax.plot(np.where(lag1 < cutoff)[0],
-                             lag1[lag1 < cutoff],
-                             'r',
-                             label='Lag-1 Noise')
-                self.ax.set_title('PC AutoCorrelation')
-                self.ax.set_ylabel('AutoCorrelation')
-                self.ax.set_xlabel('Independent Component')
-                self.ax.legend()
+                self.ax2.plot(np.where(lag1 > cutoff)[0],
+                              lag1[lag1 > cutoff],
+                              'b',
+                              label='Lag-1 Signal')
+                self.ax2.plot(np.where(lag1 < cutoff)[0],
+                              lag1[lag1 < cutoff],
+                              'r',
+                              label='Lag-1 Noise')
+                self.ax2.set_title('Component AutoCorrelation')
+                self.ax2.set_ylabel('AutoCorrelation')
+                self.ax2.set_xlabel('Independent Component')
+                self.ax2.legend()
 
-                self.ax = f.add_subplot(133)
-                self.ax.set_ylim(-0.2, 1.2)
-                n, _, _ = self.ax.hist(lag1, bins=50, orientation='horizontal')
-                self.ax.plot(np.exp(log_pdf) * n.max() / np.exp(log_pdf).max(),
-                             x_grid,
-                             lw=3)
+                self.ax3 = f.add_subplot(133)
+                self.ax3.set_ylim(-0.2, 1.2)
+                n, _, _ = self.ax3.hist(lag1, bins=50, orientation='horizontal')
+                self.ax3.plot(np.exp(log_pdf) * n.max() / np.exp(log_pdf).max(),
+                              x_grid,
+                              lw=3)
                 if cutoff is not None:
-                    self.ax.axhline(cutoff, color='r', lw=3, linestyle='dashed')
-                self.ax.set_title('Lag-1 Histogram')
-                self.ax.set_xlabel('n')
+                    self.ax3.axhline(cutoff,
+                                     color='r',
+                                     lw=3,
+                                     linestyle='dashed')
+                self.ax3.set_title('Lag-1 Histogram')
+                self.ax3.set_xlabel('n')
 
                 self.canvas = FigureCanvasTkAgg(f, frame)
                 self.canvas.mpl_connect('button_press_event',
@@ -1561,19 +1570,46 @@ def run_gui(components: dict,
                 frame.pack()
 
             def update(self, xlim_min, xlim_max):
-                self.ax.set_xlim([xlim_min, xlim_max])
+                self.ax1.set_xlim([xlim_min, xlim_max])
+                self.ax2.set_xlim([xlim_min, xlim_max])
+
+                self.ax3.cla()
+
+                if 'lag1_full' in components:
+                    lag1 = components['lag1_full']
+                    _, _, log_pdf = sort_noise(timecourses[xlim_min:xlim_max],
+                                               lag1=lag1,
+                                               return_logpdf=True)
+                else:
+                    lag1 = lag_n_autocorr(timecourses, 1, verbose=False)
+                    _, _, log_pdf = sort_noise(timecourses[xlim_min:xlim_max],
+                                               return_logpdf=True)
+
+                x_grid = np.linspace(-0.2, 1.2, 1200)
+                n, _, _ = self.ax3.hist(lag1[xlim_min:xlim_max],
+                                        bins=50,
+                                        orientation='horizontal')
+                self.ax3.plot(np.exp(log_pdf) * n.max() / np.exp(log_pdf).max(),
+                              x_grid,
+                              lw=3)
+                if cutoff is not None:
+                    self.ax3.axhline(cutoff,
+                                     color='r',
+                                     lw=3,
+                                     linestyle='dashed')
+
                 self.canvas.draw()
 
             def on_key_press(self, event):
                 if event.button == 3:
-                    saveFigure(self.fig)
+                    save_figure(self.fig)
 
-    # Run main loop
-    app = PCAgui()
+    # Run main loop.
+    app = AnalysisGui()
     app.mainloop()
     app.quit()
 
-    # Find which indices to use for reconstruction
+    # Find which indices to use for reconstruction.
     if toggle[0] == 100:
         raise Exception('Operation was cancelled')
 
@@ -1584,7 +1620,7 @@ def run_gui(components: dict,
               'will be used for signal reconstruction.'.format(
                   toggle.sum(), int(toggle.size - toggle.sum())))
 
-    #update components with toggle info
+    # Update components with toggle info.
     components['artifact_components'] = toggle
     components['cutoff'] = cutoff
     components['noise_components'] = noise_components
@@ -1592,7 +1628,7 @@ def run_gui(components: dict,
         components['region_assignment'] = region_assignment
         components['region_labels'] = regions
 
-    if load_hdf5:  # if data came from save file, append toggle and timecourses
+    if load_hdf5:  # If data came from save file, append toggle and timecourses.
         f.save({'artifact_components': toggle})
         f.save({'noise_components': noise_components})
         f.save({'timecourses': components['timecourses']})

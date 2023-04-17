@@ -562,7 +562,7 @@ def rebuild_eigenbrain(eig_vec: np.ndarray,
                        index: int = None,
                        roimask: np.ndarray = None,
                        eigb_shape: Tuple[int, int] = None,
-                       maskind: float=1,
+                       maskind: float = 1,
                        bulk: bool = False):
     '''
     Reshape components from (n_components, xy) shape into (n_components, x, y), 
