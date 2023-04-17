@@ -69,6 +69,7 @@ def test_ica_decompose_with_rois_n_components(mock_rois):
 
     assert 'eig_mix' in results
 
+
 def test_ica_decompose_without_rois_n_components():
     exp = seas.experiment.Experiment(pathlist=test_video_path)
     results = exp.ica_project(n_components=10)
