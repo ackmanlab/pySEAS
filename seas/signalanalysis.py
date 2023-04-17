@@ -1,31 +1,46 @@
 from sklearn.neighbors import KernelDensity
+from scipy import signal
 from scipy.signal import argrelextrema
 import numpy as np
 import math
 from itertools import compress
+from typing import Tuple, List
 
 
-def sort_noise(timecourses=None,
-               lag1=None,
-               return_logpdf=False,
-               method='KDE',
-               verbose=False):
+def sort_noise(timecourses: np.ndarray = None,
+               lag1: np.ndarray = None,
+               return_logpdf: bool = False,
+               method: str = 'KDE',
+               verbose: bool = False) -> Tuple[np.ndarray, int, np.ndarray]:
     '''
     Sorts timecourses into two clusters (signal and noise) based on 
     lag-1 autocorrelation.  
-    Timecourses should be a np array of shape (n, t).
 
-    Returns noise_components, a np array with 1 value for all noise 
-    timecourses detected, as well as the cutoff value detected
+    Arguments:
+        timecourses: Input to calculate noise threshold. 
+            Should be a np array of shape (n, t).
+        lag1: Required if the timecourses are not provided.
+            alternate input to calculate noise threshold.
+            Should be a np array of shape (n, t).
+        return_logpdf: Whether to return the KDE log density function.
+        method: The method to calculate the cutoff.  Currently only KDE is supported.
+        verbose: Whether to record a verbose output.
+
+    Returns:
+        noise_components, a np array with a value of 1 where all noise 
+            timecourses detected. as well as the cutoff value detected.
+        cutoff: The cutoff index, anything above this value is considered to be noise. 
+        log_pdf: Returned only if return_logpdf is True.  
+            The pdf function evaluated between -0.2 and 1.2.
     '''
     if method == 'KDE':
 
-        # calculate lag autocorrelations
+        # Calculate lag autocorrelations.
         if lag1 is None:
             assert timecourses is not None, 'sortNoise requires either timecourses or lag1'
             lag1 = lag_n_autocorr(timecourses, 1)
 
-        # calculate minimum between min and max peaks
+        # Calculate minimum between min and max peaks.
         kde_skl = KernelDensity(kernel='gaussian',
                                 bandwidth=0.05).fit(lag1[:, np.newaxis])
         x_grid = np.linspace(-0.2, 1.2, 1200)
@@ -54,8 +69,20 @@ def sort_noise(timecourses=None,
         return noise_components, cutoff
 
 
-def get_peak_separation(log_pdf, x_grid=None):
+def get_peak_separation(log_pdf: np.ndarray,
+                        x_grid: np.ndarray = None) -> float:
+    '''
+    Get peak to peak separation value from the log pdf.
+    This is used in 
 
+    Arguments:
+        log_pdf: The log pdf function specifying the density distribution.
+        x_grid: Optional argument specifying the coordiates matching the log_pdf.
+            If empty, -0.2 : 1.2 in 1200 points is the default.
+
+    Returns: 
+        peak_separation: The peak to peak distance of the log_pdf.
+    '''
     if x_grid is None:
         x_grid = np.linspace(-0.2, 1.2, 1200)
 
@@ -68,8 +95,15 @@ def get_peak_separation(log_pdf, x_grid=None):
     return peak_separation
 
 
-def lag_n_autocorr(x, n, verbose=True):
+def lag_n_autocorr(x: np.ndarray, n: int, verbose: bool = True):
+    '''
+    Calculate the lag-n autocorrelation.  Lower values are more likely to be noise.
 
+    Arguments:
+        x: The 1-D input vector to calculate lag autcorrelation from.
+        n: The integer lag to calculate.
+        verbose: Whether to print a verbose output.
+    '''
     if x.ndim == 1:
         return np.corrcoef(x[n:], x[:-n])[0, 1]
     elif x.ndim == 2:
@@ -84,8 +118,24 @@ def lag_n_autocorr(x, n, verbose=True):
         raise AssertionError
 
 
-def butterworth(data, high=None, low=None, fps=10, order=5):
-    from scipy import signal
+def butterworth(data: np.ndarray,
+                high: float = None,
+                low: float = None,
+                fps: int = 10,
+                order: int = 5) -> np.ndarray:
+    '''
+    Apply a butterworth filter on the data.
+
+    Arguments:
+        data: A 1-D time series array to filter.
+        high: The high pass filter to apply.
+        low: The low pass filter to apply.
+        fps: The number of frames per second of the input data.
+        order: The butterworth filter order to apply.
+
+    Returns:
+        data: The filtered dataset.
+    '''
 
     def butter_highpass(cutoff, fps, order=order):
         nyq = 0.5 * fps
@@ -110,45 +160,85 @@ def butterworth(data, high=None, low=None, fps=10, order=5):
     return data
 
 
-def local_max(xvalues, array1d, sig=None):
-    # finds the local max array values and their respective position (xvalues)
+def local_max(x_values: np.ndarray, array1d: np.ndarray, sig=None):
+    '''
+    Finds the local max array values and their respective position (xvalues)
+    by giving a significance cuttoff value array of the same size as the array1d, this will also return
+    the cutoff significance at each local maxima.
 
-    # by giving a significance cuttoff value array of the same size as the array1d, this will also return
-    # the cutoff significance at each local maxima
+    TODO(@brmullen): Add documentation here.
 
+    Args:
+        x_values:
+        array1d:
+        sig:
+
+    Returns:
+
+    '''
     if sig is not None:
         i = np.r_[True, array1d[1:] > array1d[:-1]] & np.r_[
             array1d[:-1] > array1d[1:], True]
-        return list(compress(xvalues,
+        return list(compress(x_values,
                              i)), list(compress(array1d,
                                                 i)), list(compress(sig, i))
     else:
         i = np.r_[True, array1d[1:] > array1d[:-1]] & np.r_[
             array1d[:-1] > array1d[1:], True]
-        return list(compress(xvalues, i)), list(compress(array1d, i))
+        return list(compress(x_values, i)), list(compress(array1d, i))
 
 
-def local_min(xvalues, array1d, sig=None):
-    # finds the local min array values and their respective position (xvalues)
+def local_min(x_values: np.ndarray,
+              array1d: np.ndarray,
+              sig=None) -> Tuple[List[np.ndarray], List[np.ndarray]]:
+    '''
+    Finds the local min array values and their respective position (xvalues)
+    by giving a significance cutoff value array of the same size as the array1d, this will also return
+    the cutoff significance at each local minima
 
-    # by giving a significance cutoff value array of the same size as the array1d, this will also return
-    # the cutoff significance at each local minima
+    TODO(@brmullen): Add documentation here.
 
+    Args:
+        x_values:
+        array1d:
+        sig:
+
+    Returns:
+
+    '''
     if sig is not None:
         i = np.r_[True, array1d[1:] < array1d[:-1]] & np.r_[
             array1d[:-1] < array1d[1:], True]
-        return list(compress(xvalues,
+        return list(compress(x_values,
                              i)), list(compress(array1d,
                                                 i)), list(compress(sig, i))
     else:
         i = np.r_[True, array1d[1:] < array1d[:-1]] & np.r_[
             array1d[:-1] < array1d[1:], True]
-        return list(compress(xvalues, i)), list(compress(array1d, i))
+        return list(compress(x_values, i)), list(compress(array1d, i))
 
 
-def abline(slope, intercept, nframe, label=None, color=None):
-    """Plot a line from slope and intercept"""
-    x_vals = np.array((0, nframe))
+def abline(slope: float,
+           intercept: float,
+           x_max: float,
+           label: str = None,
+           color: str = None,
+           x_min: float = 0) -> None:
+    '''
+    Plot a line to the currently active plt figure based on slope and intercept.
+
+    Arguments:
+        slope: The line slope.
+        intercept: The line y intercept.
+        x_max: The maximum x value to draw the line to.
+        x_min: The minimum x value to draw the line to.
+        label: The line label, if applicable.
+        color: The matplotlib color string.  If not specified, uses the next default option.
+
+    Returns:
+        None
+    '''
+    x_vals = np.array((0, x_min))
     y_vals = intercept + slope * x_vals
     if color != None:
         plt.plot(x_vals, y_vals, label=label, color=color)
@@ -156,8 +246,23 @@ def abline(slope, intercept, nframe, label=None, color=None):
         plt.plot(x_vals, y_vals, label=label)
 
 
-def linear_regression(time, signal, verbose=True):
+def linear_regression(time: np.ndarray,
+                      signal: np.ndarray,
+                      verbose=True) -> Tuple[float, float]:
+    '''
+    Applies a linear regression to the time-series signal.
 
+    Arguments:
+        time: The time, or x axis to fit the linear regression to.
+        signal: The signal, or y axis to fit the linear regression to.
+        verbose: Whether to print a verbose output specifying the fit results.
+
+    Returns:
+        slope: The linear regression slope.
+        intercept: The linear regression intercept.
+
+    TODO(@brmullen): Check documentation.
+    '''
     regr = linear_model.LinearRegression(fit_intercept=True)
     regr.fit(time.reshape(-1, 1), signal.reshape(-1, 1))
     wsumpred = regr.predict(signal.reshape(-1, 1))
@@ -174,8 +279,22 @@ def linear_regression(time, signal, verbose=True):
 def tdelay_correlation(vectors, n, max_offset=150, return_window=False):
     '''
     Calculates correlations of timecourses stored in an array 'vectors', of shape 
-    (n, t) against the 'n'th element of the array, or an input vector of size 't'.  
-    Returns the correlation of each vector with vector 'n', and time offset.
+    (m, t) against the 'n'th element of the array, or an input vector of size 't'.  
+    Returns 
+
+    Arguments:
+        vectors: a (m,t) numpy array containing all time series, including the one to compare to.
+        n: The element to compare each other element to.
+        max_offset: The integer maximum time offset to calculate correlation out to.
+        return_window: Whether to return the maximum correlation value in the context of the correlation window.
+
+    Returns:
+        x_corr: the correlation of each vector with vector 'n', and time offset.
+        t_delay: The time delay which maximizes the correlation value.
+        corr_window: Returns the maximum correlation at the given time delay for each time series,
+            all other values are zero.  Only returned if return_window is True.
+
+    TODO(@brmullen): Check documentation.
     '''
 
     if type(n) is int:
@@ -193,7 +312,6 @@ def tdelay_correlation(vectors, n, max_offset=150, return_window=False):
 
     vectors = (vectors.copy() - vectors.mean(axis=1)[:,None]) / \
         vectors.std(axis=1)[:,None]
-    # print('vectors', vectors)
 
     n_elements = vectors[:, 0].size
     x_corr = np.zeros(n_elements)
@@ -223,6 +341,9 @@ def tdelay_correlation(vectors, n, max_offset=150, return_window=False):
 
 
 def gaussian_smooth_2d(matrix, dj, dt):
+    '''
+    TODO(@brmullen): Write documentation.
+    '''
     sigma = [dj, dt]
     smooth_matrix = gaussian_filter(matrix.real, sigma=sigma)
     smooth_matrix += gaussian_filter(matrix.imag, sigma=sigma).imag
@@ -232,47 +353,49 @@ def gaussian_smooth_2d(matrix, dj, dt):
 
 def short_time_fourier_transform(data,
                                  fps=10,
-                                 fftLen=100,
+                                 fft_len=100,
                                  overlap=99,
                                  verbose=False):
-
-    padEndSz = fftLen
-    # the last segment can overlap the end of the data array by no more
-    # than one window size
-    nyq = fps / 2  # Nyquist frequency
+    '''
+    TODO(@brmullen): Write documentation.
+    '''
+    padEndSz = fft_len
+    # The last segment can overlap the end of the data array by no more
+    # than one window size.
+    nyq = fps / 2  # Nyquist frequency.
 
     if verbose:
         print("Calculating STFT of window size {0} and an overlap of {1}\
             \n--------------------------------------------------\
-            ".format(fftLen, overlap))
+            ".format(fft_len, overlap))
 
-    hopSz = np.int32(np.floor(fftLen - overlap))
-    # calculates the how far the next STFT is from the last
+    hopSz = np.int32(np.floor(fft_len - overlap))
+    # Calculates the how far the next STFT is from the last.
     numSeg = np.int32(np.ceil(len(data) / np.float32(hopSz)))
-    # Number of segments of through the all the data
-    window = np.hanning(fftLen)
-    # create a Hanning window of the appropriate length
-    inPad = np.zeros(fftLen)  # zeros to pad each individual segment
+    # Number of segments of through the all the data.
+    window = np.hanning(fft_len)
+    # Create a Hanning window of the appropriate length.
+    inPad = np.zeros(fft_len)  # zeros to pad each individual segment
 
     padData = np.concatenate((data, np.zeros(padEndSz)))
-    # the padded data to process
-    result = np.empty((fftLen, numSeg), dtype=np.float32)
-    # space to hold the result
+    # The padded data to process.
+    result = np.empty((fft_len, numSeg), dtype=np.float32)
+    # Space to hold the result.
 
     for i in range(numSeg):
-        hop = hopSz * i  # figure out the current segment offset
-        seg = padData[hop:hop + fftLen]  # get the current segment
-        windowed = (seg * window)  # apply a Hanning Window
+        hop = hopSz * i  # Figure out the current segment offset.
+        seg = padData[hop:hop + fft_len]  # Get the current segment.
+        windowed = (seg * window)  # Apply a Hanning Window.
         padded = np.append(windowed, inPad)
-        # add zeros to double the length of the data
-        spectrum = np.fft.fft(padded) / fftLen
-        # take the Fourier Transform and scale by the number of data points
+        # Add zeros to double the length of the data.
+        spectrum = np.fft.fft(padded) / fft_len
+        # Take the Fourier Transform and scale by the number of data points.
         autopower = np.abs(spectrum * np.conj(spectrum))
-        # find the autopower spectrum
-        result[:, i] = autopower[:fftLen]  # append to the results array
+        # Find the autopower spectrum.
+        result[:, i] = autopower[:fft_len]  # Append to the results array.
 
     result = np.flipud(result[0:math.floor(2 * nyq * fps), :]) / overlap
-    # clip values greater than the nyquist sampling rate
+    # Clip values greater than the nyquist sampling rate.
     maxData = np.amax(result)
     minData = np.amin(result)
 

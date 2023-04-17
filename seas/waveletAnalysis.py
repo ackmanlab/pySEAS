@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-
+# TODO(@brmullen): Write documentation for this file.
 import sys
 import numpy as np
 from seas.waveletFunctions import *
@@ -28,6 +28,7 @@ To find signal change:
     There seems to be very little difference between binned data and full data
 
 '''
+
 
 def waveletCoherence(tc1, tc2, fps=10, siglvl=0.95, sigtest=0):
 
@@ -309,7 +310,8 @@ class waveletAnalysis:
         self.signif = wave_signif(([1.0]), dt=self.cadence, sigtest=0, scale=self.scale, \
             lag1=self.lag1, mother=self.mother, siglvl = self.siglvl)
         self.sig95 = self.signif[:, np.newaxis].dot(
-            np.ones(self.n)[np.newaxis, :])  # Expand signif --> (J+1)x(N) array.
+            np.ones(
+                self.n)[np.newaxis, :])  # Expand signif --> (J+1)x(N) array.
         self.sig95 = self.power / self.sig95  # Where ratio > 1, power is significant.
         return
 
