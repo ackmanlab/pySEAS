@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="seas",
-    version="0.0.3",
+    version="0.0.4",
     author="Sydney Weiser",
     author_email="scweiser@ucsc.edu",
     description="python Signal Extraction and Segmentation",
@@ -26,7 +26,6 @@ setuptools.setup(
         'PyYAML',
         'scikit-learn',
         'scipy',
-        'sklearn',
         'tifffile',
         'tk',
     ],

@@ -12,7 +12,6 @@ Github repository for source code, usage and help:
     https://github.com/ackmanlab/pySEAS
 
 '''
-
 '__version__' == '0.0.4'
 
 from . import video

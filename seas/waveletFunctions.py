@@ -1,6 +1,7 @@
 from scipy.special._ufuncs import gammainc, gamma
 import numpy as np
 from scipy.optimize import fminbound
+
 __author__ = 'Evgeniya Predybaylo'
 
 # Copyright (C) 1995-2004, Christopher Torrence and Gilbert P.Compo
