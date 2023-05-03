@@ -775,7 +775,7 @@ def run_gui(components: dict,
 
                 def update(self, component_variables):
                     timecourse = component_variables['timecourse']
-                    self.ax.lines.pop(0)
+                    self.ax.lines[0].remove()
                     self.ax.plot(
                         np.arange(timecourse.size) / 10, timecourse, 'k')
                     self.canvas.draw()
@@ -819,7 +819,7 @@ def run_gui(components: dict,
                     temp[-1] = 0
                     ylim = np.std(temp)
 
-                    self.ax.lines.pop(0)
+                    self.ax.lines[0].remove()
                     self.ax.plot(correlation, 'k')
                     self.ax.set_ylim([-3 * ylim, 3 * ylim])
                     self.canvas.draw()
@@ -905,7 +905,7 @@ def run_gui(components: dict,
                         timecourse)
 
                     stfthist = stft.sum(1)
-                    self.ax.lines.pop(0)
+                    self.ax.lines[0].remove()
                     self.ax.plot((np.arange(stfthist.size) / 10)[::-1],
                                  stfthist, 'k')
                     self.ax.set_yscale('log')
@@ -961,9 +961,10 @@ def run_gui(components: dict,
                     wavelet.globalWaveletSpectrum()
 
                     for i in range(len(self.ax1.lines)):
-                        self.ax1.lines.pop(0)
+                        self.ax1.lines[0].remove()
+
                     for i in range(len(self.ax2.lines)):
-                        self.ax2.lines.pop(0)
+                        self.ax2.lines[0].remove()
                     # self.ax2.cla()
                     self.ax1.plot(wavelet.flambda, wavelet.gws, 'r')
                     self.ax1.plot(wavelet.flambda,

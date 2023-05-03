@@ -12,20 +12,19 @@ Github repository for source code, usage and help:
     https://github.com/ackmanlab/pySEAS
 
 '''
+'__version__' == '0.0.4'
 
-'__version__' == '0.0.1'
-
-# from . import video
-# from . import ica
+from . import video
+from . import ica
 from . import domains
-# from .experiment import Experiment
+from .experiment import Experiment
 
-# from .hdf5manager import hdf5manager
-# from .gui import run_gui as run_gui
+from .hdf5manager import hdf5manager
+from .gui import run_gui
 
-# from . import rois
+from . import rois
+from . import filemanager
 # from . import colormap
-# from . import filemanager
 # signalanalysis.py
 # waveletAnalysis.py
 # waveletFunctions.py

@@ -249,8 +249,8 @@ class hdf5manager:
             keys = f.keys()
             attrs = f.attrs
         else:
-            assert (type(target) is str) or (type(target) is
-                                             list), 'invalid target'
+            assert (type(target) is str) or (type(target)
+                                             is list), 'invalid target'
             if type(target) is str:
                 target = [target]
 

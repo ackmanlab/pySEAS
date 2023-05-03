@@ -321,9 +321,15 @@ def get_domain_edges(domain_ROIs: np.ndarray,
             mean_filtered: 
                 The frame mean, of shape (t), filtered by the default filtering method. 
     '''
-    # make sure domains are detected when there are more than 256 of them, by adding an offset
-    edges = cv2.Canny((domain_ROIs + 1).astype('uint8'), 1, 1)
-    edges += cv2.Canny((domain_ROIs + 2).astype('uint8'), 1, 1)
+    # Make sure domains are detected when there are more than 256 of them, by adding an offset
+
+    # Avoid a RuntimeWarning by explicitly converting to uint8 with no np.nan.
+    domain_ROIs = domain_ROIs.copy() + 1
+    domain_ROIs[np.where(np.isnan(domain_ROIs))] = 0
+    domain_ROIs = domain_ROIs.astype('uint8')
+
+    edges = cv2.Canny(domain_ROIs, 1, 1)
+    edges += cv2.Canny((domain_ROIs + 1), 1, 1)
 
     if linepad is not None:
         assert type(

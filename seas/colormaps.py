@@ -12,7 +12,7 @@ from matplotlib import pyplot as plt
 from matplotlib.colors import ListedColormap
 import warnings
 
-from seas.defaults import config
+from .defaults import config
 
 
 def get_mpl_colormap(colormap_name: str):

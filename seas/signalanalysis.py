@@ -182,14 +182,14 @@ def local_max(x_values:np.ndarray,
 
     '''
     if sig is not None:
-        i = np.r_[True, array1d[1:] > array1d[:-1]] & np.r_[
-            array1d[:-1] > array1d[1:], True]
+        i = np.r_[True, array1d[1:] > array1d[:-1]] & np.r_[array1d[:-1] >
+                                                            array1d[1:], True]
         return list(compress(x_values,
                              i)), list(compress(array1d,
                                                 i)), list(compress(sig, i))
     else:
-        i = np.r_[True, array1d[1:] > array1d[:-1]] & np.r_[
-            array1d[:-1] > array1d[1:], True]
+        i = np.r_[True, array1d[1:] > array1d[:-1]] & np.r_[array1d[:-1] >
+                                                            array1d[1:], True]
         return list(compress(x_values, i)), list(compress(array1d, i))
 
 
@@ -214,14 +214,14 @@ def local_min(x_values: np.ndarray,
     '''
     
     if sig is not None:
-        i = np.r_[True, array1d[1:] < array1d[:-1]] & np.r_[
-            array1d[:-1] < array1d[1:], True]
+        i = np.r_[True, array1d[1:] < array1d[:-1]] & np.r_[array1d[:-1] <
+                                                            array1d[1:], True]
         return list(compress(x_values,
                              i)), list(compress(array1d,
                                                 i)), list(compress(sig, i))
     else:
-        i = np.r_[True, array1d[1:] < array1d[:-1]] & np.r_[
-            array1d[:-1] < array1d[1:], True]
+        i = np.r_[True, array1d[1:] < array1d[:-1]] & np.r_[array1d[:-1] <
+                                                            array1d[1:], True]
         return list(compress(x_values, i)), list(compress(array1d, i))
 
 
