@@ -162,8 +162,7 @@ def butterworth(data: np.ndarray,
 
 def local_max(x_values:np.ndarray, 
               array1d: np.ndarray, 
-              sig: np.ndarray = None) -> Tuple[np.ndarray, np.ndarray] or
-                                         Tuple[np.ndarray, np.ndarray, np.ndarray]:
+              sig: np.ndarray = None) -> Tuple[np.ndarray, np.ndarray]:
     '''
     Finds the local max array values and their respective position (xvalues)
     by giving a significance cuttoff value array of the same size as the array1d, 
@@ -282,9 +281,9 @@ def linear_regression(time: np.ndarray,
 
 
 def tdelay_correlation(vectors: np.ndarray, 
-                       n = int, 
-                       max_offset = int = 150, 
-                       return_window = bool = False) -> Tuple[]:
+                       n: int, 
+                       max_offset: int = 150, 
+                       return_window: bool = False) -> Tuple[np.ndarray, np.ndarray]:
     '''
     Calculates correlations of timecourses stored in an array 'vectors', of shape 
     (m, t) against the 'n'th element of the array, or an input vector of size 't'.  
@@ -346,9 +345,9 @@ def tdelay_correlation(vectors: np.ndarray,
         return x_corr, t_delay
 
 
-def gaussian_smooth_2d(matrix: np.ndarry,
+def gaussian_smooth_2d(matrix: np.ndarray,
                        dj: float,
-                       dt: float) -> np.ndarray
+                       dt: float) -> np.ndarray:
     '''
     This takes a 2-d matrix and applies a smoothing gaussian
     filter defined by the two sigma variables (dj, dt)
@@ -370,10 +369,10 @@ def gaussian_smooth_2d(matrix: np.ndarry,
 
 
 def short_time_fourier_transform(data: np.ndarray,
-                                 fps= float = 10,
-                                 fft_len = int = 100,
-                                 overlap = int = 50,
-                                 verbose = bool = False) -> np.array:
+                                 fps: float = 10,
+                                 fft_len: int = 100,
+                                 overlap: int = 50,
+                                 verbose: bool = False) -> np.array:
     '''
     Creates a short time windowed fourier transform of a time series
 
