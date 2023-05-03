@@ -160,20 +160,25 @@ def butterworth(data: np.ndarray,
     return data
 
 
-def local_max(x_values: np.ndarray, array1d: np.ndarray, sig=None):
+def local_max(x_values:np.ndarray, 
+              array1d: np.ndarray, 
+              sig: np.ndarray = None) -> Tuple[np.ndarray, np.ndarray] or
+                                         Tuple[np.ndarray, np.ndarray, np.ndarray]:
     '''
     Finds the local max array values and their respective position (xvalues)
-    by giving a significance cuttoff value array of the same size as the array1d, this will also return
-    the cutoff significance at each local maxima.
-
-    TODO(@brmullen): Add documentation here.
+    by giving a significance cuttoff value array of the same size as the array1d, 
+    this will also return the cutoff significance at each local maxima.
 
     Args:
-        x_values:
-        array1d:
-        sig:
+        x_values: positional information (i.e. time, sequence, etc.)
+        array1d: data values (i.e. Dfof, etc.)
+        sig: third list, significance of signal, that is returned 
+            (in realitity this could be any array of equal len as array1d) 
 
     Returns:
+        xvalues of where the local max 
+        data values of the local max
+        third list of significance of where the local max
 
     '''
     if sig is not None:
@@ -193,19 +198,21 @@ def local_min(x_values: np.ndarray,
               sig=None) -> Tuple[List[np.ndarray], List[np.ndarray]]:
     '''
     Finds the local min array values and their respective position (xvalues)
-    by giving a significance cutoff value array of the same size as the array1d, this will also return
-    the cutoff significance at each local minima
-
-    TODO(@brmullen): Add documentation here.
+    by giving a significance cuttoff value array of the same size as the array1d, 
+    this will also return the cutoff significance at each local maxima.
 
     Args:
-        x_values:
-        array1d:
-        sig:
+        x_values: positional information (i.e. time, sequence, etc.)
+        array1d: data values (i.e. Dfof, etc.)
+        sig: third list, significance of signal, that is returned 
+            (in realitity this could be any array of equal len as array1d) 
 
     Returns:
-
+        xvalues of where the local min 
+        data values of the local min
+        third list of significance of where the local min
     '''
+    
     if sig is not None:
         i = np.r_[True, array1d[1:] < array1d[:-1]] & np.r_[
             array1d[:-1] < array1d[1:], True]
@@ -260,8 +267,6 @@ def linear_regression(time: np.ndarray,
     Returns:
         slope: The linear regression slope.
         intercept: The linear regression intercept.
-
-    TODO(@brmullen): Check documentation.
     '''
     regr = linear_model.LinearRegression(fit_intercept=True)
     regr.fit(time.reshape(-1, 1), signal.reshape(-1, 1))
@@ -276,7 +281,10 @@ def linear_regression(time: np.ndarray,
     return slope, intercept
 
 
-def tdelay_correlation(vectors, n, max_offset=150, return_window=False):
+def tdelay_correlation(vectors: np.ndarray, 
+                       n = int, 
+                       max_offset = int = 150, 
+                       return_window = bool = False) -> Tuple[]:
     '''
     Calculates correlations of timecourses stored in an array 'vectors', of shape 
     (m, t) against the 'n'th element of the array, or an input vector of size 't'.  
@@ -293,8 +301,6 @@ def tdelay_correlation(vectors, n, max_offset=150, return_window=False):
         t_delay: The time delay which maximizes the correlation value.
         corr_window: Returns the maximum correlation at the given time delay for each time series,
             all other values are zero.  Only returned if return_window is True.
-
-    TODO(@brmullen): Check documentation.
     '''
 
     if type(n) is int:
@@ -340,9 +346,21 @@ def tdelay_correlation(vectors, n, max_offset=150, return_window=False):
         return x_corr, t_delay
 
 
-def gaussian_smooth_2d(matrix, dj, dt):
+def gaussian_smooth_2d(matrix: np.ndarry,
+                       dj: float,
+                       dt: float) -> np.ndarray
     '''
-    TODO(@brmullen): Write documentation.
+    This takes a 2-d matrix and applies a smoothing gaussian
+    filter defined by the two sigma variables (dj, dt)
+
+    Arguments:
+        matrix: 2d matrix of values to smooth
+        dj = sigma to define the first dimension gaussian
+        dt = sigma to define the second dimension gaussian
+
+    Returns:
+        Smoothed 2d matrix
+
     '''
     sigma = [dj, dt]
     smooth_matrix = gaussian_filter(matrix.real, sigma=sigma)
@@ -351,14 +369,29 @@ def gaussian_smooth_2d(matrix, dj, dt):
     return smooth_matrix
 
 
-def short_time_fourier_transform(data,
-                                 fps=10,
-                                 fft_len=100,
-                                 overlap=99,
-                                 verbose=False):
+def short_time_fourier_transform(data: np.ndarray,
+                                 fps= float = 10,
+                                 fft_len = int = 100,
+                                 overlap = int = 50,
+                                 verbose = bool = False) -> np.array:
     '''
-    TODO(@brmullen): Write documentation.
+    Creates a short time windowed fourier transform of a time series
+
+    Arguments:
+        data: Time series (1d vector)
+        fps: frames per second
+        fft_len: window length (number of data points to run fft)
+        overlap: Overlab between adjacent windows (number of datapoints that are 
+            similar between adajacent windows)
+        verbose: Boolean to be verbose or not
+
+    Returns:
+        result: 2d matrix of short time windowed Fourier transform
+        fps: frames per second used in fourier transform
+        nyq: nyquist frequency
+        maxData: location of the maxima of the 2d transform
     '''
+    
     padEndSz = fft_len
     # The last segment can overlap the end of the data array by no more
     # than one window size.

@@ -2,7 +2,7 @@
 
 python Signal Extraction and Segmentation
 
-See readme files in examples for basic usage, or the [ReadTheDocs](https://pyseas.readthedocs.io/en/latest/) page to browse available function help.
+See readme files in examples for basic usage, or the [ReadTheDocs](https://pyseas.readthedocs.io/en/master/modules.html) page to browse available function help.
 
 ---
 

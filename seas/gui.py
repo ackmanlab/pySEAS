@@ -341,12 +341,12 @@ def run_gui(components: dict,
             # Initialize navigation buttons.
             navbuttons = tk.Frame(self)
             self.llbutton = tk.Button(navbuttons,
-                                      text='<<< {0} PCs'.format(4 *
+                                      text='<<< {0} Components'.format(4 *
                                                                 self.n_images),
                                       command=lambda: self.changeComponentPage(
                                           self.current_page_number - 4))
             self.lbutton = tk.Button(navbuttons,
-                                     text='<<< {0} PCs'.format(self.n_images),
+                                     text='<<< {0} Components'.format(self.n_images),
                                      command=lambda: self.changeComponentPage(
                                          self.current_page_number - 1))
             self.homebutton = tk.Button(
@@ -354,11 +354,11 @@ def run_gui(components: dict,
                 text='Home',
                 command=lambda: self.changeComponentPage(0))
             self.rbutton = tk.Button(navbuttons,
-                                     text='{0} PCs >>>'.format(self.n_images),
+                                     text='{0} Components >>>'.format(self.n_images),
                                      command=lambda: self.changeComponentPage(
                                          self.current_page_number + 1))
             self.rrbutton = tk.Button(navbuttons,
-                                      text='{0} PCs >>>'.format(4 *
+                                      text='{0} Components >>>'.format(4 *
                                                                 self.n_images),
                                       command=lambda: self.changeComponentPage(
                                           self.current_page_number + 4))
@@ -581,7 +581,7 @@ def run_gui(components: dict,
                         fig.update_figures(self.component_id[0])
 
                     except:
-                        print('Not changing upper PC cutoff.')
+                        print('Not changing upper Component cutoff.')
                         self.selected_component.set(str(self.component_id[0]))
                         # Reset text box to previous value.
 
@@ -757,7 +757,7 @@ def run_gui(components: dict,
                                       bottom=0.15,
                                       right=0.85,
                                       top=0.85)
-                    self.ax.set_title('PC Timecourse')
+                    self.ax.set_title('Component Timecourse')
                     self.ax.set_xlabel('Time (s)')
                     self.ax.set_ylabel('Sum Intensity (dFoF)')
                     self.ax.plot([])
@@ -1045,7 +1045,7 @@ def run_gui(components: dict,
                     except Exception as e:
                         print('Error!')
                         print('\t', e)
-                        print('Not changing upper PC cutoff.')
+                        print('Not changing upper Component cutoff.')
                         self.selected_component.set(str(self.component_id[0]))
                         # Reset text box to previous value.
 
