@@ -341,12 +341,13 @@ def run_gui(components: dict,
             # Initialize navigation buttons.
             navbuttons = tk.Frame(self)
             self.llbutton = tk.Button(navbuttons,
-                                      text='<<< {0} Components'.format(4 *
-                                                                self.n_images),
+                                      text='<<< {0} Components'.format(
+                                          4 * self.n_images),
                                       command=lambda: self.changeComponentPage(
                                           self.current_page_number - 4))
             self.lbutton = tk.Button(navbuttons,
-                                     text='<<< {0} Components'.format(self.n_images),
+                                     text='<<< {0} Components'.format(
+                                         self.n_images),
                                      command=lambda: self.changeComponentPage(
                                          self.current_page_number - 1))
             self.homebutton = tk.Button(
@@ -354,12 +355,13 @@ def run_gui(components: dict,
                 text='Home',
                 command=lambda: self.changeComponentPage(0))
             self.rbutton = tk.Button(navbuttons,
-                                     text='{0} Components >>>'.format(self.n_images),
+                                     text='{0} Components >>>'.format(
+                                         self.n_images),
                                      command=lambda: self.changeComponentPage(
                                          self.current_page_number + 1))
             self.rrbutton = tk.Button(navbuttons,
-                                      text='{0} Components >>>'.format(4 *
-                                                                self.n_images),
+                                      text='{0} Components >>>'.format(
+                                          4 * self.n_images),
                                       command=lambda: self.changeComponentPage(
                                           self.current_page_number + 4))
 

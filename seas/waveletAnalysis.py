@@ -1,5 +1,16 @@
 #!/usr/bin/env python3
-# TODO(@brmullen): Write documentation for this file.
+'''
+Adapted from __author__ = 'Mykhaylo Shumko' : __init__, waveletTransform, plotPower, lagNAutoCorr
+All other functions written by Brian Mullen.
+
+To find the global wavelet spectrum run these two scripts:
+    wave = waveletAnalysis(data) #create object & runs wavelet transform
+    wave.globalWaveletSpectrum() #runs function to create global wavelet spectrum
+    
+To find signal change:
+    waveletAnalysis.tsSignal()
+    There seems to be very little difference between binned data and full data
+'''
 import sys
 import numpy as np
 from seas.waveletFunctions import *
@@ -11,25 +22,13 @@ from matplotlib.gridspec import GridSpec
 from datetime import datetime
 from seas.signalanalysis import local_max, linear_regression, abline, lag_n_autocorr
 
+from typing import List
 import operator
-
-#Adapted from __author__ = 'Mykhaylo Shumko' : __init__, waveletTransform, plotPower, lagNAutoCorr
-#All other functions written by Brian Mullen.
-'''
-To find the global wavelet spectrum run these two scripts:
-    wave = waveletAnalysis(data) #create object & runs wavelet transform
-    wave.globalWaveletSpectrum() #runs function to create global wavelet spectrum
-    
-To find signal change:
-    waveletAnalysis.tsSignal()
-    There seems to be very little difference between binned data and full data
-
-'''
 
 
 class waveletAnalysis:
 
-    def __init__(self, data, fps, **kwargs):
+    def __init__(self, data: np.ndarray, fps: int, **kwargs):
         """
         A class for managing wavelet analysis. 
         Initialize the wavelet parameters and run the wavelet tranform.
@@ -99,16 +98,16 @@ class waveletAnalysis:
         self.cdelta = None
         if self.mother == 'MORLET' and self.param == 6:
             self.cdelta = 0.776
-            self.psi0 = np.pi**(-0.25) * 0.85        
+            self.psi0 = np.pi**(-0.25) * 0.85
         elif self.mother == 'MORLET' and self.param == 4:
             self.cdelta = 1.151
             self.psi0 = np.pi**(-0.25) * 0.85
         elif self.mother == 'DOG' and self.param == 2:
             self.cdelta = 3.541
-            self.psi0 = None #used in wavelet inverse, see (Torrence and Compo 1998)
+            self.psi0 = None  #used in wavelet inverse, see (Torrence and Compo 1998)
         elif self.mother == 'DOG' and self.param == 6:
             self.cdelta = 1.966
-            self.psi0 = None #used in wavelet inverse, see (Torrence and Compo 1998)
+            self.psi0 = None  #used in wavelet inverse, see (Torrence and Compo 1998)
         else:
             assert self.cdelta != None, 'Unknown c value based on wavelet choice'
         if self.psi0 == None:
@@ -149,10 +148,7 @@ class waveletAnalysis:
                 self.n)[np.newaxis, :])  # Expand signif --> (J+1)x(N) array.
         self.sig95 = self.power / self.sig95  # Where ratio > 1, power is significant.
 
-
-    def inverseWaveletTransform(self,
-                                waveFlt=None):
-        
+    def inverseWaveletTransform(self, waveFlt: np.ndarray = None):
         ''' 
         Inverse wavelet transform from 2d power spectra back to a timecourse
 
@@ -167,14 +163,15 @@ class waveletAnalysis:
             waveFlt = self.waveFlt
 
         InvTranform = np.zeros(self.n)
-        tansformConstant = ((self.dj * math.sqrt(self.cadence)) / (self.cdelta * self.psi0))  # Reconstruction constant.
+        tansformConstant = (
+            (self.dj * math.sqrt(self.cadence)) / (self.cdelta * self.psi0)
+        )  # Reconstruction constant.
 
         for i in range(waveFlt.shape[0]):
             waveFlt[i, :] /= math.sqrt(self.period[i])
         for i in range(self.n):
             InvTranform[i] = np.sum(np.real(waveFlt[:, i]), axis=0)
         self.dataFlt = tansformConstant * InvTranform
-
 
     def plotPower(self, ax=None):
         '''
@@ -237,11 +234,10 @@ class waveletAnalysis:
         cax = divider.append_axes("bottom", size="5%", pad=0.5)
         plt.colorbar(im, cax=cax, orientation='horizontal')
 
-
     def waveletFilter(self,
-                      lowerPeriod=None,
-                      upperPeriod=None,
-                      sigLevel=1):
+                      lowerPeriod: float = None,
+                      upperPeriod: float = None,
+                      sigLevel: float = 1):
         '''
         High-pass and low-pass filter possibilities.
 
@@ -263,7 +259,7 @@ class waveletAnalysis:
         '''
 
         self.waveFlt = self.wave.copy()
- 
+
         # Band pass filter:
         # Zero out parts of the wavlet space that we don't want to reconstruct.
         if lowerPeriod != None:
@@ -281,7 +277,6 @@ class waveletAnalysis:
         )  # Only pass data that has power of (100% - sigThreshold). Usually sigThreshold is 95%. Was 0.25.
         self.waveFlt[notSigInd] = 0
 
-
     def nanCOI(self):
         '''
         Get rid of all values outside the cone of influence.
@@ -298,7 +293,6 @@ class waveletAnalysis:
             cutoff = np.where(self.coi[i] < self.period)
             self.nanCOImat[cutoff, i] = np.nan
 
-
     def nanSig(self):
         '''
         Get rid of all values not significant.
@@ -313,8 +307,11 @@ class waveletAnalysis:
         self.nanSigmat = self.wave
         self.nanSigmat[np.where(wavelet.sig95 < 1)] = np.nan
 
-
-    def familySig(self, sigList=[0.9, 0.95, 0.99, 0.999], dof=-1, sigtest=0):
+    def familySig(self,
+                  sigList: List[float, float, float,
+                                float] = [0.9, 0.95, 0.99, 0.999],
+                  dof: int = -1,
+                  sigtest: float = 0):
         '''
         Plot a family of significance curves for visualization and analysis.
 
@@ -367,8 +364,7 @@ class waveletAnalysis:
 
         return np.squeeze(fam_signif), np.squeeze(sigList)
 
-
-    def sumAcrossPeriod(self, perLim=[0, 100]):
+    def sumAcrossPeriod(self, perLim: List[float, float] = [0, 100]):
         '''
         Sum wavelet power across select periods.
         
@@ -396,7 +392,6 @@ class waveletAnalysis:
             axis=0)
 
         return np.squeeze(period_sum)
-
 
     def globalWaveletSpectrum(self):
         '''
@@ -556,8 +551,7 @@ class waveletAnalysis:
             plt.tight_layout()
             plt.show()
 
-
-    def averageWaveletPower(self, perLim=[0.25, 8]):
+    def averageWaveletPower(self, perLim: List[float, float] = [0.25, 8]):
         '''
         Average wavelet power, Average across periods to find significant 
         prominant times of activity.
@@ -569,8 +563,7 @@ class waveletAnalysis:
         Returns:
             None
         '''
-        assert len(
-            perLim) == 2, 'Period limit list must only include 2 values'
+        assert len(perLim) == 2, 'Period limit list must only include 2 values'
 
         if self.verbose:
             print('Creating scaled average of the timeseries, \
@@ -617,11 +610,10 @@ class waveletAnalysis:
         self.events = ltime
         self.events_value = lgws
 
-
     def noiseFilter(self,
-                    lowerPeriod=None,
-                    upperPeriod=10,
-                    sigLevel=0.25):
+                    lowerPeriod: float = None,
+                    upperPeriod: float = 10,
+                    sigLevel: float = 0.25):
         '''
         High-pass and low-pass filter possibilities.
 

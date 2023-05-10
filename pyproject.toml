@@ -1,0 +1,35 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "seas"
+version = "0.0.5"
+authors = [
+  { name="Sydney Weiser", email="scweiser@ucsc.edu"  },
+  { name="Brian Mullen", email="brmullen@ucsc.edu"  },
+]
+description = "python Signal Extraction and Segmentation"
+long_description= "Data-driven filtration and segmentation of mesoscale neural dynamics"
+requires-python = ">=3.5"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+dependencies = [
+    "h5py",
+    "matplotlib",
+    "numpy",
+    "opencv-python",
+    "PyYAML",
+    "scikit-learn",
+    "scipy",
+    "tifffile",
+    "tk",
+]
+
+[project.urls]
+"Homepage" = "https://github.com/ackmanlab/pySEAS"
+"Bug Tracker" = "https://github.com/ackmanlab/pySEAS/issues"
+"Publication" = "https://doi.org/10.1371/journal.pcbi.1011085"

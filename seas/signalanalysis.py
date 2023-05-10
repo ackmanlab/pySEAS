@@ -160,8 +160,8 @@ def butterworth(data: np.ndarray,
     return data
 
 
-def local_max(x_values:np.ndarray, 
-              array1d: np.ndarray, 
+def local_max(x_values: np.ndarray,
+              array1d: np.ndarray,
               sig: np.ndarray = None) -> Tuple[np.ndarray, np.ndarray]:
     '''
     Finds the local max array values and their respective position (xvalues)
@@ -181,14 +181,14 @@ def local_max(x_values:np.ndarray,
 
     '''
     if sig is not None:
-        i = np.r_[True, array1d[1:] > array1d[:-1]] & np.r_[array1d[:-1] >
-                                                            array1d[1:], True]
+        i = np.r_[True, array1d[1:] > array1d[:-1]] & np.r_[
+            array1d[:-1] > array1d[1:], True]
         return list(compress(x_values,
                              i)), list(compress(array1d,
                                                 i)), list(compress(sig, i))
     else:
-        i = np.r_[True, array1d[1:] > array1d[:-1]] & np.r_[array1d[:-1] >
-                                                            array1d[1:], True]
+        i = np.r_[True, array1d[1:] > array1d[:-1]] & np.r_[
+            array1d[:-1] > array1d[1:], True]
         return list(compress(x_values, i)), list(compress(array1d, i))
 
 
@@ -211,16 +211,16 @@ def local_min(x_values: np.ndarray,
         data values of the local min
         third list of significance of where the local min
     '''
-    
+
     if sig is not None:
-        i = np.r_[True, array1d[1:] < array1d[:-1]] & np.r_[array1d[:-1] <
-                                                            array1d[1:], True]
+        i = np.r_[True, array1d[1:] < array1d[:-1]] & np.r_[
+            array1d[:-1] < array1d[1:], True]
         return list(compress(x_values,
                              i)), list(compress(array1d,
                                                 i)), list(compress(sig, i))
     else:
-        i = np.r_[True, array1d[1:] < array1d[:-1]] & np.r_[array1d[:-1] <
-                                                            array1d[1:], True]
+        i = np.r_[True, array1d[1:] < array1d[:-1]] & np.r_[
+            array1d[:-1] < array1d[1:], True]
         return list(compress(x_values, i)), list(compress(array1d, i))
 
 
@@ -280,10 +280,11 @@ def linear_regression(time: np.ndarray,
     return slope, intercept
 
 
-def tdelay_correlation(vectors: np.ndarray, 
-                       n: int, 
-                       max_offset: int = 150, 
-                       return_window: bool = False) -> Tuple[np.ndarray, np.ndarray]:
+def tdelay_correlation(
+        vectors: np.ndarray,
+        n: int,
+        max_offset: int = 150,
+        return_window: bool = False) -> Tuple[np.ndarray, np.ndarray]:
     '''
     Calculates correlations of timecourses stored in an array 'vectors', of shape 
     (m, t) against the 'n'th element of the array, or an input vector of size 't'.  
@@ -345,9 +346,7 @@ def tdelay_correlation(vectors: np.ndarray,
         return x_corr, t_delay
 
 
-def gaussian_smooth_2d(matrix: np.ndarray,
-                       dj: float,
-                       dt: float) -> np.ndarray:
+def gaussian_smooth_2d(matrix: np.ndarray, dj: float, dt: float) -> np.ndarray:
     '''
     This takes a 2-d matrix and applies a smoothing gaussian
     filter defined by the two sigma variables (dj, dt)
@@ -390,7 +389,7 @@ def short_time_fourier_transform(data: np.ndarray,
         nyq: nyquist frequency
         maxData: location of the maxima of the 2d transform
     '''
-    
+
     padEndSz = fft_len
     # The last segment can overlap the end of the data array by no more
     # than one window size.
