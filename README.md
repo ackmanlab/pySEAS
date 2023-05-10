@@ -14,9 +14,9 @@ Weiser SC, Mullen BR, Ascencio D, Ackman JB (2023) Data-driven segmentation of c
 
 # Installation Notes
 
-should work with most python3s.  Currently being tested and developed on 3.8.
+Should work with most python3 versionss.  Currently being tested and developed on 3.8.
 
-if some ffmpeg bindings aren't set correctly, mp4 videos may be difficult to load.  if so, use avis instead.
+If some ffmpeg bindings aren't set correctly, mp4 videos may be difficult to load.  if so, use avis instead.
 
 ## Venvs
 
@@ -28,7 +28,7 @@ Manually install all dependencies with:
 
     pip install -r requirements.txt
 
-Right now the dependencies are the latest versions of all packages.  I'm planning on lowering some requirements once they're tested.
+Right now the dependencies are any version of the required packages.
 
 ## Tkinter
 
@@ -44,31 +44,11 @@ If you experience problems with the GUI, check your tk version with the followin
     python -m tkinter
 This will launch a GUI that tells you your tk version.  Make sure it is >=8.6
 
-# Tests:
-
-Run tests locally by running `pytest` from root or ./tests folder.
-
 # Examples:
 
     python ica_project.py -f /home/sydney/Lab/testfiles/ -e 200220_01 -d 10 -r 1 -rr 2
     python ica_project.py -f /home/sydney/Lab/testfiles/ -e 170721_02 -d 10 -r 3
 
-
-# TODO:
-
----
-
-* clean up ROIs and other things in exp
-
-* sharing test data?
-
-* documentation
-
-* clean up and unify script parameters
-
-* better error than KeyError when experiment string was invalid.
-
-* explicitly return ica_project output to bash.
 
 # Developer Notes:
 
@@ -110,7 +90,7 @@ from the root dir:
 
 generate package formatting:
 
-    python setup.py sdist bdist_wheel
+    hatch build
 
 install it to environment
 

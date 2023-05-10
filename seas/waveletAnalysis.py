@@ -308,8 +308,7 @@ class waveletAnalysis:
         self.nanSigmat[np.where(wavelet.sig95 < 1)] = np.nan
 
     def familySig(self,
-                  sigList: List[float, float, float,
-                                float] = [0.9, 0.95, 0.99, 0.999],
+                  sigList: List[float] = [0.9, 0.95, 0.99, 0.999],
                   dof: int = -1,
                   sigtest: float = 0):
         '''
@@ -364,7 +363,7 @@ class waveletAnalysis:
 
         return np.squeeze(fam_signif), np.squeeze(sigList)
 
-    def sumAcrossPeriod(self, perLim: List[float, float] = [0, 100]):
+    def sumAcrossPeriod(self, perLim: List[float] = [0, 100]):
         '''
         Sum wavelet power across select periods.
         
@@ -551,7 +550,7 @@ class waveletAnalysis:
             plt.tight_layout()
             plt.show()
 
-    def averageWaveletPower(self, perLim: List[float, float] = [0.25, 8]):
+    def averageWaveletPower(self, perLim: List[float] = [0.25, 8]):
         '''
         Average wavelet power, Average across periods to find significant 
         prominant times of activity.

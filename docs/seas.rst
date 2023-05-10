@@ -1,118 +1,107 @@
 seas package
 ============
 
-Submodules
-----------
-
 seas.colormaps module
----------------------
+--------------------
 
-.. automodule:: seas.colormaps
-    :members:
-    :undoc-members:
-    :show-inheritance:
+.. automodapi:: seas.colormaps
+   :no-heading:
+   :no-inheritance-diagram:
+   :no-inherited-members:
+
 
 seas.defaults module
 --------------------
 
-.. automodule:: seas.defaults
-    :members:
-    :undoc-members:
-    :show-inheritance:
+.. automodapi:: seas.defaults
+   :no-heading:
+   :no-inheritance-diagram:
+   :no-inherited-members:
 
 seas.domains module
 -------------------
 
-.. automodule:: seas.domains
-    :members:
-    :undoc-members:
-    :show-inheritance:
+.. automodapi:: seas.domains
+   :no-heading:
+   :no-inheritance-diagram:
+   :no-inherited-members:
 
 seas.experiment module
 ----------------------
 
-.. automodule:: seas.experiment
-    :members:
-    :undoc-members:
-    :show-inheritance:
+.. automodapi:: seas.experiment
+   :no-heading:
+   :no-inheritance-diagram:
+   :no-inherited-members:
 
 seas.filemanager module
 -----------------------
 
-.. automodule:: seas.filemanager
-    :members:
-    :undoc-members:
-    :show-inheritance:
+.. automodapi:: seas.filemanager
+   :no-heading:
+   :no-inheritance-diagram:
+   :no-inherited-members:
 
 seas.gui module
 ---------------
 
-.. automodule:: seas.gui
-    :members:
-    :undoc-members:
-    :show-inheritance:
+.. automodapi:: seas.gui
+   :no-heading:
+   :no-inheritance-diagram:
+   :no-inherited-members:
 
 seas.hdf5manager module
 -----------------------
 
-.. automodule:: seas.hdf5manager
-    :members:
-    :undoc-members:
-    :show-inheritance:
+.. automodapi:: seas.hdf5manager
+   :no-heading:
+   :no-inheritance-diagram:
+   :no-inherited-members:
 
 seas.ica module
 ---------------
 
-.. automodule:: seas.ica
-    :members:
-    :undoc-members:
-    :show-inheritance:
+.. automodapi:: seas.ica
+   :no-heading:
+   :no-inheritance-diagram:
+   :no-inherited-members:
 
 seas.rois module
 ----------------
 
-.. automodule:: seas.rois
-    :members:
-    :undoc-members:
-    :show-inheritance:
+.. automodapi:: seas.rois
+   :no-heading:
+   :no-inheritance-diagram:
+   :no-inherited-members:
 
 seas.signalanalysis module
 --------------------------
 
-.. automodule:: seas.signalanalysis
-    :members:
-    :undoc-members:
-    :show-inheritance:
+.. automodapi:: seas.signalanalysis
+   :no-heading:
+   :no-inheritance-diagram:
+   :no-inherited-members:
 
 seas.video module
 -----------------
 
-.. automodule:: seas.video
-    :members:
-    :undoc-members:
-    :show-inheritance:
+.. automodapi:: seas.video
+   :no-heading:
+   :no-inheritance-diagram:
+   :no-inherited-members:
 
 seas.waveletAnalysis module
 ---------------------------
 
-.. automodule:: seas.waveletAnalysis
-    :members:
-    :undoc-members:
-    :show-inheritance:
+.. automodapi:: seas.waveletAnalysis
+   :no-heading:
+   :no-inheritance-diagram:
+   :no-inherited-members:
 
 seas.waveletFunctions module
 ----------------------------
 
-.. automodule:: seas.waveletFunctions
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-
-Module contents
----------------
-
-.. automodule:: seas
-    :members:
-    :undoc-members:
-    :show-inheritance:
+.. automodapi:: seas.waveletFunctions
+   :no-heading:
+   :no-inheritance-diagram:
+   :no-inherited-members:

@@ -3,16 +3,17 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Documentation for python Signal Extraction And Segmentation (pySEAS)
-====================================================================
+python Signal Extraction And Segmentation (pySEAS)
+==================================================
 
-This is a python package built for ICA signal extraction and segmentation for mesoscale calcium imaging videos. 
+This is a python package for ICA signal extraction and segmentation of mesoscale calcium imaging videos. 
 
-See publication here:
+Publication
+^^^^^^^^^^^^^
 
-https://doi.org/10.1101/2020.12.30.424865
+Weiser SC, Mullen BR, Ascencio D, Ackman JB (2023) Data-driven segmentation of cortical calcium dynamics. PLOS Computational Biology 19(5): e1011085. `article link <https://doi.org/10.1371/journal.pcbi.1011085>`_.
 
-Installation:
+Installation
 ^^^^^^^^^^^^^
 
 .. code-block:: bash
@@ -20,21 +21,16 @@ Installation:
    pip install seas
 
 
+Test Data
+^^^^^^^^^^
+Test ica processed datasets are available for download from `Dryad <https://datadryad.org/stash/dataset/doi:10.7291/D1N96W>`_.
 
-Guide:
-======
+
+Contents
+-------
 
 .. toctree::
    :maxdepth: 2
-   :caption: Contents:
 
-   ../modules.rst
-   ../seas.rst
-
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
+   /seas.rst
+   /examples.rst
