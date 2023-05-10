@@ -20,6 +20,8 @@ Installation
 
    pip install seas
 
+Please see the :ref:`install-notes` for further troubleshooting details, and report any bugs you find to our `Github issues page <https://github.com/ackmanlab/pySEAS/issues>`_.
+
 
 Test Data
 ^^^^^^^^^^
@@ -34,3 +36,4 @@ Contents
 
    /seas.rst
    /examples.rst
+   /install.rst
