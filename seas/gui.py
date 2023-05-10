@@ -6,7 +6,6 @@ import tkinter.messagebox
 
 # Set the matplotlib backend to tk figures.
 # If imported, cannot plot to regular matplotlib figures!
-matplotlib.use("TkAgg")
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
 
@@ -42,7 +41,6 @@ def run_gui(components: dict,
     Returns:
         components: The components dict, updated with any new region assignment, or artifact assignment, if applicable. 
     '''
-
     print('\nStarting ICA Component Selection GUI\n-----------------------')
     print(
         'If you experience problems with this GUI, check your tk version with the following terminal command:'
@@ -54,6 +52,7 @@ def run_gui(components: dict,
     print(
         "If installed using conda, use 'conda install -c anaconda tk' to update"
     )
+    matplotlib.use("TkAgg")
 
     if type(components) is str:
         f = hdf5manager(components)
