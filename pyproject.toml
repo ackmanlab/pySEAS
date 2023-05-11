@@ -9,8 +9,9 @@ authors = [
   { name="Sydney Weiser", email="scweiser@ucsc.edu"  },
   { name="Brian Mullen", email="brmullen@ucsc.edu"  },
 ]
+readme = "README.md"
 description = "python Signal Extraction and Segmentation"
-long_description= "Data-driven filtration and segmentation of mesoscale neural dynamics"
+long_description = "Data-driven filtration and segmentation of mesoscale neural dynamics"
 requires-python = ">=3.5"
 classifiers = [
     "Programming Language :: Python :: 3",
@@ -33,3 +34,4 @@ dependencies = [
 "Homepage" = "https://github.com/ackmanlab/pySEAS"
 "Bug Tracker" = "https://github.com/ackmanlab/pySEAS/issues"
 "Publication" = "https://doi.org/10.1371/journal.pcbi.1011085"
+"Dsocumentation" = "https://pyseas.readthedocs.io/en/latest/"

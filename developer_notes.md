@@ -36,14 +36,18 @@ https://sphinx-automodapi.readthedocs.io/en/latest/
 
 ## Making and locally installing the python package
 
-to test and install the python package locally
+Test and install the python package locally:
 
-from the root dir:
-
-generate package formatting:
+from the project root dir, generate package formatting:
 
     hatch build
 
-install it to environment
+and install it to environment:
 
     pip install -e .
+
+To check if the built wheel passes all checks: 
+
+    twine check dist/*
+
+## Deploying the python package
