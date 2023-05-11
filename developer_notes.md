@@ -50,4 +50,8 @@ To check if the built wheel passes all checks:
 
     twine check dist/*
 
-## Deploying the python package
+## Deploying the python packages
+
+https://packaging.python.org/en/latest/tutorials/packaging-projects/
+
+    python3 -m twine upload dist/*
