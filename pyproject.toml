@@ -34,4 +34,4 @@ dependencies = [
 "Homepage" = "https://github.com/ackmanlab/pySEAS"
 "Bug Tracker" = "https://github.com/ackmanlab/pySEAS/issues"
 "Publication" = "https://doi.org/10.1371/journal.pcbi.1011085"
-"Dsocumentation" = "https://pyseas.readthedocs.io/en/latest/"
+"Documentation" = "https://pyseas.readthedocs.io/en/latest/"
