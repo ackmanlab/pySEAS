@@ -296,8 +296,6 @@ def rebuild(components: dict,
     artifact_components == False.  Returns a matrix data_r, the reconstructed 
     vector projected back into its original dimensions.
 
-    The filtered mean is *NOT* readded by this function.
-
     Arguments:
         components: 
             The components from ica_project.  artifact_components must be assigned to components before rebuilding, or passed in explicitly
